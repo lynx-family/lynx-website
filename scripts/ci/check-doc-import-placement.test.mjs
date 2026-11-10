@@ -251,11 +251,13 @@ test('CLI reports misplaced imports, parse failures, and ignores unrelated files
   t.after(() => rmSync(directory, { recursive: true, force: true }));
 
   const invalid = path.join(directory, 'invalid.mdx');
+  const invalidFrontmatter = path.join(directory, 'invalid-frontmatter.mdx');
   const violation = path.join(directory, 'violation.mdx');
   const markdown = path.join(directory, 'example.md');
   const valid = path.join(directory, 'valid.mdx');
 
   writeFileSync(invalid, "import X from './x'\nconst x = 1\n");
+  writeFileSync(invalidFrontmatter, '---\ntitle: First\ntitle: Second\n---\n');
   writeFileSync(
     violation,
     "# Title\n\nimport { PropertyDefinition } from '@lynx';\n",
@@ -273,14 +275,22 @@ test('CLI reports misplaced imports, parse failures, and ignores unrelated files
     new URL('./check-doc-import-placement.mjs', import.meta.url),
   );
 
-  const result = spawnSync(process.execPath, [script, invalid, violation], {
-    cwd: directory,
-    encoding: 'utf8',
-    timeout: 30_000,
-  });
+  const result = spawnSync(
+    process.execPath,
+    [script, invalid, invalidFrontmatter, violation],
+    {
+      cwd: directory,
+      encoding: 'utf8',
+      timeout: 30_000,
+    },
+  );
 
   assert.equal(result.status, 1);
   assert.match(result.stderr, /invalid\.mdx:2: could not parse document/);
+  assert.match(
+    result.stderr,
+    /invalid-frontmatter\.mdx:3: could not parse document/,
+  );
   assert.match(result.stderr, /violation\.mdx:3: static import from '@lynx'/);
 
   // Allowed files (valid MDX, plain .md, deleted file, non-doc file) return exit code 0

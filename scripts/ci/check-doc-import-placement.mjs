@@ -136,7 +136,8 @@ function run() {
     try {
       violations.push(...findMisplacedImports(file, content));
     } catch (error) {
-      const line = error.line ?? error.place?.start?.line ?? 1;
+      const line =
+        error.line ?? error.place?.start?.line ?? (error.mark?.line ?? 0) + 1;
       console.error(
         `${file}:${line}: could not parse document: ${error.message}`,
       );
