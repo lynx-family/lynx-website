@@ -15,10 +15,10 @@ import {
   discoverCorpus,
   matchingAlias,
   parseImports,
-  producerAreas,
   resolvedResource,
 } from './corpus.js';
 import { loadContracts } from './check-registry.js';
+import { manifestSourceAreas } from './oss-manifest-source-areas.js';
 import type { SourceArea } from './types.js';
 
 mkdirSync(path.join(process.cwd(), 'node_modules/.cache'), { recursive: true });
@@ -313,17 +313,26 @@ test('discovery includes generated locales, deduplicates mounts and fails on par
   execFileSync('git', ['init', '--quiet', cwd]);
   write('package.json', '{"type":"module"}');
   const contracts = await loadContracts();
+  contracts.documentationScope = {
+    roots: ['docs', 'sharedDocs'],
+    trackedSource: { id: 'tracked-docs', owner: 'lynx-website' },
+  };
+  mkdirSync(path.join(cwd, 'sharedDocs'));
   write('src/components/entry.ts', "export { Value } from '@lynx';");
   write('docs/fr/guide.mdx', "import { Value } from '@lynx';");
+  execFileSync('git', ['add', 'docs/fr/guide.mdx'], { cwd });
   write('docs/fr/generated/fresh/page.mdx', "import { Value } from '@lynx';");
-  const manifest = {
-    sections: [
-      { route: 'generated/fresh', content: { fr: 'content/fr/fresh' } },
-    ],
-  };
   symlinkSync(path.join(cwd, 'src/components'), path.join(cwd, 'mount'));
   contracts.sourceAreas = [
     ...contracts.sourceAreas,
+    {
+      id: 'generated-docs',
+      root: 'docs/fr/generated/fresh',
+      owner: 'lynx-stack',
+      role: 'generated',
+      boundary: 'documentation',
+      origins: [{ repository: 'fixture', root: 'content/fr/fresh' }],
+    },
     {
       id: 'same-mount',
       root: 'mount',
@@ -332,32 +341,270 @@ test('discovery includes generated locales, deduplicates mounts and fails on par
       origins: [{ repository: 'fixture', root: 'src/components' }],
     },
   ];
-  const corpus = discoverCorpus(cwd, contracts, manifest);
+  const corpus = discoverCorpus(cwd, contracts);
   assert.equal(corpus.length, 3);
   assert.deepEqual(
     corpus.map((record) => record.owner),
     ['lynx-stack', 'lynx-website', 'lynx-website'],
   );
-  assert.deepEqual(discoverCorpus(cwd, contracts, manifest), corpus);
+  assert.deepEqual(discoverCorpus(cwd, contracts), corpus);
   write('docs/fr/generated/fresh/broken.mdx', 'import { from "@lynx";');
-  assert.throws(() => discoverCorpus(cwd, contracts, manifest));
+  assert.throws(() => discoverCorpus(cwd, contracts));
 });
 
-test('producer destinations and ownership are derived from manifest data', () => {
-  const areas = producerAreas({
-    sections: [
-      { route: 'generated/new-section', content: { fr: 'content/fr/new' } },
+const manifestBinding = {
+  owner: 'consumer' as const,
+  repository: 'fixture',
+  sourceRoot: 'package',
+  outputRoot: 'prepared',
+};
+
+test('manifest conversion uses explicit binding and localized/shared destination data', () => {
+  const areas = manifestSourceAreas(
+    {
+      sections: [{ route: 'guide', content: { fr: 'content/fr' } }],
+      sharedContent: [{ source: 'content/shared', destination: '_shared' }],
+    },
+    manifestBinding,
+  );
+  assert.deepEqual(
+    areas.map(({ root, owner, origins }) => ({ root, owner, origins })),
+    [
+      {
+        root: 'prepared/fr/guide',
+        owner: 'consumer',
+        origins: [{ repository: 'fixture', root: 'package/content/fr' }],
+      },
+      {
+        root: 'prepared/_shared',
+        owner: 'consumer',
+        origins: [{ repository: 'fixture', root: 'package/content/shared' }],
+      },
     ],
-  });
-  assert.equal(areas[0]?.root, 'docs/fr/generated/new-section');
-  assert.equal(areas[0]?.owner, 'lynx-stack');
+  );
   assert.throws(
     () =>
-      producerAreas({
-        sections: [{ route: '../escape', content: { en: 'content/en' } }],
-      }),
+      manifestSourceAreas(
+        {
+          sections: [{ route: '../escape', content: { en: 'content/en' } }],
+        },
+        manifestBinding,
+      ),
     /Invalid/,
   );
+});
+
+test('complete scope rejects unowned documentation even without alias imports', async (t) => {
+  const cwd = mkdtempSync(
+    path.join(process.cwd(), 'node_modules/.cache/corpus-'),
+  );
+  t.after(() => rmSync(cwd, { recursive: true, force: true }));
+  execFileSync('git', ['init', '--quiet', cwd]);
+  const contracts = await loadContracts();
+  contracts.documentationScope = { roots: ['docs', 'sharedDocs'] };
+  for (const root of contracts.documentationScope.roots)
+    mkdirSync(path.join(cwd, root), { recursive: true });
+  for (const [file, content] of [
+    [
+      'docs/en/unregistered/page.mdx',
+      "import { Value } from 'ordinary-package';",
+    ],
+    ['docs/_support/Preview.tsx', "import React from 'react';"],
+    ['sharedDocs/unregistered/empty.ts', 'export const value = 1;'],
+    ['docs/en/unregistered/empty.md', '# No imports'],
+  ]) {
+    mkdirSync(path.dirname(path.join(cwd, file!)), { recursive: true });
+    writeFileSync(path.join(cwd, file!), content!);
+    assert.throws(
+      () => discoverCorpus(cwd, contracts),
+      /executable documentation has no source ownership/,
+      file,
+    );
+    rmSync(path.join(cwd, file!));
+  }
+});
+
+test('tracked site documentation and support modules retain authoritative ownership', async (t) => {
+  const cwd = mkdtempSync(
+    path.join(process.cwd(), 'node_modules/.cache/corpus-'),
+  );
+  t.after(() => rmSync(cwd, { recursive: true, force: true }));
+  execFileSync('git', ['init', '--quiet', cwd]);
+  for (const file of [
+    'docs/fr/page.mdx',
+    'docs/_local/Preview.tsx',
+    'sharedDocs/local.ts',
+  ]) {
+    mkdirSync(path.dirname(path.join(cwd, file)), { recursive: true });
+    writeFileSync(path.join(cwd, file), "import React from 'react';");
+    execFileSync('git', ['add', file], { cwd });
+  }
+  const contracts = await loadContracts();
+  contracts.documentationScope = {
+    roots: ['docs', 'sharedDocs'],
+    trackedSource: { id: 'tracked-docs', owner: 'consumer' },
+  };
+  const corpus = discoverCorpus(cwd, contracts);
+  assert.equal(corpus.length, 3);
+  assert.ok(corpus.every((record) => record.owner === 'consumer'));
+  assert.ok(corpus.every((record) => record.role === 'authoritative'));
+  contracts.documentationScope = { roots: ['absent'] };
+  assert.throws(
+    () => discoverCorpus(cwd, contracts),
+    /missing documentation root/,
+  );
+});
+
+test('declared generated modules retain ownership and reject conflicting areas', async (t) => {
+  const cwd = mkdtempSync(
+    path.join(process.cwd(), 'node_modules/.cache/corpus-'),
+  );
+  t.after(() => rmSync(cwd, { recursive: true, force: true }));
+  execFileSync('git', ['init', '--quiet', cwd]);
+  const write = (file: string, content: string) => {
+    mkdirSync(path.dirname(path.join(cwd, file)), { recursive: true });
+    writeFileSync(path.join(cwd, file), content);
+  };
+  write('prepared/page.mdx', "import { Preview } from './Preview';");
+  write('prepared/Preview.tsx', "import React from 'react';");
+  write('prepared/empty.ts', 'export const value = 1;');
+  // Public resources remain excluded even when mounted under docs.
+  write('docs/public/resource.ts', 'import { from "broken";');
+  symlinkSync(
+    path.join(cwd, 'docs/public'),
+    path.join(cwd, 'prepared/public-mount'),
+  );
+  const contracts = await loadContracts();
+  contracts.documentationScope = { roots: ['prepared'] };
+  const area: SourceArea = {
+    id: 'generated-modules',
+    root: 'prepared',
+    owner: 'consumer:tools-docs',
+    role: 'generated',
+    boundary: 'documentation',
+    origins: [{ repository: 'fixture', root: 'content/shared' }],
+  };
+  assert.throws(() => discoverCorpus(cwd, contracts), /no source ownership/);
+  contracts.sourceAreas = [...contracts.sourceAreas, area];
+  const corpus = discoverCorpus(cwd, contracts);
+  assert.equal(corpus.length, 2);
+  assert.ok(corpus.every((record) => record.owner === area.owner));
+  assert.ok(corpus.every((record) => record.role === 'generated'));
+  assert.ok(
+    corpus.every(
+      (record) => record.documentation && record.boundary === 'documentation',
+    ),
+  );
+  assert.deepEqual(corpus[0]?.origins, area.origins);
+  // Documentation metadata cannot reclassify a physical runtime mount.
+  write('src/local/index.ts', 'export const value = 1;');
+  symlinkSync(path.join(cwd, 'src/local'), path.join(cwd, 'runtime-mount'));
+  const documentationAreas = contracts.sourceAreas;
+  for (const mounted of [false, true]) {
+    if (mounted) {
+      renameSync(path.join(cwd, 'src'), path.join(cwd, 'physical'));
+      symlinkSync(path.join(cwd, 'physical'), path.join(cwd, 'src'));
+    }
+    for (const owner of ['consumer', 'consumer:tools-docs'] as const) {
+      contracts.sourceAreas = [
+        ...documentationAreas,
+        {
+          ...area,
+          id: 'runtime-mount',
+          root: 'runtime-mount',
+          owner,
+        },
+      ];
+      assert.throws(
+        () => discoverCorpus(cwd, contracts),
+        /documentation owner overlaps runtime/,
+      );
+    }
+  }
+  contracts.sourceAreas = documentationAreas;
+  contracts.sourceAreas = [
+    ...contracts.sourceAreas,
+    {
+      id: 'wrong-owner',
+      root: 'prepared',
+      owner: 'consumer',
+      role: 'authoritative',
+    },
+  ];
+  assert.throws(
+    () => discoverCorpus(cwd, contracts),
+    /ambiguous source ownership/,
+  );
+});
+
+test('producer manifests reject escaping, public and overlapping executable roots', () => {
+  for (const manifest of [
+    { sections: [{ route: 'guide', content: { public: 'content' } }] },
+    { sections: [{ route: 'C:/escape', content: { en: 'content' } }] },
+    {
+      sections: [
+        { route: 'guide', content: { en: 'content' } },
+        { route: 'guide/nested', content: { en: 'other' } },
+      ],
+    },
+    {
+      sections: [],
+      sharedContent: [{ source: '../escape', destination: '_shared' }],
+    },
+    {
+      sections: [],
+      sharedContent: [{ source: 'content', destination: 'public/escape' }],
+    },
+    {
+      sections: [{ route: 'guide', content: { en: 'content' } }],
+      sharedContent: [{ source: 'content', destination: 'en' }],
+    },
+  ]) {
+    assert.throws(
+      () =>
+        manifestSourceAreas(
+          { schemaVersion: 1, sharedContent: [], ...manifest },
+          { ...manifestBinding, outputRoot: 'docs' },
+        ),
+      /Invalid documentation manifest/,
+    );
+  }
+});
+
+test('public exclusions reject overlapping standard and relocated runtime mounts', async (t) => {
+  const cwd = mkdtempSync(
+    path.join(process.cwd(), 'node_modules/.cache/corpus-'),
+  );
+  t.after(() => rmSync(cwd, { recursive: true, force: true }));
+  execFileSync('git', ['init', '--quiet', cwd]);
+  mkdirSync(path.join(cwd, 'docs'), { recursive: true });
+  const contracts = await loadContracts();
+  contracts.sourceAreas = [
+    ...contracts.sourceAreas,
+    {
+      id: 'relocated-runtime',
+      root: 'modules',
+      owner: 'consumer',
+      role: 'authoritative',
+      boundary: 'runtime',
+    },
+  ];
+  for (const root of ['src', 'theme', 'modules']) {
+    mkdirSync(path.join(cwd, root), { recursive: true });
+    writeFileSync(
+      path.join(cwd, root, 'entry.ts'),
+      "import { Value } from '@lynx';",
+    );
+    execFileSync('git', ['add', `${root}/entry.ts`], { cwd });
+    for (const target of [root, '.']) {
+      symlinkSync(path.join(cwd, target), path.join(cwd, 'docs/public'));
+      assert.throws(
+        () => discoverCorpus(cwd, contracts),
+        /public resources overlap runtime/,
+      );
+      rmSync(path.join(cwd, 'docs/public'));
+    }
+  }
 });
 
 test('discovery follows working-tree deletions and renames before staging', async (t) => {

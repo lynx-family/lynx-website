@@ -13,11 +13,19 @@ import {
   statSync,
 } from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 import ts from 'typescript';
 import { parseDocumentation } from '../ci/documentation-parser.mjs';
 import type { ActiveContracts } from './check-registry.js';
-import type { OwnerId, SourceArea } from './types.js';
+import {
+  preparedDocumentation,
+  type PreparedFile,
+} from './documentation-corpus.js';
+import type {
+  AliasContract,
+  OwnerId,
+  SourceArea,
+  SourceOrigin,
+} from './types.js';
 
 export interface ImportBinding {
   name: string;
@@ -50,6 +58,8 @@ export interface ImportRecord {
   role?: SourceArea['role'];
   /** JSON field path for a registered generator setting. */
   field?: readonly string[];
+  /** Optional canonical origins declared for the final importer. */
+  origins?: readonly SourceOrigin[];
 }
 type SyntaxRecord = Omit<
   ImportRecord,
@@ -60,6 +70,7 @@ type SyntaxRecord = Omit<
   | 'documentation'
   | 'role'
   | 'field'
+  | 'origins'
 >;
 const sourcePattern = /\.(?:[cm]?[jt]sx?|mdx?)$/;
 export const posix = (file: string): string => file.split(path.sep).join('/');
@@ -112,6 +123,22 @@ export const canonical = (file: string): string => {
 };
 const contains = (root: string, file: string): boolean =>
   file === root || file.startsWith(`${root}${path.sep}`);
+const overlaps = (left: string, right: string): boolean =>
+  contains(left, right) || contains(right, left);
+const runtimeRoots = (areas: readonly SourceArea[]): string[] => [
+  'src',
+  'theme',
+  ...areas
+    .filter((area) => area.boundary === 'runtime')
+    .map((area) => area.root),
+];
+/** Documentation inputs declare portable boundaries; prepared inventory owns discovery. */
+export const documentationRoots = (contracts: ActiveContracts): string[] => [
+  ...new Set([
+    ...(contracts.documentationScope?.roots ?? []),
+    ...(contracts.documentationCorpus?.roots ?? []),
+  ]),
+];
 const compare = (left: string, right: string): number =>
   left < right ? -1 : left > right ? 1 : 0;
 
@@ -140,52 +167,6 @@ export function classifySource(
   )[0]?.area;
 }
 
-/** Pure classification from the manifest used by the OSS preparation step. */
-export function producerAreas(data: unknown): SourceArea[] {
-  if (!data || !Array.isArray((data as any).sections))
-    throw new Error('Invalid lynx-stack manifest sections');
-  return (data as any).sections.flatMap((section: any) => {
-    const normalized = (value: unknown): value is string =>
-      typeof value === 'string' &&
-      !path.isAbsolute(value) &&
-      !value.includes('\\') &&
-      value.split('/').every((part) => part && part !== '.' && part !== '..');
-    if (
-      !normalized(section.route) ||
-      !section.content ||
-      typeof section.content !== 'object'
-    ) {
-      throw new Error('Invalid lynx-stack manifest destination');
-    }
-    return Object.entries(section.content).map(([locale, origin]) => {
-      if (!normalized(locale) || locale.includes('/') || !normalized(origin))
-        throw new Error('Invalid lynx-stack manifest locale/source');
-      return {
-        id: `lynx-stack:${locale}:${section.route}`,
-        root: `docs/${locale}/${section.route}`,
-        owner: 'lynx-stack' as const,
-        role: 'generated' as const,
-        boundary: 'documentation' as const,
-        origins: [{ repository: 'lynx-family/lynx-stack', root: origin }],
-      };
-    });
-  });
-}
-
-/** Shared CLI producer lookup; consumer maps explicitly define their scope. */
-export function readProducerManifest(cwd: string, consumer: boolean): unknown {
-  return consumer
-    ? undefined
-    : JSON.parse(
-        readFileSync(
-          createRequire(path.join(cwd, 'package.json')).resolve(
-            '@lynx-js/lynx-stack-docs/manifest.json',
-          ),
-          'utf8',
-        ),
-      );
-}
-
 /** Preserve the pre-resolution boundary of standard documentation trees. */
 export function lexicalBoundary(
   file: string,
@@ -207,10 +188,31 @@ export function portableBoundary(
   file: string,
   cwd: string,
   areas: readonly SourceArea[],
+  documentationRoots: readonly string[] = [],
 ): SourceArea['boundary'] {
   const area = classifySource(file, cwd, areas);
-  if (area?.boundary) return area.boundary;
-  return lexicalBoundary(canonical(path.resolve(cwd, file)), cwd);
+  const real = canonical(path.resolve(cwd, file));
+  // Physical paths must be classified relative to the same physical cwd.
+  const boundary = lexicalBoundary(real, canonical(cwd));
+  const runtimes = runtimeRoots(areas).map((root) =>
+    canonical(path.resolve(cwd, root)),
+  );
+  if (area?.boundary === 'documentation') {
+    const root = canonical(path.resolve(cwd, area.root));
+    if (runtimes.some((runtime) => overlaps(runtime, root)))
+      throw new Error(`${posix(file)}: documentation owner overlaps runtime`);
+  }
+  let prepared = false;
+  for (const root of documentationRoots) {
+    const physical = canonical(path.resolve(cwd, root));
+    // Root overlap is forbidden even when no source area owns the subtree.
+    if (runtimes.some((runtime) => overlaps(runtime, physical)))
+      throw new Error(
+        `${posix(file)}: prepared documentation overlaps runtime`,
+      );
+    prepared ||= contains(physical, real);
+  }
+  return prepared ? 'documentation' : (area?.boundary ?? boundary);
 }
 
 /** Only registered JSON values enter the corpus; no JSON-wide string search. */
@@ -471,45 +473,122 @@ export function matchingAlias(
     .sort((left, right) => right.specifier.length - left.specifier.length)[0];
 }
 
+/** Documentation extensions share public consumer policy, never private access. */
+export function aliasAllowsImporter(
+  alias: AliasContract,
+  owner: OwnerId,
+): boolean {
+  const importer =
+    alias.visibility === 'public' && owner.startsWith('consumer:')
+      ? 'consumer'
+      : owner;
+  return alias.allowedImporters.some((allowed) => allowed === importer);
+}
+
 /**
  * Scan JS/TS/MDX in site source/theme, declared roots, and tracked site modules.
- * The OSS caller supplies its producer manifest to include assembled docs.
- * Consumer layouts do not inspect installed package internals. Canonical paths
+ * Site adapters supply source areas, scope and final documentation ownership.
+ * Discovery does not inspect installed package internals. Canonical paths
  * deduplicate mounts and make conflicting ownership fail closed.
  */
 export function discoverCorpus(
   cwd: string,
   contracts: ActiveContracts,
-  producerManifest?: unknown,
 ): ImportRecord[] {
-  const producer =
-    producerManifest === undefined ? [] : producerAreas(producerManifest);
-  const areas = [...contracts.sourceAreas, ...producer];
+  const scope = contracts.documentationScope;
+  const areas = contracts.sourceAreas;
+  const roots = documentationRoots(contracts);
+  const inScope = (file: string): boolean =>
+    !!scope?.roots.some((root) =>
+      contains(path.resolve(cwd, root), path.resolve(cwd, file)),
+    );
+  const publicRoot = canonical(path.resolve(cwd, 'docs/public'));
+  // A public mount cannot hide tracked or relocated runtime files.
+  for (const root of runtimeRoots(areas)) {
+    const real = canonical(path.resolve(cwd, root));
+    if (overlaps(publicRoot, real))
+      throw new Error(
+        `docs/public: public resources overlap runtime root '${root}'`,
+      );
+  }
+  for (const root of roots) {
+    if (contains(publicRoot, canonical(path.resolve(cwd, root))))
+      throw new Error(`${root}: public resources are not documentation roots`);
+    if (
+      !statSync(path.resolve(cwd, root), {
+        throwIfNoEntry: false,
+      })?.isDirectory()
+    )
+      throw new Error(`${root}: missing documentation root`);
+    portableBoundary(root, cwd, areas, roots);
+  }
   const tracked = execFileSync('git', ['ls-files', '-z'], {
     cwd,
     encoding: 'utf8',
     env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
   }).split('\0');
+  const trackedFiles = new Set(tracked);
+  // Prepared file ownership takes precedence over physical importer mappings.
+  const sourceFor = (file: string) =>
+    classifySource(file, cwd, areas) ??
+    (scope?.trackedSource && trackedFiles.has(file) && inScope(file)
+      ? {
+          ...scope.trackedSource,
+          role: 'authoritative' as const,
+          origins: undefined,
+        }
+      : !file.includes('/')
+        ? {
+            id: 'site-modules',
+            owner: 'consumer' as const,
+            role: 'authoritative' as const,
+            origins: undefined,
+          }
+        : undefined);
+  for (const area of areas)
+    if (area.boundary === 'documentation')
+      portableBoundary(area.root, cwd, areas);
+  const prepared = contracts.documentationCorpus
+    ? preparedDocumentation(cwd, contracts.documentationCorpus, canonical)
+    : new Map<string, PreparedFile>();
+  // Prepared inventory is the only documentation importer entry point. Source
+  // areas still classify resolver targets and discover runtime/configuration.
+  const physicalDocumentationRoots = contracts.documentationCorpus
+    ? [
+        'docs',
+        'sharedDocs',
+        ...roots,
+        ...areas
+          .filter((area) => area.boundary === 'documentation')
+          .map((area) => area.root),
+      ].map((root) => canonical(path.resolve(cwd, root)))
+    : [];
+  const inPreparedDocumentation = (file: string, real: string): boolean =>
+    !!contracts.documentationCorpus &&
+    (lexicalBoundary(file, cwd) === 'documentation' ||
+      physicalDocumentationRoots.some((root) => contains(root, real)));
   const files = new Set(
     tracked.filter(
       (file) =>
         sourcePattern.test(file) &&
         existsSync(path.resolve(cwd, file)) &&
-        (!file.includes('/') ||
-          /^(src|theme)\//.test(file) ||
-          (producerManifest !== undefined &&
-            /^(docs|sharedDocs)\//.test(file))) &&
-        !file.startsWith('docs/public/'),
+        (!file.includes('/') || /^(src|theme)\//.test(file) || inScope(file)) &&
+        !file.startsWith('docs/public/') &&
+        !inPreparedDocumentation(file, canonical(path.resolve(cwd, file))),
     ),
   );
   const seenDirectories = new Set<string>();
   const walk = (file: string): void => {
     const absolute = path.resolve(cwd, file);
-    if (!existsSync(absolute)) return;
-    if (statSync(absolute).isDirectory()) {
+    const metadata = statSync(absolute, { throwIfNoEntry: false });
+    if (!metadata) return;
+    const real = canonical(absolute);
+    if (contains(publicRoot, real) || inPreparedDocumentation(file, real))
+      return;
+    if (metadata.isDirectory()) {
       const key = JSON.stringify([
-        canonical(absolute),
-        lexicalBoundary(file, cwd) === 'documentation',
+        real,
+        inScope(file) || lexicalBoundary(file, cwd) === 'documentation',
       ]);
       if (seenDirectories.has(key)) return;
       seenDirectories.add(key);
@@ -527,43 +606,40 @@ export function discoverCorpus(
   for (const root of [
     'src',
     'theme',
-    ...(producerManifest === undefined ? [] : ['docs', 'sharedDocs']),
+    ...(contracts.documentationCorpus ? [] : (scope?.roots ?? [])),
     ...areas
       .filter(
         (area) =>
-          area.owner !== 'rspress' && !area.root.startsWith('docs/public/'),
+          area.owner !== 'rspress' &&
+          !area.root.startsWith('docs/public/') &&
+          (!contracts.documentationCorpus || area.boundary !== 'documentation'),
       )
       .map((area) => area.root),
   ])
     walk(root);
   const records: ImportRecord[] = [];
+  for (const { file } of prepared.values()) files.add(file.file);
   const seen = new Map<
     string,
     { owner: OwnerId | undefined; records: ImportRecord[] }
   >();
   for (const file of [...files].sort()) {
-    // Producer areas override locale fallback, never an explicit other owner.
-    const area = classifySource(file, cwd, areas);
-    const fallback =
-      producerManifest !== undefined && /^docs\/[^/]+\/.*\.mdx?$/.test(file)
-        ? {
-            id: 'website-locale-docs',
-            owner: 'lynx-website' as const,
-            role: 'authoritative' as const,
-          }
-        : !file.includes('/')
-          ? {
-              id: 'site-modules',
-              owner: 'consumer' as const,
-              role: 'authoritative' as const,
-            }
-          : undefined;
-    const source = area ?? fallback;
+    if (contains(publicRoot, canonical(path.resolve(cwd, file)))) continue;
     const real = canonical(path.resolve(cwd, file));
-    const documentation = lexicalBoundary(file, cwd) === 'documentation';
+    const preparation = prepared.get(real);
+    const source = preparation ? undefined : sourceFor(file);
+    const owner = preparation?.file.owner ?? source?.owner;
+    const documentation =
+      !!preparation ||
+      inScope(file) ||
+      lexicalBoundary(file, cwd) === 'documentation';
+    if (inScope(file) && !source && !preparation)
+      throw new Error(
+        `${file}: executable documentation has no source ownership`,
+      );
     const previous = seen.get(real);
     if (previous) {
-      if (previous.owner !== source?.owner)
+      if (previous.owner !== owner)
         throw new Error(`${file}: ambiguous mounted importer ownership`);
       // Prefer a documentation spelling for diagnostics and resolver context.
       // A mount visited earlier must not erase its documentation constraint.
@@ -576,17 +652,49 @@ export function discoverCorpus(
       continue;
     }
     const discovered: ImportRecord[] = [];
-    seen.set(real, { owner: source?.owner, records: discovered });
+    seen.set(real, { owner, records: discovered });
     let imports: SyntaxRecord[];
     try {
       imports = parseImports(
         file,
-        readFileSync(path.resolve(cwd, file), 'utf8'),
+        preparation?.content ?? readFileSync(path.resolve(cwd, file), 'utf8'),
       );
     } catch (error) {
       throw new Error(`${file}: ${(error as Error).message}`);
     }
-    for (const record of imports) {
+    const boundary =
+      !preparation && source && imports.length
+        ? portableBoundary(file, cwd, areas, roots)
+        : undefined;
+    const importOwners = new Map(
+      preparation?.file.imports?.map((request) => [request.index, request]),
+    );
+    for (const [index, request] of importOwners) {
+      const syntax = imports[index];
+      if (!syntax)
+        throw new Error(
+          `${file}: import ownership index ${index} is outside the final syntax`,
+        );
+      if (syntax.specifier !== request.specifier)
+        throw new Error(
+          `${file}: import ownership index ${index} expects ${JSON.stringify(request.specifier)}, found ${JSON.stringify(syntax.specifier)}; regenerate import annotations and run prepare`,
+        );
+    }
+    for (const [index, record] of imports.entries()) {
+      if (preparation) {
+        const ownership = importOwners.get(index) ?? preparation.file;
+        discovered.push({
+          ...record,
+          importer: preparation.file.file,
+          sourceArea: `prepared-document:${preparation.file.file}`,
+          owner: ownership.owner,
+          ...(ownership.origins ? { origins: ownership.origins } : {}),
+          role: 'generated',
+          boundary: 'documentation',
+          documentation: true,
+        });
+        continue;
+      }
       if (!source) {
         if (matchingAlias(record.specifier, contracts.aliases))
           throw new Error(`${file}: alias importer has no source area`);
@@ -598,7 +706,8 @@ export function discoverCorpus(
         sourceArea: source.id,
         owner: source.owner,
         role: source.role,
-        boundary: portableBoundary(file, cwd, areas),
+        ...(source.origins ? { origins: source.origins } : {}),
+        boundary,
         ...(documentation ? { documentation: true as const } : {}),
       });
     }

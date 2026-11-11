@@ -22,8 +22,15 @@ import {
   ossSourceAreas,
   owners,
 } from './registry.js';
+import {
+  validateDocumentationCorpus,
+  validateDocumentationScope,
+} from './documentation-corpus.js';
+import { repositoryRelativePathProblem } from './path-validation.js';
 import type {
   AliasContract,
+  DocumentationCorpus,
+  DocumentationScope,
   Owner,
   ResolverOverride,
   SourceArea,
@@ -35,6 +42,7 @@ type UnknownRecord = Record<string, any>;
 
 interface ContractInput {
   owners: unknown;
+  ownerExtensions?: unknown;
   aliases: unknown;
   aliasExtensions?: unknown;
   sourceAreas: unknown;
@@ -44,8 +52,8 @@ interface ContractInput {
 
 type RegistryDefaults = Omit<
   ContractInput,
-  'sourceAreaPolicy' | 'aliasExtensions'
->;
+  'sourceAreaPolicy' | 'aliasExtensions' | 'ownerExtensions'
+> & { documentationScope?: unknown };
 
 // Keep an unexported policy copy before consumer modules can mutate registry
 // exports. Later runCli calls in the same process must use the same OSS policy.
@@ -61,6 +69,7 @@ export interface CliOptions {
   sourceMap?: string;
   resolverOverrides?: string;
   aliasExtensions?: string;
+  documentationCorpus?: string;
 }
 
 // Closed vocabularies are schema, not policy. The concrete owners, aliases,
@@ -196,32 +205,6 @@ function referenceErrors(
   return errors;
 }
 
-function repositoryRelativePathProblem(
-  root: unknown,
-  allowGlob: boolean,
-): string | undefined {
-  if (!nonEmptyString(root)) {
-    return 'must be a non-empty repository-relative path';
-  }
-  if (
-    path.posix.isAbsolute(root) ||
-    /^[A-Za-z]:/.test(root) ||
-    root.startsWith('\\\\')
-  ) {
-    return 'must be repository-relative, not absolute';
-  }
-  if (
-    root.includes('\\') ||
-    (!allowGlob && root.includes('*')) ||
-    root === '.' ||
-    root.endsWith('/') ||
-    root.split('/').some((part) => part === '' || part === '.' || part === '..')
-  ) {
-    return 'must be a normalized repository-relative path';
-  }
-  return undefined;
-}
-
 function sourceRootProblem(root: unknown): string | undefined {
   return repositoryRelativePathProblem(root, false);
 }
@@ -268,6 +251,7 @@ function aliasCoversSpecifier(alias: unknown, specifier: string): boolean {
  */
 export function validateAliasContracts({
   owners: ownerRecords,
+  ownerExtensions = [],
   aliases: aliasRecords,
   aliasExtensions = [],
   sourceAreas,
@@ -275,7 +259,11 @@ export function validateAliasContracts({
   sourceAreaPolicy = undefined,
 }: ContractInput): string[] {
   const errors = [];
-  const ownerList = Array.isArray(ownerRecords) ? ownerRecords : [];
+  const sharedOwnerList = Array.isArray(ownerRecords) ? ownerRecords : [];
+  const ownerExtensionList = Array.isArray(ownerExtensions)
+    ? ownerExtensions
+    : [];
+  const ownerList = [...sharedOwnerList, ...ownerExtensionList];
   const extensionList = Array.isArray(aliasExtensions) ? aliasExtensions : [];
   // Append without key-based merging: collisions must fail, never replace
   // shared policy or become dependent on extension order.
@@ -293,6 +281,9 @@ export function validateAliasContracts({
 
   if (!Array.isArray(ownerRecords)) {
     errors.push('owners must be an array');
+  }
+  if (!Array.isArray(ownerExtensions)) {
+    errors.push('ownerExtensions must be an array');
   }
   if (!Array.isArray(aliasRecords)) {
     errors.push('aliases must be an array');
@@ -314,6 +305,16 @@ export function validateAliasContracts({
   const ownerIds = new Set<string>(
     ownerList.filter((owner) => nonEmptyString(owner?.id)).map(({ id }) => id),
   );
+  const sharedOwnerIds = new Set<string>(
+    sharedOwnerList
+      .filter((owner) => nonEmptyString(owner?.id))
+      .map(({ id }) => id),
+  );
+  const documentationOwnerIds = new Set<string>(
+    ownerExtensionList
+      .filter((owner) => nonEmptyString(owner?.id))
+      .map(({ id }) => id),
+  );
   for (const [index, owner] of ownerList.entries()) {
     if (!isRecord(owner) || !nonEmptyString(owner.id)) {
       errors.push(`owners[${index}] must declare a non-empty id`);
@@ -321,6 +322,19 @@ export function validateAliasContracts({
     if (!isRecord(owner) || !nonEmptyString(owner.description)) {
       errors.push(`owners[${index}] must declare a non-empty description`);
     }
+  }
+  for (const [index, owner] of ownerExtensionList.entries()) {
+    const label = `ownerExtensions[${index}]`;
+    if (
+      !isRecord(owner) ||
+      !nonEmptyString(owner.id) ||
+      !/^consumer:[a-z0-9]+(?:-[a-z0-9]+)*$/.test(owner.id)
+    )
+      errors.push(
+        `${label} id must use 'consumer:<name>' with lowercase words`,
+      );
+    if (!isRecord(owner) || owner.scope !== 'documentation')
+      errors.push(`${label} scope must be 'documentation'`);
   }
 
   const duplicateContractIds = duplicateValues(
@@ -374,6 +388,14 @@ export function validateAliasContracts({
       !['documentation', 'runtime'].includes(area.boundary)
     )
       errors.push(`${label} has unknown portable boundary`);
+    if (
+      documentationOwnerIds.has(area.owner) &&
+      (area.boundary !== 'documentation' ||
+        area.moduleSpecifierFields !== undefined)
+    )
+      errors.push(
+        `${label} extended owner may only own documentation without module specifier fields`,
+      );
     if (area.moduleSpecifierFields !== undefined) {
       if (!Array.isArray(area.moduleSpecifierFields))
         errors.push(`${label} moduleSpecifierFields must be an array`);
@@ -464,9 +486,13 @@ export function validateAliasContracts({
         errors.push(
           `source area '${area.id}' must preserve OSS boundary '${sharedArea.boundary}'`,
         );
-      } else if (!sharedArea && area.owner !== 'consumer') {
+      } else if (
+        !sharedArea &&
+        area.owner !== 'consumer' &&
+        !documentationOwnerIds.has(area.owner)
+      ) {
         errors.push(
-          `additional source area '${area.id}' must be owned by 'consumer'`,
+          `additional source area '${area.id}' must be owned by 'consumer' or a registered documentation owner`,
         );
       }
     }
@@ -556,7 +582,7 @@ export function validateAliasContracts({
         }
       }
     }
-    if (!ownerIds.has(alias.owner)) {
+    if (!sharedOwnerIds.has(alias.owner)) {
       errors.push(
         `${label} references unknown owner '${describe(alias.owner)}'`,
       );
@@ -572,7 +598,7 @@ export function validateAliasContracts({
     errors.push(
       ...referenceErrors(
         alias.allowedImporters,
-        ownerIds,
+        sharedOwnerIds,
         `${label} allowedImporters`,
       ),
     );
@@ -597,7 +623,7 @@ export function validateAliasContracts({
         errors.push(
           ...referenceErrors(
             alias.subpaths.targetOwners,
-            ownerIds,
+            sharedOwnerIds,
             `${label} subpath targetOwners`,
             'owner',
             true,
@@ -624,7 +650,7 @@ export function validateAliasContracts({
       errors.push(
         ...referenceErrors(
           alias.bareTargetOwners,
-          ownerIds,
+          sharedOwnerIds,
           `${label} bareTargetOwners`,
           'owner',
           true,
@@ -689,7 +715,7 @@ export function validateAliasContracts({
         ),
         ...referenceErrors(
           additionalOwners,
-          ownerIds,
+          sharedOwnerIds,
           `${label} implementationSources.additionalOwners`,
           'additional source owner',
         ),
@@ -867,7 +893,9 @@ export function parseArguments(args: readonly string[]): CliOptions {
           ? 'resolverOverrides'
           : argument === '--alias-extensions'
             ? 'aliasExtensions'
-            : undefined;
+            : argument === '--documentation-corpus'
+              ? 'documentationCorpus'
+              : undefined;
     if (!option) {
       throw new Error(`unknown argument '${argument}'`);
     }
@@ -890,7 +918,11 @@ function moduleUrl(modulePath: string, cwd: string): string {
 
 async function loadConsumerData(
   modulePath: string,
-  exportName: 'sourceAreas' | 'resolverOverrides' | 'aliasExtensions',
+  exportName:
+    | 'sourceAreas'
+    | 'resolverOverrides'
+    | 'aliasExtensions'
+    | 'documentationCorpus',
   cwd: string,
 ): Promise<unknown> {
   const consumerModule = await import(moduleUrl(modulePath, cwd));
@@ -913,7 +945,7 @@ async function loadConsumerData(
   }
   const data: unknown = consumerModule[exportName];
   // A supplied undefined export is malformed, not an omitted CLI option.
-  if (!Array.isArray(data)) {
+  if (exportName !== 'documentationCorpus' && !Array.isArray(data)) {
     throw new Error(`${modulePath}: ${exportName} must be an array`);
   }
   return data;
@@ -937,7 +969,7 @@ export async function runCli(
   }
   if (options.help) {
     console.log(
-      'Usage: node --import tsx scripts/alias-contracts/check-registry.ts [--source-map <module>] [--resolver-overrides <module>] [--alias-extensions <module>]',
+      'Usage: node --import tsx scripts/alias-contracts/check-registry.ts [--source-map <module>] [--resolver-overrides <module>] [--alias-extensions <module>] [--documentation-corpus <module>]',
     );
     return 0;
   }
@@ -958,6 +990,8 @@ export interface ActiveContracts {
   aliases: readonly AliasContract[];
   sourceAreas: readonly SourceArea[];
   resolverOverrides: readonly ResolverOverride[];
+  documentationCorpus?: DocumentationCorpus;
+  documentationScope?: DocumentationScope;
 }
 
 export async function loadContracts(
@@ -969,18 +1003,35 @@ export async function loadContracts(
   let sourceAreas: unknown;
   let resolverOverrides: unknown;
   let aliasExtensions: unknown = [];
+  let ownerExtensions: unknown = [];
+  let documentationCorpus: unknown;
+  let documentationScope: unknown;
   try {
     // Snapshot every default, including nested records, before the first
     // import. This also isolates explicitly supplied defaults from side effects.
     policy = structuredClone(defaults);
+    if (options.documentationCorpus && !options.sourceMap)
+      throw new Error('--documentation-corpus requires --source-map');
     sourceAreas = policy.sourceAreas;
     resolverOverrides = options.sourceMap ? [] : policy.resolverOverrides;
+    if (!options.sourceMap && policy.documentationScope !== undefined)
+      documentationScope = policy.documentationScope;
     if (options.sourceMap) {
       sourceAreas = await loadConsumerData(
         options.sourceMap,
         'sourceAreas',
         cwd,
       );
+      const sourceModule = await import(moduleUrl(options.sourceMap, cwd));
+      ownerExtensions =
+        'ownerExtensions' in sourceModule
+          ? structuredClone(sourceModule.ownerExtensions ?? null)
+          : [];
+      if ('documentationScope' in sourceModule) {
+        documentationScope = structuredClone(
+          sourceModule.documentationScope ?? null,
+        );
+      }
     }
     if (options.resolverOverrides) {
       resolverOverrides = await loadConsumerData(
@@ -996,12 +1047,20 @@ export async function loadContracts(
         cwd,
       );
     }
+    if (options.documentationCorpus) {
+      documentationCorpus = await loadConsumerData(
+        options.documentationCorpus,
+        'documentationCorpus',
+        cwd,
+      );
+    }
   } catch (error) {
     throw new Error(`Cannot load alias contracts: ${errorMessage(error)}`);
   }
 
   const errors = validateAliasContracts({
     owners: policy.owners,
+    ownerExtensions,
     aliases: policy.aliases,
     aliasExtensions,
     sourceAreas,
@@ -1013,8 +1072,22 @@ export async function loadContracts(
       `Alias contract validation failed:\n${errors.map((error) => `  - ${error}`).join('\n')}`,
     );
   }
+  const activeOwners = [
+    ...(policy.owners as Owner[]),
+    ...(ownerExtensions as Owner[]),
+  ];
+  if (options.documentationCorpus)
+    documentationCorpus = validateDocumentationCorpus(
+      documentationCorpus,
+      activeOwners,
+    );
+  if (documentationScope !== undefined)
+    documentationScope = validateDocumentationScope(
+      documentationScope,
+      activeOwners,
+    );
   return structuredClone({
-    owners: policy.owners,
+    owners: activeOwners,
     aliases: [
       ...(policy.aliases as AliasContract[]),
       ...(aliasExtensions as AliasContract[]),
@@ -1029,6 +1102,8 @@ export async function loadContracts(
       };
     }),
     resolverOverrides,
+    ...(documentationCorpus ? { documentationCorpus } : {}),
+    ...(documentationScope ? { documentationScope } : {}),
   }) as ActiveContracts;
 }
 

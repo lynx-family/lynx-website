@@ -25,6 +25,7 @@ export function relativeBoundaryTarget(
     'importer' | 'specifier' | 'boundary' | 'documentation'
   >,
   resolved: readonly string[] = [],
+  documentationRoots: readonly string[] = [],
 ): string | undefined {
   if (
     (!record.boundary && !record.documentation) ||
@@ -43,7 +44,7 @@ export function relativeBoundaryTarget(
   if (crosses(lexicalBoundary(lexical, cwd)))
     return posix(path.relative(cwd, lexical));
   for (const file of [lexical, ...resolved])
-    if (crosses(portableBoundary(file, cwd, areas)))
+    if (crosses(portableBoundary(file, cwd, areas, documentationRoots)))
       return posix(path.relative(cwd, canonical(path.resolve(cwd, file))));
   return undefined;
 }

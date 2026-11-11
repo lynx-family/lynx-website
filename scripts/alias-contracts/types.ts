@@ -5,12 +5,16 @@
  * the OSS website and downstream sites instantiate this role; it does not
  * identify one specific repository or physical directory.
  */
-export type OwnerId =
+export type SharedOwnerId =
   | 'lynx-website'
   | 'lynx-ui'
   | 'lynx-stack'
+  | 'skills'
   | 'consumer'
   | 'rspress';
+
+/** Site-local identities extend documentation ownership only. */
+export type OwnerId = SharedOwnerId | `consumer:${string}`;
 
 /** Registry metadata for one stable logical source owner. */
 export interface Owner {
@@ -18,7 +22,15 @@ export interface Owner {
   readonly id: OwnerId;
   /** Non-empty human-readable ownership description. */
   readonly description: string;
+  /** Extended owners are confined to executable documentation. */
+  readonly scope?: 'documentation';
 }
+
+/** Additive identity declared in a consumer source map. */
+export type ConsumerOwnerExtension = Owner & {
+  readonly id: `consumer:${string}`;
+  readonly scope: 'documentation';
+};
 
 /** Determines whether an alias is portable across owners or owner-private. */
 export type AliasVisibility =
@@ -92,7 +104,7 @@ export type AliasLifecycle =
 /** Target ownership and lifecycle policy shared by direct subpath imports. */
 export interface AliasSubpathPolicy {
   /** Logical owners that may provide the first resolved direct-subpath target. */
-  readonly targetOwners: readonly [OwnerId, ...OwnerId[]];
+  readonly targetOwners: readonly [SharedOwnerId, ...SharedOwnerId[]];
   /**
    * Stability of the subpath import form, not of every currently reachable
    * file. Gate 2 and Gate 3 derive concrete specifiers from the import corpus.
@@ -111,7 +123,7 @@ export interface AliasImplementationSources {
   /** Source-area IDs that every active source map must provide. */
   readonly requiredAreas: readonly string[];
   /** Owners permitted to provide additional repository-local source areas. */
-  readonly additionalOwners: readonly OwnerId[];
+  readonly additionalOwners: readonly SharedOwnerId[];
 }
 
 /** Fields shared by every supported alias namespace shape. */
@@ -121,7 +133,7 @@ interface AliasContractBase {
   /** Import spelling without resolver-only `$` or `/*` syntax. */
   readonly specifier: string;
   /** Logical owner that governs the alias namespace contract. */
-  readonly owner: OwnerId;
+  readonly owner: SharedOwnerId;
   /** Whether this alias is portable across owners or owner-private. */
   readonly visibility: AliasVisibility;
   /**
@@ -129,7 +141,7 @@ interface AliasContractBase {
    * `lynx-ui` permits source classified as lynx-ui-owned after synchronization;
    * it does not grant access to every path reachable by the resolver.
    */
-  readonly allowedImporters: readonly OwnerId[];
+  readonly allowedImporters: readonly SharedOwnerId[];
   /** Required spelling of public imports. */
   readonly canonical: CanonicalSpelling;
   /** Whether ordered fallback roots are part of the supported contract. */
@@ -153,14 +165,14 @@ export type AliasContract = AliasContractBase &
         readonly kind: 'exact';
         readonly subpaths?: never;
         /** Logical owners that may provide the resolved bare entry. */
-        readonly bareTargetOwners: readonly [OwnerId, ...OwnerId[]];
+        readonly bareTargetOwners: readonly [SharedOwnerId, ...SharedOwnerId[]];
         readonly downstream: BareEntryDownstreamContract;
       }
     | {
         /** The bare specifier and direct subpath imports are supported. */
         readonly kind: 'bare-and-subpaths';
         /** Logical owners that may provide the resolved bare entry. */
-        readonly bareTargetOwners: readonly [OwnerId, ...OwnerId[]];
+        readonly bareTargetOwners: readonly [SharedOwnerId, ...SharedOwnerId[]];
         readonly subpaths: AliasSubpathPolicy;
         readonly downstream: BareEntryDownstreamContract;
       }
@@ -208,6 +220,39 @@ export interface SourceOrigin {
   readonly root: string;
 }
 
+/** Final importer ownership for one prepared executable documentation file. */
+export interface PreparedDocument {
+  readonly file: string;
+  /** SHA-256 of the prepared file's UTF-8 content. */
+  readonly sha256: string;
+  /** Default owner of all executable requests in this file. */
+  readonly owner: OwnerId;
+  /** Optional canonical origins retained when documentation is synchronized. */
+  readonly origins?: readonly SourceOrigin[];
+  /**
+   * Overrides only for mixed-owner executable requests. Index is zero-based
+   * syntax order returned by parseImports on the final content, before sorting.
+   */
+  readonly imports?: readonly {
+    readonly index: number;
+    /** Expected raw module specifier at this index, including query/hash suffixes. */
+    readonly specifier: string;
+    readonly owner: OwnerId;
+    readonly origins?: readonly SourceOrigin[];
+  }[];
+}
+
+/**
+ * Consumer preparation output, independent of alias implementation mappings.
+ * Preparation snapshots final files and declares importer owners. It does not
+ * describe generation operations. All prepared imports retain generated status.
+ */
+export interface DocumentationCorpus {
+  /** Complete prepared trees to scan, including untracked executable files. */
+  readonly roots: readonly string[];
+  readonly files: readonly PreparedDocument[];
+}
+
 /** Fields shared by every physical source area in an active repository map. */
 interface SourceAreaBase {
   /** Stable physical-area identity referenced by alias contracts. */
@@ -253,6 +298,16 @@ export type SourceArea =
       /** Canonical repositories and roots used to generate this output. */
       readonly origins: readonly [SourceOrigin, ...SourceOrigin[]];
     });
+
+/** Complete executable documentation scope supplied by site preparation. */
+export interface DocumentationScope {
+  readonly roots: readonly string[];
+  /** Only tracked files in these roots may use this authoritative fallback. */
+  readonly trackedSource?: {
+    readonly id: string;
+    readonly owner: OwnerId;
+  };
+}
 
 /** Exact repository-local resolver exception outside portable alias policy. */
 export interface ResolverOverride {
