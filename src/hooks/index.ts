@@ -6,3 +6,5 @@ export {
 } from './use-latest-blog';
 export { useCanonicalLatestBlog } from './use-canonical-latest-blog';
 export { useTiltEffect } from './use-tilt-effect';
+export { useIfMobile } from './use-if-mobile';
+export { useFixDark } from './use-fix-dark';

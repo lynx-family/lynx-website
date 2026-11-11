@@ -13,7 +13,7 @@ import { FetchingCompatTable as FetchingCompatTableMarkdown } from './FetchingCo
 // the JS (and the JSON XHR fetch of course)
 import './compat-table/index.scss';
 
-import type LCD from '@lynx-js/lynx-compat-data';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 const LCD_BASE_URL = '/lynx-compat-data';
 
 function useIsServer() {

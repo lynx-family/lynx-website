@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useLang } from '@rspress/core/runtime';
-import type { PlatformName } from '@lynx-js/lynx-compat-data';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 import { PlatformBadge } from '@/components/api-badge';
 
 import './style.css';
@@ -53,7 +53,7 @@ function normalizeType(record: Record<string, unknown>): string {
   return type != null && type !== '' ? String(type) : '';
 }
 
-const PLATFORMS: { field: string; name: PlatformName }[] = [
+const PLATFORMS: { field: string; name: LCD.PlatformName }[] = [
   { field: 'isSupportIOS', name: 'ios' },
   { field: 'isSupportAndroid', name: 'android' },
   { field: 'isSupportHarmony', name: 'harmony' },

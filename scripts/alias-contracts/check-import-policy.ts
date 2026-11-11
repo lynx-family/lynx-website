@@ -39,6 +39,11 @@ const debtRules = new Set([
   'version-data',
 ]);
 
+const isRetiredAssetAlias = (specifier: string) => {
+  const request = resourcePath(specifier);
+  return request === '@assets' || request.startsWith('@assets/');
+};
+
 export interface PolicyViolation {
   rule: string;
   file: string;
@@ -194,10 +199,11 @@ export async function checkImportPolicy(
       record.documentation || record.boundary === 'documentation';
     const alias = matchingAlias(record.specifier, contracts.aliases);
     const relative = record.specifier.startsWith('.');
+    const retiredAssetAlias = isRetiredAssetAlias(record.specifier);
     const override = contracts.resolverOverrides.find(
       (entry) => entry.specifier === request,
     );
-    if (!alias && !relative && !override) continue;
+    if (!alias && !relative && !override && !retiredAssetAlias) continue;
     const bare = request === alias?.specifier;
     const targets: { environment: string; file?: string; area?: SourceArea }[] =
       [];
@@ -253,6 +259,16 @@ export async function checkImportPolicy(
         baselinable: debt && record.role !== 'generated',
       });
     };
+    if (retiredAssetAlias) {
+      add(
+        documentation ? 'document-assets' : 'retired-alias',
+        documentation ? 'documentation-cdn-url' : 'source-owned-asset',
+        documentation
+          ? 'documentation must not import public assets as modules'
+          : 'the retired public asset alias must not be imported',
+      );
+      continue;
+    }
     if (override) {
       add(
         'resolver-override',
@@ -308,18 +324,10 @@ export async function checkImportPolicy(
             target.area?.owner ?? null,
           );
       }
-      if (documentation && alias.id === 'public-assets')
-        add(
-          'document-assets',
-          'documentation-cdn-url',
-          'documentation must not import public assets as modules',
-        );
-      else if (alias.lifecycle.state === 'migration')
+      if (alias.lifecycle.state === 'migration')
         add(
           'migration-alias',
-          alias.id === 'public-assets'
-            ? 'source-owned-asset'
-            : 'reviewed-host-adapter',
+          'reviewed-host-adapter',
           'legacy alias namespace',
           true,
         );

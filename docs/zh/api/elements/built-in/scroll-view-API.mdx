@@ -1,299 +1,325 @@
-import { AndroidOnly, IOSOnly, ClayOnly, ClayWindowsOnly, ClayMacOSOnly, HarmonyOnly, Required, Deprecated, Go, PlatformTabs } from '@lynx';
-import { VersionBadge, APITable } from '@lynx';
+import {
+  AndroidOnly,
+  IOSOnly,
+  ClayOnly,
+  HarmonyOnly,
+  VersionBadge,
+} from '@lynx';
 
 ## 属性
 
+各平台及 SDK 版本的支持情况不同，具体版本见[兼容性表格](#兼容性)。下文中的数值距离均使用 Lynx 逻辑像素（`px`），而非设备物理像素。
+
 ### `bounces`
 
- <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+<IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
 
-```tsx
-// @默认值: true
+```ts
 bounces?: boolean;
 ```
 
-启用回弹效果
-
+控制滚动内容到达边界时是否具有回弹效果。iOS 及 Clay 的 iOS/macOS 实现默认为 `true`；HarmonyOS 及 Clay 的 Windows 实现默认为 `false`。Android 不支持该属性，包括 Clay 的 Android 实现。
 
 ### `enable-scroll`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-```tsx
-// @默认值: true
+```ts
+// 默认值：true
 'enable-scroll'?: boolean;
 ```
 
-启用拖动
-
+控制用户是否可以通过拖拽滚动。设置为 `false` 不会禁用 `scrollTo`、`scrollBy` 等显式定位操作。在 Clay 上，启动 `autoScroll` 还要求滚动处于启用状态。
 
 ### `initial-scroll-offset`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>2.17</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>2.17</VersionBadge>
 
-```tsx
-// @默认值: 0
+```ts
+// 默认值：0
 'initial-scroll-offset'?: number;
 ```
 
-初始滚动位置，仅生效一次，单位为像素
+设置沿滚动方向的初始绝对偏移，单位为 `px`。该属性用于初始化，不是持续控制滚动位置的状态；后续更新位置请使用 [`scrollTo`](#scrollto)。
 
+建议只设置 `initial-scroll-offset` 或 `initial-scroll-to-index` 中的一项，不要依赖两者同时设置时的跨平台优先级。
 
 ### `initial-scroll-to-index`
 
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>2.17</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>2.17</VersionBadge>
 
-```tsx
-// @默认值: 0
+```ts
 'initial-scroll-to-index'?: number;
 ```
 
-首次加载时滚动到指定子节点，仅生效一次。所有直接子节点必须设置 flatten=false。
+初始化时将内容定位到指定的直接子节点，索引从 `0` 开始。不设置该属性时，不会主动选择某个子节点。与 `initial-scroll-offset` 一样，该属性用于初始化；后续更新位置请使用 `scrollTo`。
 
+在 Android 上，需为直接子节点设置 `flatten={false}`，使原生节点索引与预期的子节点索引一致。索引必须对应已存在的子节点。Clay 从 4.5 版本开始在 Android、iOS、Windows 和 macOS 上支持该属性。
 
 ### `lower-threshold`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-```tsx
-// @默认值: 0
+```ts
+// 默认值：0
 'lower-threshold'?: number;
 ```
 
-设置触发 bindscrolltolower 事件的下阈值。
-
+设置触发 [`bindscrolltolower`](#bindscrolltolower) 时距离内容结束边界的阈值，单位为 `px`。纵向滚动对应下边界，从左到右的横向滚动对应右边界。
 
 ### `scroll-bar-enable`
 
- <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-```tsx
-// @默认值: true
+```ts
+// 默认值：false
 'scroll-bar-enable'?: boolean;
 ```
 
-启用滚动条
-
+控制是否显示滚动条。Android 内置的 `scroll-view` 仅将该属性应用于纵向滚动条；iOS、HarmonyOS 和 Clay 支持两个滚动方向的滚动条。
 
 ### `scroll-orientation`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>3.0</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>3.0</VersionBadge>
 
-```tsx
-// @默认值: 'vertical'
+```ts
+// 默认值：'vertical'
 'scroll-orientation'?: 'vertical' | 'horizontal';
 ```
 
-替代 scroll-x 和 scroll-y
-
+同时设置滚动方向及直接子节点的线性布局方向。建议使用该属性替代旧的 `scroll-x`、`scroll-y` 属性。
 
 ### `upper-threshold`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-```tsx
-// @默认值: 0
+```ts
+// 默认值：0
 'upper-threshold'?: number;
 ```
 
-设置触发 bindscrolltoupper 事件的上阈值。
+设置触发 [`bindscrolltoupper`](#bindscrolltoupper) 时距离内容起始边界的阈值，单位为 `px`。纵向滚动对应上边界，从左到右的横向滚动对应左边界。
 
 ## 事件
 
-前端可以绑定相应的事件回调来监听元素的运行时行为，如下所示。
+在 `<scroll-view>` 上绑定事件回调，通过 `event.detail` 读取事件数据。事件名称位于 `event.type`，而非 `event.detail.type`。
 
 ### `bindcontentsizechanged`
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>1.6</VersionBadge>
 
-```tsx
-bindcontentsizechanged = (e: ContentSizeChangedEvent) => {};
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.6</VersionBadge>
+
+<span id="contentsizechanged" />
+
+内容尺寸发生变化时触发，并非每次布局或子节点更新都会触发。
+
+```ts
+interface ContentSizeChangedDetail {
+  scrollWidth: number;
+  scrollHeight: number;
+}
 ```
 
-当滚动视图的内容大小发生变化时，会触发此事件。
+两个字段分别表示内容的宽度和高度，单位为 `px`。可以在内容尺寸变化后通过该事件重新定位；若更新未改变内容尺寸，则不能保证收到该事件。
 
 ### `bindscroll`
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
 
-```tsx
-bindscroll = (e: ScrollEvent) => {};
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
+
+<span id="scroll" />
+
+滚动位置变化时触发，`detail` 包含以下字段：
+
+```ts
+interface ScrollDetail {
+  scrollLeft: number;
+  scrollTop: number;
+  scrollWidth: number;
+  scrollHeight: number;
+  deltaX: number;
+  deltaY: number;
+}
 ```
 
-当滚动视图正在滚动时，会触发此事件。
+`scrollLeft`、`scrollTop` 表示内容偏移，`scrollWidth`、`scrollHeight` 表示内容尺寸。`deltaX`、`deltaY` 表示本次事件报告的偏移变化量。上述数值单位均为 `px`。
 
 ### `bindscrollend`
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly /> <VersionBadge>1.6</VersionBadge>
 
-```tsx
-bindscrollend = (e: ScrollEndEvent) => {};
-```
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.6</VersionBadge>
 
-当滚动视图的滚动结束时，会触发此事件。
+<span id="scrollend" />
+
+滚动结束时触发。`detail` 包含 [`bindscroll`](#bindscroll) 中的滚动偏移和内容尺寸字段。请通过偏移读取最终位置，不要将 `deltaX`、`deltaY` 当作整个滚动过程的总距离。
 
 ### `bindscrolltolower`
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
 
-```tsx
-bindscrolltolower = (e: ScrollToLowerEvent) => {};
-```
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-当滚动区域的下/右边缘与由 lowerThreshold 定义的可见区域相交时，会触发此事件。
+<span id="scrolltolower" />
+
+滚动进入 `lower-threshold` 定义的结束边界区域时触发：纵向滚动为下边界，从左到右的横向滚动为右边界。
+
+`detail` 的字段与 `bindscroll` 相同。不同实现的阈值事件中，`deltaX`、`deltaY` 不一定为 `0`。
 
 ### `bindscrolltoupper`
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly /> <VersionBadge>1.4</VersionBadge>
 
-```tsx
-bindscrolltoupper = (e: ScrollToUpperEvent) => {};
-```
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<VersionBadge>1.4</VersionBadge>
 
-当滚动区域的上/左边缘与由 upperThreshold 定义的可见区域相交时，会触发此事件。
+<span id="scrolltoupper" />
+
+滚动进入 `upper-threshold` 定义的起始边界区域时触发：纵向滚动为上边界，从左到右的横向滚动为左边界。`detail` 的字段与 `bindscroll` 相同。
+
+对于横向 RTL 内容，Android、iOS 和 Clay 会交换起始与结束边界。不要假定 HarmonyOS 的 RTL 阈值行为与这些平台完全一致。
 
 ## 方法
 
-前端可以通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) API 调用组件方法。
+通过 [SelectorQuery](/api/lynx-api/nodes-ref/nodes-ref-invoke.html) 调用元件方法。下列示例假设页面中已存在完成布局的 `<scroll-view id="scroll-view">`。
 
 ### `autoScroll`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+沿配置的滚动方向开始或停止连续滚动。
+
 ```ts
-
-lynx.createSelectorQuery()
-     .select('#id')
-     .invoke({
-      method: 'autoScroll',
-      params: {
-        /**
-         * 每秒滚动的距离，支持正负数。距离单位可以是 "px"、"rpx"、"ppx" 或 null（对于 iOS，该值必须大于 1/屏幕缩放比例 px）。
-         * @Android
-         * @iOS
-         * @Harmony
-         * @PC
-         */
-        rate: 60,
-        /**
-         * 开始/停止自动滚动。
-         * @Android
-         * @iOS
-         * @Harmony
-         * @PC
-         */
-        start: true,
-      },
-      success: function (res) {},
-      fail: function (res) {},
-    })
-    .exec();
-
+lynx
+  .createSelectorQuery()
+  .select('#scroll-view')
+  .invoke({
+    method: 'autoScroll',
+    params: {
+      rate: 120,
+      start: true,
+    },
+  })
+  .exec();
 ```
 
-自动滚动
+- `rate`：数值类型，表示每秒滚动的 `px` 数。Android、iOS、HarmonyOS 支持正负值；Clay 仅在速率为正值时启动自动滚动。
+- `start`：`true` 表示开始滚动，`false` 表示停止。停止时可再次调用并传入 `{ rate: 0, start: false }`。
 
+为保证跨平台可用，请传入数值速率；`"120rpx"` 等带单位字符串并不具有一致的平台支持。默认行为下，自动滚动到达内容边界后停止，用户拖离边界不会使其自动重新开始。
 
 ### `getScrollInfo`
 
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+读取当前滚动位置。
+
 ```ts
 interface GetScrollInfoResult {
-  /**
-   * 沿方向的总可滚动范围，单位为 PX
-   * @Android
-   * @iOS
-   * @Harmony
-   * @PC
-   */
-  scrollRange: number;
-  /**
-   * X 轴上的内容偏移量，单位为 PX
-   * @Android
-   * @iOS
-   * @Harmony
-   * @PC
-   */
   scrollX: number;
-  /**
-   * Y 轴上的内容偏移量，单位为 PX
-   * @Android
-   * @iOS
-   * @Harmony
-   * @PC
-   */
   scrollY: number;
+  scrollRange: number;
+  maxScrollOffset?: number;
 }
 
-lynx.createSelectorQuery()
-     .select('#id')
-     .invoke({
-      method: 'getScrollInfo',
-      success: function (res: GetScrollInfoResult) {},
-      fail: function (res) {},
-    })
-    .exec();
-
+lynx
+  .createSelectorQuery()
+  .select('#scroll-view')
+  .invoke({
+    method: 'getScrollInfo',
+    success: (res: GetScrollInfoResult) => {
+      console.log(res.scrollX, res.scrollY);
+    },
+  })
+  .exec();
 ```
 
-获取滚动信息
+`scrollX`、`scrollY` 表示内容偏移，单位为 `px`。
 
+`scrollRange` 的含义存在平台差异：Android、HarmonyOS 和 Clay 返回滚动方向上的内容长度减去视口长度；iOS 为兼容历史行为，返回完整内容长度。当前 iOS 实现额外返回 `maxScrollOffset` 表示最大偏移。不要直接将 `scrollRange` 作为跨平台一致的最大滚动偏移。
 
 ### `scrollBy`
 
- <AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+<AndroidOnly /> <IOSOnly /> <HarmonyOnly />
+
+沿滚动方向相对当前位置移动。Clay 未提供该 UI 方法。
+
 ```ts
-interface ScrollByParams {
-  /**
-   * 滚动的偏移量
-   */
-  offset?: number;
-}
-
-const params: ScrollByParams = { offset: 100 };
-
-lynx.createSelectorQuery()
-     .select('#id')
-     .invoke({
-      method: 'scrollBy',
-      params,
-      success: function (res) {},
-      fail: function (res) {},
-    })
-    .exec();
-
+lynx
+  .createSelectorQuery()
+  .select('#scroll-view')
+  .invoke({
+    method: 'scrollBy',
+    params: { offset: 100 },
+    success: (res) => {
+      console.log(res.consumedX, res.consumedY);
+    },
+  })
+  .exec();
 ```
 
-按指定偏移量滚动
+必须传入数值类型的 `offset`，单位为 `px`，正负值表示相反的移动方向。与 `scrollTo` 不同，这里的偏移相对于当前位置。
 
+返回值包含 `consumedX`、`consumedY`、`unconsumedX`、`unconsumedY`，单位为 `px`。读取滚动方向对应的一组字段，了解实际消耗和未消耗的移动距离。
 
 ### `scrollTo`
 
- <AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+将内容定位到绝对偏移，或相对于某个直接子节点的位置。
+
 ```ts
 interface ScrollToParams {
-  /**
-   * 目标项索引
-   * @defaultValue 0
-   */
   index?: number;
-  /**
-   * 相对于目标节点的偏移量
-   */
   offset?: number;
-  /**
-   * 启用滚动动画
-   */
   smooth?: boolean;
 }
 
-const params: ScrollToParams = { index: 0, offset: 0, smooth: true };
+const params: ScrollToParams = { offset: 100, smooth: true };
 
-lynx.createSelectorQuery()
-     .select('#id')
-     .invoke({
-      method: 'scrollTo',
-      params,
-      success: function (res) {},
-      fail: function (res) {},
-    })
-    .exec();
-
+lynx
+  .createSelectorQuery()
+  .select('#scroll-view')
+  .invoke({
+    method: 'scrollTo',
+    params,
+    fail: (error) => {
+      console.error(error);
+    },
+  })
+  .exec();
 ```
 
-滚动到指定位置
+- 不传 `index` 时，`offset` 表示内容的绝对偏移，单位为 `px`，而非相对当前位置的移动距离。
+- 传入 `index` 时，按从 `0` 开始的索引选择直接子节点，再在该节点位置上叠加 `offset`。例如，`{ index: 1, offset: 0 }` 定位到第二个子节点。在 Android 上使用索引定位时，应为直接子节点设置 `flatten={false}`。
+- `offset` 默认为 `0`，`smooth` 默认为 `false`。省略 `index` 不等于 `index: 0`，例如第一个子节点受内边距或外边距影响时，两者的位置可能不同。
 
+请使用有效子节点索引，并将目标位置限制在可滚动范围内。越界处理和回调时机存在平台差异，不要将成功回调作为跨平台一致的动画完成信号。对于横向 RTL 索引定位，Android、iOS 和 Clay 会按子节点右边界对齐并减去偏移；HarmonyOS 则使用子节点左侧位置加上偏移。
+
+### `scrollIntoView`
+
+<AndroidOnly /> <IOSOnly /> <ClayOnly /> <HarmonyOnly />
+
+在**目标后代节点**上调用此方法，而非在滚动容器上调用，使其进入祖先滚动容器的可视区域。在 Android 上，目标必须具有原生视图，必要时设置 `flatten={false}`。
+
+```ts
+lynx
+  .createSelectorQuery()
+  .select('#scroll-target')
+  .invoke({
+    method: 'scrollIntoView',
+    params: {
+      scrollIntoViewOptions: {
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'start',
+      },
+    },
+  })
+  .exec();
+```
+
+必须提供 `scrollIntoViewOptions`。`behavior: 'smooth'` 表示动画滚动，`'auto'` 表示直接定位。`block` 控制纵向对齐，`inline` 控制横向对齐；建议显式选择 `'start'`、`'center'` 或 `'end'`，不要依赖平台各异的默认对齐行为。

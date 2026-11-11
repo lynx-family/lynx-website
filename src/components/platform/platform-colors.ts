@@ -1,4 +1,7 @@
-// Single source of truth for platform colors across the site.
+// Platform identity hues; domains may use separate status/chart palettes.
+// The homepage consumes PLATFORM_TINT directly. PlatformBadge mirrors the
+// corresponding hex values in domain-owned CSS until those variables have a
+// shared generated representation.
 //
 // One hue per *brand family*, paired across light/dark so the row stays
 // tonally even. Tailwind ~600 in light + ~400 in dark sits on the same

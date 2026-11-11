@@ -244,12 +244,24 @@ test(
       `export { Value } from './entry'; export interface Shape { value: number }`,
     );
     write(
+      `${areaRoot('oss-components')}/api-status/index.ts`,
+      `export const Value = 1;`,
+    );
+    write(
       `${areaRoot('oss-lynx-ui-components')}/index.ts`,
       `export { Value } from './entry';`,
     );
     write(`${areaRoot('oss-luna')}/index.ts`, `export const Value = 1;`);
     write(
       `${areaRoot('oss-open-graph-config')}/index.ts`,
+      `export const Value = 1;`,
+    );
+    write(
+      `${areaRoot('site-route-config')}/index.ts`,
+      `export const Value = 1;`,
+    );
+    write(
+      `${areaRoot('oss-version-data')}/index.ts`,
       `export const Value = 1;`,
     );
     write(`${areaRoot('oss-theme')}/index.ts`, `export const Value = 1;`);
@@ -291,10 +303,6 @@ test(
     write('consumer/local/child.ts', `export const Value = 1;`);
     write('consumer/local/global.ts', 'const initialized = true;');
     write('consumer/local/child.css', `.example { color: red; }`);
-    write(
-      `${areaRoot('site-public-assets')}/icon.svg`,
-      '<svg xmlns="http://www.w3.org/2000/svg"/>',
-    );
     write('consumer/other/child.ts', `export const Value = 1;`);
     const lifecycle = {
       state: 'stable',
@@ -342,6 +350,11 @@ test(
     const bindings: RuntimeAliases = {
       '@lynx$': path.join(cwd, 'consumer/wrappers/components.ts'),
       '@lynx': path.join(cwd, areaRoot('oss-components')),
+      '@api-status$': path.join(
+        cwd,
+        areaRoot('oss-components'),
+        'api-status/index.ts',
+      ),
       '@lynx-ui$': path.join(cwd, 'consumer/wrappers/ui.ts'),
       '@lynx-ui': path.join(cwd, areaRoot('oss-lynx-ui-components')),
       '@luna$': path.join(cwd, areaRoot('oss-luna'), 'index.ts'),
@@ -350,8 +363,17 @@ test(
         areaRoot('oss-open-graph-config'),
         'index.ts',
       ),
+      '@route-config$': path.join(
+        cwd,
+        areaRoot('site-route-config'),
+        'index.ts',
+      ),
+      '@version-data$': path.join(
+        cwd,
+        areaRoot('oss-version-data'),
+        'index.ts',
+      ),
       '@docs': path.join(cwd, areaRoot('lynx-ui-package-docs')),
-      '@assets': path.join(cwd, areaRoot('site-public-assets')),
       '@theme': [
         path.join(cwd, 'consumer/theme'),
         path.join(cwd, areaRoot('rspress-default-theme')),
@@ -382,7 +404,7 @@ test(
         );
         if (key.endsWith('$') || alias.kind === 'bare-and-subpaths')
           paths[specifier] ??= roots.map((root) =>
-            root.endsWith('.ts') ? root : `${root}/index.ts`,
+            /\.(?:ts|json)$/.test(root) ? root : `${root}/index.ts`,
           );
         if (!key.endsWith('$') && alias.kind !== 'exact')
           paths[`${specifier}/*`] = roots.map((root) => `${root}/*`);
@@ -436,11 +458,14 @@ declare module '*.svg';`,
     });
     const records = [
       record('@lynx'),
+      record('@api-status'),
       record('@lynx/entry'),
       record('@lynx-ui'),
       record('@lynx-ui/entry'),
       record('@luna'),
       record('@og-config'),
+      record('@route-config'),
+      record('@version-data'),
       record('@theme'),
       record('@theme/custom'),
       record('@theme/fallback'),
@@ -454,7 +479,6 @@ declare module '*.svg';`,
       consumerRecord(nested),
       { ...consumerRecord('@fixture1/global'), bindings: [] },
       { ...consumerRecord('@fixture1/child.css'), bindings: [] },
-      { ...consumerRecord('@assets/icon.svg'), bindings: [] },
     ];
     const run = async (
       corpus = records,
@@ -510,6 +534,140 @@ declare module '*.svg';`,
           policy.filter((entry) => entry.rule === 'migration-subpath').length,
           2,
         );
+      },
+    );
+    await t.test(
+      'retired public asset mappings are rejected if reintroduced',
+      async () => {
+        bindings['@assets'] = path.join(cwd, 'docs/public/assets');
+        try {
+          const { result } = await run([], {
+            '@assets/*': ['docs/public/assets/*'],
+          });
+          assert.ok(
+            result.errors.some((error) =>
+              error.includes("unaccounted runtime resolver key '@assets'"),
+            ),
+            result.errors.join('\n'),
+          );
+          assert.ok(
+            result.errors.some((error) =>
+              error.includes("unaccounted TypeScript resolver key '@assets/*'"),
+            ),
+            result.errors.join('\n'),
+          );
+        } finally {
+          delete bindings['@assets'];
+        }
+      },
+    );
+    await t.test(
+      'host entries reject prefix resolvers and unapproved target owners',
+      async () => {
+        for (const specifier of ['@route-config', '@version-data']) {
+          const key = `${specifier}$`;
+          const original = bindings[key]!;
+          delete bindings[key];
+          bindings[specifier] = original;
+          try {
+            const { result } = await run([record(specifier)]);
+            assert.ok(
+              result.errors.some((error) =>
+                error.includes('must use exact matching'),
+              ),
+              result.errors.join('\n'),
+            );
+          } finally {
+            delete bindings[specifier];
+            bindings[key] = original;
+          }
+          bindings[key] = path.join(
+            cwd,
+            areaRoot('rspress-default-theme'),
+            'custom.ts',
+          );
+          try {
+            const { result, policy } = await run([record(specifier)]);
+            assert.ok(
+              result.errors.some((error) =>
+                error.includes("target owner 'rspress'"),
+              ),
+              result.errors.join('\n'),
+            );
+            assert.ok(policy.some((entry) => entry.rule === 'target-policy'));
+          } finally {
+            bindings[key] = original;
+          }
+          const { policy } = await run([record(`${specifier}/child`)]);
+          assert.ok(policy.some((entry) => entry.rule === 'alias-shape'));
+        }
+      },
+    );
+    await t.test(
+      'host version metadata supports a consumer-owned JSON module with TS parity',
+      async () => {
+        addArea('consumer-version-data', 'consumer/version.json');
+        write(
+          'consumer/version.json',
+          JSON.stringify({ versions: [], current_version: 'next' }),
+        );
+        const original = bindings['@version-data$']!;
+        bindings['@version-data$'] = path.join(cwd, 'consumer/version.json');
+        try {
+          const version = {
+            ...record('@version-data'),
+            bindings: [{ name: 'default', typeOnly: false }],
+          };
+          const { result, policy } = await run(
+            [version],
+            {},
+            { resolveJsonModule: true },
+          );
+          assert.deepEqual(result.errors, []);
+          assert.deepEqual(policy, []);
+        } finally {
+          bindings['@version-data$'] = original;
+        }
+      },
+    );
+    await t.test(
+      'API Status rejects consumer replacement, fallback roots and subpaths',
+      async () => {
+        const saved = bindings['@api-status$'];
+        try {
+          bindings['@api-status$'] = path.join(cwd, 'consumer/local/index.ts');
+          const replaced = await run([record('@api-status')]);
+          assert.ok(
+            replaced.result.errors.some((error) =>
+              /@api-status.*target owner 'consumer'/.test(error),
+            ),
+            replaced.result.errors.join('\n'),
+          );
+          assert.ok(
+            replaced.policy.some((entry) => entry.rule === 'target-policy'),
+          );
+          bindings['@api-status$'] = [
+            saved as string,
+            path.join(cwd, 'consumer/local/index.ts'),
+          ];
+          assert.ok(
+            (await run([record('@api-status')])).result.errors.some((error) =>
+              /@api-status.*multiple resolver roots/.test(error),
+            ),
+          );
+          bindings['@api-status$'] = saved!;
+          const subpath = await run([record('@api-status/child')]);
+          assert.ok(
+            subpath.result.errors.some((error) =>
+              /@api-status\/child.*unsupported direct subpath/.test(error),
+            ),
+          );
+          assert.ok(
+            subpath.policy.some((entry) => entry.rule === 'alias-shape'),
+          );
+        } finally {
+          bindings['@api-status$'] = saved!;
+        }
       },
     );
     await t.test(

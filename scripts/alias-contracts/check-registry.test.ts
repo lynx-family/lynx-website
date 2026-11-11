@@ -191,6 +191,51 @@ test('accepts the checked-in OSS registry', () => {
 
 // These assert supported consumer contracts against actual registry policy.
 // Gate 2 will exercise resolution; Gate 1 does not resolve fixture paths.
+test('host entries preserve exact contracts and existing source-map owners', () => {
+  const route = (aliases as readonly AliasContract[]).find(
+    ({ specifier }) => specifier === '@route-config',
+  )!;
+  const version = (aliases as readonly AliasContract[]).find(
+    ({ specifier }) => specifier === '@version-data',
+  )!;
+  for (const alias of [route, version]) {
+    assert.equal(alias.kind, 'exact');
+    assert.equal(alias.owner, 'consumer');
+    assert.equal(alias.allowMultipleResolverRoots, false);
+    assert.equal(alias.downstream.implementation, 'required');
+    assert.equal(alias.downstream.mayExtendBare, false);
+    assert.equal(alias.subpaths, undefined);
+  }
+  assert.deepEqual(route.bareTargetOwners, ['consumer']);
+  assert.deepEqual(route.implementationSources.requiredAreas, [
+    'site-route-config',
+  ]);
+  assert.ok(version.bareTargetOwners?.includes('lynx-website'));
+  assert.ok(version.bareTargetOwners?.includes('consumer'));
+  assert.ok(
+    version.implementationSources.additionalOwners.includes('consumer'),
+  );
+  assert.equal(
+    ossSourceAreas.find(({ id }) => id === 'oss-version-data')?.owner,
+    'lynx-website',
+  );
+});
+
+test('public asset alias compatibility is retired', () => {
+  assert.equal(
+    (aliases as readonly AliasContract[]).some(
+      ({ specifier }) => specifier === '@assets',
+    ),
+    false,
+  );
+  assert.equal(
+    (ossSourceAreas as readonly SourceArea[]).some(
+      ({ id }) => id === 'site-public-assets',
+    ),
+    false,
+  );
+});
+
 test('permits a consumer custom theme alongside mounted OSS and framework themes', () => {
   const theme = (aliases as readonly AliasContract[]).find(
     ({ specifier }) => specifier === '@theme',

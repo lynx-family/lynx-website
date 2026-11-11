@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useFixDark } from '@site/theme/hooks/use-fix-dark';
+import { useFixDark } from '../../../hooks';
 import { GalaxyRings } from './galaxy-rings';
 import styles from './index.module.less';
 

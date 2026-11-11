@@ -117,6 +117,27 @@ export const aliases = [
     lifecycle: stablePublicLifecycle,
   },
   {
+    // OSS API Status barrel, separate from extensible document-component barrels.
+    id: 'api-status-page',
+    specifier: '@api-status',
+    owner: 'lynx-website',
+    visibility: 'public',
+    kind: 'exact',
+    allowedImporters: ['lynx-website', 'consumer'],
+    bareTargetOwners: ['lynx-website'],
+    canonical: publicCanonicalSpelling,
+    allowMultipleResolverRoots: false,
+    implementationSources: {
+      requiredAreas: ['oss-components'],
+      additionalOwners: [],
+    },
+    downstream: {
+      implementation: 'required',
+      mayExtendBare: false,
+    },
+    lifecycle: stablePublicLifecycle,
+  },
+  {
     id: 'luna-entry',
     specifier: '@luna',
     owner: 'lynx-website',
@@ -159,6 +180,49 @@ export const aliases = [
     lifecycle: stablePublicLifecycle,
   },
   {
+    // The active host supplies route metadata used by the shared runtime.
+    id: 'route-config',
+    specifier: '@route-config',
+    owner: 'consumer',
+    visibility: 'public',
+    kind: 'exact',
+    allowedImporters: ['lynx-website', 'consumer'],
+    bareTargetOwners: ['consumer'],
+    canonical: publicCanonicalSpelling,
+    allowMultipleResolverRoots: false,
+    implementationSources: {
+      requiredAreas: ['site-route-config'],
+      additionalOwners: [],
+    },
+    downstream: {
+      implementation: 'required',
+      mayExtendBare: false,
+    },
+    lifecycle: stablePublicLifecycle,
+  },
+  {
+    // Hosts bind their published version metadata; the OSS source-area ID and
+    // owner remain stable for existing consumer source maps.
+    id: 'version-data',
+    specifier: '@version-data',
+    owner: 'consumer',
+    visibility: 'public',
+    kind: 'exact',
+    allowedImporters: ['lynx-website', 'lynx-ui', 'consumer'],
+    bareTargetOwners: ['lynx-website', 'consumer'],
+    canonical: publicCanonicalSpelling,
+    allowMultipleResolverRoots: false,
+    implementationSources: {
+      requiredAreas: ['oss-version-data'],
+      additionalOwners: ['consumer'],
+    },
+    downstream: {
+      implementation: 'required',
+      mayExtendBare: false,
+    },
+    lifecycle: stablePublicLifecycle,
+  },
+  {
     id: 'package-documents',
     specifier: '@docs',
     owner: 'consumer',
@@ -182,38 +246,6 @@ export const aliases = [
       implementation: 'required',
     },
     lifecycle: stablePublicLifecycle,
-  },
-  {
-    // Legacy compatibility for existing src/theme consumers only.
-    // Documentation imports are forbidden; Gate 3 owns no-new enforcement.
-    id: 'public-assets',
-    specifier: '@assets',
-    owner: 'consumer',
-    visibility: 'public',
-    kind: 'subpaths-only',
-    allowedImporters: ['lynx-website', 'consumer'],
-    subpaths: {
-      targetOwners: ['consumer'],
-      lifecycle: {
-        state: 'migration',
-        removalCondition:
-          'remove-after-runtime-assets-move-to-source-owned-locations',
-      },
-    },
-    canonical: publicCanonicalSpelling,
-    allowMultipleResolverRoots: false,
-    implementationSources: {
-      requiredAreas: ['site-public-assets'],
-      additionalOwners: [],
-    },
-    downstream: {
-      implementation: 'required',
-    },
-    lifecycle: {
-      state: 'migration',
-      removalCondition:
-        'remove-after-runtime-assets-move-to-source-owned-locations',
-    },
   },
   {
     id: 'rspress-theme',
@@ -326,20 +358,10 @@ export const aliases = [
 // needed to classify consumer source.
 export const ossSourceAreas = [
   {
-    // Classifies the current @site target without approving that legacy
-    // spelling. Issue #1328 will migrate it to the exact @version-data alias.
+    // Published version metadata implementing the exact @version-data entry.
     id: 'oss-version-data',
     root: 'docs/public/version.json',
     owner: 'lynx-website',
-    role: 'authoritative',
-  },
-  {
-    // This is the OSS host's final assembled asset root. A downstream host
-    // binds the same ID to its final tree after copying OSS assets and applying
-    // its overlays; `@assets` still resolves through one deterministic root.
-    id: 'site-public-assets',
-    root: 'docs/public/assets',
-    owner: 'consumer',
     role: 'authoritative',
   },
   {
@@ -443,10 +465,7 @@ export const ossSourceAreas = [
     role: 'authoritative',
   },
   {
-    // Each host provides and maintains its own authoritative
-    // shared-route-config.ts. This source area only classifies the target of
-    // the legacy @site/shared-route-config import; it does not register that
-    // spelling as a supported host adapter.
+    // Each host provides the authoritative @route-config implementation.
     id: 'site-route-config',
     root: 'shared-route-config.ts',
     owner: 'consumer',

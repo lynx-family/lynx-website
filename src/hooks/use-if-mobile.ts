@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
  * 判断当前浏览器是否为移动端
  * @returns {boolean} 如果是移动端设备返回 true，否则返回 false
  */
-export default function useIfMobile(): boolean {
+export function useIfMobile(): boolean {
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
   useEffect(() => {

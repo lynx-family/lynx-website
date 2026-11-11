@@ -11,7 +11,7 @@
  *   Copyright Mozilla Contributors
  *   Licensed under the Mozilla Public License, v. 2.0
  */
-import type BCD from '@lynx-js/lynx-compat-data';
+import type * as LCD from '@lynx-js/lynx-compat-data';
 import { useI18n, useLocation, withBase } from '@rspress/core/runtime';
 import type React from 'react';
 import { useReducer } from 'react';
@@ -55,16 +55,16 @@ export const HIDDEN_BROWSERS = ['ie'];
  */
 function gatherPlatformsAndBrowsers(
   category: string,
-  data: BCD.Identifier,
-  browserInfo: BCD.Platforms,
-): [string[], BCD.PlatformName[]] {
+  data: LCD.Identifier,
+  browserInfo: LCD.Platforms,
+): [string[], LCD.PlatformName[]] {
   const hasNodeJSData = data.__compat && 'nodejs' in data.__compat.support;
   const hasDenoData = data.__compat && 'deno' in data.__compat.support;
 
-  const platforms: BCD.PlatformType[] = !!process.env.COMPAT_TABLE_HIDE_CLAY
+  const platforms: LCD.PlatformType[] = !!process.env.COMPAT_TABLE_HIDE_CLAY
     ? ['native', 'web']
     : ['native', 'clay', 'web'];
-  let browsers: BCD.PlatformName[] = [];
+  let browsers: LCD.PlatformName[] = [];
 
   // Add browsers in platform order to align table cells
   for (const platform of platforms) {
@@ -72,7 +72,7 @@ function gatherPlatformsAndBrowsers(
       if (process.env.COMPAT_TABLE_HIDE_CLAY) {
         const regularNativeBrowsers = Object.keys(browserInfo).filter(
           (browser) => {
-            const platformName = browser as BCD.PlatformName;
+            const platformName = browser as LCD.PlatformName;
             return (
               browserInfo[platformName].type === 'native' &&
               platformName !== 'clay_macos' &&
@@ -81,7 +81,7 @@ function gatherPlatformsAndBrowsers(
           },
         );
 
-        browsers.push(...(regularNativeBrowsers as BCD.PlatformName[]));
+        browsers.push(...(regularNativeBrowsers as LCD.PlatformName[]));
 
         if ('clay_macos' in browserInfo) {
           browsers.push('clay_macos');
@@ -92,27 +92,27 @@ function gatherPlatformsAndBrowsers(
       } else {
         browsers.push(
           ...(Object.keys(browserInfo).filter((browser) => {
-            const platformName = browser as BCD.PlatformName;
+            const platformName = browser as LCD.PlatformName;
             return (
               browserInfo[platformName].type === 'native' &&
               !platformName.startsWith('clay_')
             );
-          }) as BCD.PlatformName[]),
+          }) as LCD.PlatformName[]),
         );
       }
     } else if (platform === 'clay') {
       browsers.push(
         ...(Object.keys(browserInfo).filter((browser) => {
-          const platformName = browser as BCD.PlatformName;
+          const platformName = browser as LCD.PlatformName;
           return platformName.startsWith('clay_');
-        }) as BCD.PlatformName[]),
+        }) as LCD.PlatformName[]),
       );
     } else {
       browsers.push(
         ...(Object.keys(browserInfo).filter((browser) => {
-          const platformName = browser as BCD.PlatformName;
+          const platformName = browser as LCD.PlatformName;
           return browserInfo[platformName].type === platform;
-        }) as BCD.PlatformName[]),
+        }) as LCD.PlatformName[]),
       );
     }
   }
@@ -147,9 +147,9 @@ interface CompatibilityTableProps {
    */
   module?: string;
   /** Compatibility record selected by `query`. */
-  data: BCD.Identifier;
+  data: LCD.Identifier;
   /** Platform metadata used to order and label support columns. */
-  browsers: BCD.Platforms;
+  browsers: LCD.Platforms;
   /** Locale used when formatting platform release dates. */
   locale: string;
 }
@@ -160,7 +160,7 @@ function FeatureListAccordion({
   locale,
 }: {
   features: ReturnType<typeof listFeatures>;
-  browsers: BCD.PlatformName[];
+  browsers: LCD.PlatformName[];
   locale: string;
 }) {
   const [[activeRow, activeColumn], dispatchCellToggle] = useReducer<
@@ -262,36 +262,37 @@ export default function CompatibilityTable({
   return (
     <BrowserCompatibilityErrorBoundary>
       <BrowserInfoContext.Provider value={browserInfo}>
-        <div className="flex justify-end items-center mb-2">
-          <div className="flex gap-2 text-sm">
-            {(sourceUrl || path) && (
-              <EditThis path={path} sourceUrl={sourceUrl} />
-            )}
-            {lynxDocUrl && (
-              <a
-                href={lynxDocUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-[var(--custom-link-color)] hover:opacity-85"
-              >
-                <span>{t('api.reference')}</span>
-                <span className="text-xs">↗</span>
-              </a>
-            )}
-            {descriptionUrl && (
-              <a
-                href={descriptionUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-[var(--custom-link-color)] hover:opacity-85"
-              >
-                <span>MDN</span>
-                <span className="text-xs">↗</span>
-              </a>
-            )}
+        <div className="lynx-compat-table">
+          <div className="flex justify-end items-center mb-2">
+            <div className="flex gap-2 text-sm">
+              {(sourceUrl || path) && (
+                <EditThis path={path} sourceUrl={sourceUrl} />
+              )}
+              {lynxDocUrl && (
+                <a
+                  href={lynxDocUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[var(--custom-link-color)] hover:opacity-85"
+                >
+                  <span>{t('api.reference')}</span>
+                  <span className="text-xs">↗</span>
+                </a>
+              )}
+              {descriptionUrl && (
+                <a
+                  href={descriptionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[var(--custom-link-color)] hover:opacity-85"
+                >
+                  <span>MDN</span>
+                  <span className="text-xs">↗</span>
+                </a>
+              )}
+            </div>
           </div>
-        </div>
-        {/* <a
+          {/* <a
           className="bc-github-link external external-icon"
           href={getNewIssueURL()}
           target="_blank"
@@ -300,34 +301,35 @@ export default function CompatibilityTable({
         >
           Report problems with this compatibility data on GitHub
         </a> */}
-        <figure className="table-container">
-          <figure className="table-container-inner">
-            <table key="bc-table" className="bc-table bc-table-web">
-              <Headers
-                platforms={platforms}
-                browsers={browsers}
-                browserInfo={browserInfo}
-              />
-              <tbody>
-                <FeatureListAccordion
+          <figure className="table-container">
+            <figure className="table-container-inner">
+              <table key="bc-table" className="bc-table bc-table-web">
+                <Headers
+                  platforms={platforms}
                   browsers={browsers}
-                  features={listFeatures(data, '', name)}
-                  locale={locale}
+                  browserInfo={browserInfo}
                 />
-              </tbody>
-            </table>
+                <tbody>
+                  <FeatureListAccordion
+                    browsers={browsers}
+                    features={listFeatures(data, '', name)}
+                    locale={locale}
+                  />
+                </tbody>
+              </table>
+            </figure>
           </figure>
-        </figure>
-        <Legend compat={data} name={name} />
+          <Legend compat={data} name={name} />
 
-        {/* https://github.com/mdn/yari/issues/1191 */}
-        <div className="hidden">
-          The compatibility table on this page is generated from structured
-          data. If you'd like to contribute to the data, please check out{' '}
-          <a href="https://github.com/mdn/browser-compat-data">
-            https://github.com/mdn/browser-compat-data
-          </a>{' '}
-          and send us a pull request.
+          {/* https://github.com/mdn/yari/issues/1191 */}
+          <div className="hidden">
+            The compatibility table on this page is generated from structured
+            data. If you'd like to contribute to the data, please check out{' '}
+            <a href="https://github.com/mdn/browser-compat-data">
+              https://github.com/mdn/browser-compat-data
+            </a>{' '}
+            and send us a pull request.
+          </div>
         </div>
       </BrowserInfoContext.Provider>
     </BrowserCompatibilityErrorBoundary>

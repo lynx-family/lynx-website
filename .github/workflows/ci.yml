@@ -37,7 +37,12 @@ jobs:
             --lockfile-only \
             --ignore-scripts \
             --no-frozen-lockfile
-          if ! git diff --exit-code -- pnpm-lock.yaml; then
+          # Registry deprecation notices are mutable metadata and do not
+          # affect the resolved dependency graph or package integrity.
+          if ! git diff \
+            --exit-code \
+            --ignore-matching-lines='^[[:space:]]*deprecated:' \
+            -- pnpm-lock.yaml; then
             echo "::error::The committed pnpm-lock.yaml is inconsistent with the complete dependency resolution."
             cat <<'EOF'
           Regenerate the lockfile locally with:
@@ -132,6 +137,9 @@ jobs:
       - name: Generated HTML Cleanup Test
         run: node --test scripts/build/generated-html.test.mts
 
+      - name: Theme Document Contract Test
+        run: node --experimental-vm-modules --test scripts/theme-before-doc-content.test.mjs
+
       - name: Build
         run: pnpm run build
 
@@ -206,6 +214,8 @@ jobs:
 
   # Check committed documents for relative imports crossing into runtime source.
   # Reuse the shared boundary checker without prepare or site resolver setup.
+  # Reject unused imports in all site-owned, committed MDX documents.
+  # Separately managed documentation is excluded by the checker.
   # Validate separately verifies generated documentation after root prepare.
   # Keep installation explicit and separate from dependency-free generator tests.
   documentation-imports:
@@ -230,6 +240,11 @@ jobs:
         run: |
           node --test scripts/ci/check-doc-import-boundaries.test.mjs
           node scripts/ci/check-doc-import-boundaries.mjs
+
+      - name: Unused Documentation Import Check
+        run: |
+          node --test scripts/ci/check-doc-unused-imports.test.mjs
+          node scripts/ci/check-doc-unused-imports.mjs
 
   alias-contracts:
     name: Alias Contracts
@@ -275,6 +290,11 @@ jobs:
         run: |
           node --test scripts/ci/check-doc-heading-parity.test.mjs
           node scripts/ci/check-doc-heading-parity.mjs
+
+      - name: MDX Import Placement Check
+        run: |
+          node --test scripts/ci/check-doc-import-placement.test.mjs
+          node scripts/ci/check-doc-import-placement.mjs
 
   # Keep authoring contracts that require installed dependencies separate from
   # portable import rules. API reference checks here may read the installed

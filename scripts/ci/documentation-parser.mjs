@@ -6,6 +6,16 @@ import remarkCjkFriendly from 'remark-cjk-friendly';
 import remarkCjkStrikethrough from 'remark-cjk-friendly-gfm-strikethrough';
 import remarkGfm from 'remark-gfm';
 
+/**
+ * Preserve the compiled JavaScript ESTree on the VFile returned by `process`.
+ * The scope checker consumes this tree without evaluating the generated code.
+ */
+function captureEstree() {
+  return (tree, file) => {
+    file.data.estree = tree;
+  };
+}
+
 // Match Rspress's syntax plugins and extension-based format selection without
 // loading site config, rendering plugins, or executable document modules.
 // Keep these direct dependency versions aligned with @rspress/core.
@@ -15,10 +25,12 @@ const processors = new Map(
     createProcessor({
       format,
       remarkPlugins: [remarkGfm, remarkCjkFriendly, remarkCjkStrikethrough],
+      recmaPlugins: [captureEstree],
     }),
   ]),
 );
 
+/** Normalize a filesystem path for repository-level policy matching. */
 function toPosix(value) {
   return value.split(path.sep).join('/');
 }
@@ -52,4 +64,18 @@ export function parseDocumentation(file, content) {
     path: normalizedFile,
     value: prepareSource(content),
   });
+}
+
+/**
+ * Compile to an ESTree module for scope analysis, without evaluating the
+ * generated JavaScript or resolving its imports. Use the same syntax and
+ * source preparation as the boundary parser.
+ */
+export function compileDocumentation(file, content) {
+  const normalizedFile = toPosix(file);
+  const format = path.posix.extname(normalizedFile).slice(1);
+  return processors.get(format).processSync({
+    path: normalizedFile,
+    value: prepareSource(content),
+  }).data.estree;
 }

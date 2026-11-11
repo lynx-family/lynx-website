@@ -99,6 +99,27 @@ pnpm package links. TypeScript ambient declarations may describe a module
 without resolving to the runtime file; declaration/export compatibility
 must be checked explicitly rather than comparing path strings alone.
 
+## Shared Hooks Across Runtime Mounts
+
+Shared hooks live in OSS `src/hooks`. Consumers mount `src` as a tree, so
+relative imports from `src/components` to `src/hooks` stay within that OSS
+tree even when the consumer provides its own `src/hooks`. Consumers can mount
+`theme` separately from `src`. Sharing a logical owner or a `runtime`
+source-area boundary alone does not guarantee a stable relative mount layout
+between those trees.
+
+OSS theme code imports shared hooks through concrete private entries such as
+`@/hooks/use-if-mobile`. A bare `@/hooks` request can instead resolve first
+to a consumer's hook barrel. Re-exporting OSS hooks leaves that barrel
+consumer-owned, so it cannot satisfy the private alias's target-owner policy.
+Consumer-authored callers access their hook barrel through a declared
+consumer-private alias or a relative import. Mounted OSS source retains its
+OSS ownership and continues to use OSS-private entries.
+
+`@theme/*` selects the active site's custom theme with framework fallback.
+Use it only when that implementation choice is intentional; shared OSS hooks
+use the private source entry to retain their implementation across themes.
+
 ## Lifecycle and Source Classification
 
 Stable surfaces have a `changePolicy`; migration surfaces have a
@@ -116,9 +137,10 @@ the `lynx-stack` owner without adding an `@lynx-stack` alias.
 
 Gate 2 establishes the shared executable-import corpus and uses it for resolver
 verification. Gate 3 reuses those records for import policy and exact
-migration baselines. Concrete direct-path and `@assets/*` inventories are
-derived from observed imports and belong only in Gate 3 data, never in the
-Gate 1 registry.
+migration baselines. Concrete direct component paths are derived from observed
+imports and belong only in Gate 3 data, never in the Gate 1 registry. The
+retired `@assets/*` spelling is rejected directly by Gate 3 and has no alias or
+source-area contract.
 
 ## Gate 2 Resolution Verification
 

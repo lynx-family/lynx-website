@@ -1,6 +1,5 @@
 import { Space } from '@douyinfe/semi-ui';
-import useIfMobile from '@site/theme/hooks/use-if-mobile';
-import { useTiltEffect } from '@site/src/hooks';
+import { useIfMobile, useTiltEffect } from '../../../hooks';
 import React, { ReactNode, useState } from 'react';
 import styles from './index.module.less';
 import { Moon } from './moon';
@@ -66,7 +65,7 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
             </Space>
           ),
           size: 'large',
-          link: 'guide/start/integrate-with-existing-apps.html?platform=ios',
+          link: 'guide/start/integrate-with-existing-apps?platform=ios',
         },
         {
           text: (
@@ -75,7 +74,7 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
               Android
             </Space>
           ),
-          link: 'guide/start/integrate-with-existing-apps.html?platform=android',
+          link: 'guide/start/integrate-with-existing-apps?platform=android',
           size: 'large',
         },
         {
@@ -86,7 +85,7 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
             </Space>
           ),
           size: 'large',
-          link: 'guide/start/integrate-with-existing-apps.html?platform=harmony',
+          link: 'guide/start/integrate-with-existing-apps?platform=harmony',
         },
         {
           text: (
@@ -96,7 +95,7 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
             </Space>
           ),
           size: 'large',
-          link: 'guide/start/integrate-with-existing-apps.html?platform=web',
+          link: 'guide/start/integrate-with-existing-apps?platform=web',
         },
         {
           text: (
@@ -107,7 +106,7 @@ const featuresConfig: Record<FeaturesConfigKey, FeatureCardItem[]> = {
             </Space>
           ),
           size: 'large',
-          link: 'guide/start/integrate-with-existing-apps.html?platform=macos',
+          link: 'guide/start/integrate-with-existing-apps?platform=macos',
         },
       ],
     },

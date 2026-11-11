@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './moon.module.less';
-import { useFixDark } from '@site/theme/hooks/use-fix-dark';
+import { useFixDark } from '../../../hooks';
 
 export const Moon = ({ compact = false }: { compact?: boolean }) => {
   const containerCls = compact

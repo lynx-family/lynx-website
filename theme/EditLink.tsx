@@ -34,11 +34,6 @@ export function EditLink(props: Props) {
   }
   // The API reference is generated from the TSDoc of lynx-stack; there is no
   // page in either repository to edit.
-  if (
-    typeof page._relativePath === 'string' &&
-    isGeneratedApiPage(page._relativePath)
-  ) {
-    return null;
-  }
+  if (isGeneratedApiPage(page.pagePath)) return null;
   return <OriginalEditLink {...props} />;
 }

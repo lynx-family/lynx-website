@@ -71,6 +71,22 @@ For checker changes, also run:
 node --test scripts/ci/check-doc-import-boundaries.test.mjs
 ```
 
+MDX imports must be used in executable JSX, expressions, or exports. Check all
+site-owned MDX with:
+
+```bash
+pnpm run check:doc-unused-imports
+```
+
+The check analyzes MDX without executing it. It excludes Lynxtron, synchronized
+lynx-ui docs, and API sections owned by `@lynx-js/lynx-stack-docs`.
+
+For changes to this checker, also run:
+
+```bash
+node --test scripts/ci/check-doc-unused-imports.test.mjs
+```
+
 ### Writing Style
 
 Keep English and Chinese document headings consistent in count, order, and
@@ -166,6 +182,10 @@ copies its package documentation into `sharedDocs/packageDocs/`, and generates
 revision or its sync and generation tooling, run `pnpm run prepare` and commit
 all changes in those output paths.
 
+For the complete lynx-ui refresh workflow, including example version checks
+and `Go` highlight updates, see the
+[lynx-ui update skill](./.agents/skills/lynx-ui-docs-update/SKILL.md).
+
 The API reference for lynx-stack packages is written and generated in
 [lynx-stack](https://github.com/lynx-family/lynx-stack/tree/main/docs/content)
 and copied here from the `@lynx-js/lynx-stack-docs` package by
@@ -201,6 +221,12 @@ As with lynx-stack, synchronization makes these links site-relative only when
 the target page exists in this checkout. The website build checks the resulting
 internal links; the package's standalone preview checks its own pages and
 anchors. The generated edit links point to the original files in skills.
+
+## Theme and Component Design
+
+For site UI changes under `src/` and `theme/`, see the
+[Theme and Component Design guide](./src/README.md). It covers visual
+consistency, component ownership, style overrides, and compatibility checks.
 
 ## CSS Reference Style
 
@@ -246,6 +272,18 @@ pnpm run build
 
 Then request downstream validation after the updated OSS revision is pinned.
 
+### Shared Theme Slots
+
+`Layout.beforeDocContent` defaults to the exported `BeforeDocContent` aggregate.
+Downstream themes should compose that export with their own UI: custom content
+replaces the slot, and `null` disables it. See the
+[component contract and example](./theme/BeforeDocContent.tsx).
+
+The export and slot semantics are downstream interfaces. Coordinate pin and
+composition updates in the same change, accounting for the daily sync window.
+Validate that shared and consumer content render exactly once and that caller
+overrides still work.
+
 ### Alias Contracts
 
 Portable resolver aliases are downstream interfaces. Follow the
@@ -257,6 +295,12 @@ policy, source ownership, resolver overrides, or checker behavior.
 - Keep consumer-private aliases in consumer modules, never in the shared
   registry.
 - Declare exact local exceptions with their lifecycle and removal condition.
+
+Shared runtime hooks belong in `src/hooks`; theme-specific hooks belong in
+`theme/hooks`. Within `src`, prefer relative imports such as `../../hooks`.
+OSS theme code imports shared hooks through concrete `@/hooks/use-*` entries.
+See [Shared Hooks Across Runtime Mounts](./scripts/alias-contracts/UNDERSTANDING.md#shared-hooks-across-runtime-mounts)
+for ownership and downstream layout details.
 
 For registry or checker changes, run:
 
@@ -292,10 +336,11 @@ Rspress copies every file under `docs/public` into the build output while
 preserving its path relative to that directory. These public files are
 URL-addressed resources, not code modules.
 
-Do not import from `@assets` in `docs/` or `sharedDocs/`. The alias points to
-the `docs/public/assets` subtree, so an import emits a bundled copy in addition
-to the public copy. There is no replacement asset alias: use an approved
-immutable documentation CDN URL by default.
+Do not import from the retired `@assets` namespace in `docs/` or `sharedDocs/`.
+Files under `docs/public/assets` are public URLs rather than modules, and
+importing one would emit a bundled copy in addition to the public copy. There
+is no replacement asset alias: use an approved immutable documentation CDN URL
+by default.
 
 When a document intentionally uses an existing public file, standard Markdown
 origin-root URLs are version-aware because Rspress resolves them under the
@@ -363,11 +408,32 @@ narrowest shared entry points:
 | Components exported by the OSS shared entry point  | `@lynx`          |
 | Components exported by the `lynx-ui` shared entry  | `@lynx-ui`       |
 | Luna components exported by its exact entry point  | `@luna`          |
+| API Status components exported by the OSS barrel   | `@api-status`    |
 | Shared package-document modules                    | `@docs/<path>`   |
+| Host route metadata and helpers                    | `@route-config`  |
+| Published host version metadata                    | `@version-data`  |
+| Public exports of the active Rspress theme         | `@theme`         |
 | MDX fragments kept within `docs/` or `sharedDocs/` | Relative imports |
+
+Prefer the public exports of bare `@theme`, the Rspress-governed theme entry.
+Direct source imports through `@theme/*` should be rare and used only when
+selecting the active site's theme implementation is intentional.
 
 `@luna` is an exact-match barrel for `src/luna/index.ts`. Use only the bare
 alias; `@luna/*` subpaths are not part of the shared resolver contract.
+
+`@route-config` and `@version-data` are exact host-provided entries. Bind them
+in both runtime and TypeScript configuration before consuming updated OSS
+source. They expose the existing route configuration exports and the default
+version metadata object; their physical paths belong to the active host.
+
+`@api-status` is the exact-match OSS barrel for API Status components,
+separate from the extensible `@lynx` document-component barrel. It currently
+exports `APIStatusLayout`. Consumers bind it directly to the mounted OSS
+`src/components/api-status/index.ts` in both runtime and TypeScript
+resolution; no subpaths, fallback roots, or consumer wrapper are supported.
+Coordinate that binding before pinning a revision whose documentation uses
+the entry.
 
 For new imports, omit JS/TS file extensions and a trailing `/index`. Existing
 imports that include `/index` remain supported and can be migrated separately.

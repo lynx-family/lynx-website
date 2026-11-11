@@ -18,6 +18,7 @@ export {
   ResponsiveDualColumn,
 } from './containers/ResponsiveDualColumn';
 export { PlatformTabs } from './platform-tabs/PlatformTabs';
+export * as NextSteps from './NextSteps';
 export { ChoiceTabs } from './choice-tabs/ChoiceTabs';
 export { TutorialTabs, LearnTutorialTabs } from './tutorial-tabs/TutorialTabs';
 
@@ -28,6 +29,7 @@ export { TutorialTabs, LearnTutorialTabs } from './tutorial-tabs/TutorialTabs';
 export { default as APISummary } from './api-summary';
 export { default as APITableExplorer } from './api-table-explorer/APITableExplorer';
 export { default as APITable } from './api-table/APITable';
+export { PropertyDefinition } from './PropertyDefinition';
 export { VersionTable } from './VersionTable';
 
 // API Badges
@@ -82,9 +84,14 @@ export { Go } from './go/Go';
 // ----------------------------------------------------------------------------
 
 export { Caption, Figure } from './Figure';
+export { EmbedIframe } from './EmbedIframe';
+export { FoldableRenderFlow } from './foldable-render-flow';
+export { HtmlViewer } from './html-viewer';
 export { ImageWall } from './ImageWall';
+export { InlineIcon } from './InlineIcon';
 export { default as Mermaid } from './Mermaid/Mermaid';
 export { VideoList } from './VideoList';
+export { ThemedImage } from './ThemedImage';
 export { YouTubeIframe } from './YoutubeIframe';
 
 // ----------------------------------------------------------------------------

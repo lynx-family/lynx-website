@@ -1,4 +1,4 @@
-import type { SubsiteConfig } from '@site/shared-route-config';
+import type { SubsiteConfig } from '@route-config';
 import { withBase } from '@rspress/core/runtime';
 
 function isExternalUrl(url: string): boolean {
