@@ -8,6 +8,7 @@
  */
 // cspell:ignore lynxai
 import assert from 'node:assert/strict';
+import { documentationDigest } from './documentation-corpus.js';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
   mkdirSync,
@@ -241,12 +242,12 @@ test('permits a consumer custom theme alongside mounted OSS and framework themes
     ({ specifier }) => specifier === '@theme',
   );
   assert.ok(theme?.kind === 'bare-and-subpaths');
-  const consumerTheme: SourceArea = {
+  const consumerTheme = {
     id: 'consumer-theme',
     root: 'theme',
     owner: 'consumer',
     role: 'authoritative',
-  };
+  } as const satisfies SourceArea;
   const sourceAreas = [
     ...ossSourceAreas.map((area) => ({
       ...area,
@@ -1305,6 +1306,54 @@ test('rejects resolver overrides that capture consumer extension specifiers', ()
   );
 });
 
+test('documentation owner extensions are additive and cannot extend alias policy', () => {
+  const fixture = completeRegistryFixture();
+  const owner = {
+    id: 'consumer:tools-docs',
+    description: 'Tools documentation',
+    scope: 'documentation',
+  };
+  fixture.ownerExtensions = [owner];
+  fixture.sourceAreaPolicy = structuredClone(fixture.sourceAreas);
+  fixture.sourceAreas.push({
+    id: 'tools-docs',
+    root: 'prepared/tools',
+    owner: owner.id,
+    role: 'generated',
+    boundary: 'documentation',
+    origins: [{ repository: 'fixture/tools', root: 'docs' }],
+  });
+  assert.deepEqual(validateAliasContracts(fixture), []);
+  const cases: [FixtureMutation, RegExp][] = [
+    [(f) => (f.ownerExtensions = {}), /ownerExtensions must be an array/],
+    [(f) => (f.ownerExtensions[0].id = 'consumer'), /duplicate owner id/],
+    [(f) => (f.ownerExtensions[0].id = 'consumer:../tools'), /consumer:<name>/],
+    [
+      (f) => (f.ownerExtensions[0].scope = 'runtime'),
+      /scope must be 'documentation'/,
+    ],
+    [
+      (f) => (f.sourceAreas.at(-1).boundary = 'runtime'),
+      /may only own documentation/,
+    ],
+    [
+      (f) => (f.sourceAreas.at(-1).moduleSpecifierFields = []),
+      /may only own documentation/,
+    ],
+    [(f) => (f.sourceAreas[0].owner = owner.id), /must preserve OSS owner/],
+    [(f) => (f.aliases[0].owner = owner.id), /references unknown owner/],
+    [
+      (f) => f.aliases[0].bareTargetOwners.push(owner.id),
+      /bareTargetOwners references unknown owner/,
+    ],
+  ];
+  for (const [mutate, expected] of cases) {
+    const invalid = structuredClone(fixture);
+    mutate(invalid);
+    assert.match(validateAliasContracts(invalid).join('\n'), expected);
+  }
+});
+
 // Temporary modules and captured diagnostics share one cleanup boundary.
 function consumerFixture(t: TestContext) {
   const directory = mkdtempSync(path.join(os.tmpdir(), 'alias-contracts-'));
@@ -1897,6 +1946,17 @@ test('validates consumer modules from the package produced by pnpm pack', async 
     };`,
       );
       const policy = `${contractPath}/check-import-policy.ts`;
+      for (const [entry, gate] of [
+        [`${contractPath}/check-resolution.ts`, 'resolution'],
+        [policy, 'imports'],
+      ] as const) {
+        const unconfigured = execute(entry);
+        assert.equal(unconfigured.status, 1, unconfigured.stderr);
+        assert.match(
+          unconfigured.stderr,
+          new RegExp(`Use oss\\.ts ${gate}.*--source-map`),
+        );
+      }
       const result = execute(policy, [
         ...args,
         '--baseline',
@@ -1998,6 +2058,62 @@ test('validates consumer modules from the package produced by pnpm pack', async 
       ]);
       assert.equal(allowed.status, 0, allowed.stderr);
       assert.match(allowed.stdout, /Import policy passed/);
+      // Prepared inventory replaces source-area document discovery; runtime
+      // importers remain included without new implementation source-area IDs.
+      mkdirSync(path.join(io.directory, 'assembled'));
+      const prepared = 'import { Value } from "@local/child";\n';
+      io.module('assembled/page.mdx', prepared);
+      const documentationCorpus = {
+        roots: ['assembled'],
+        files: [
+          {
+            file: 'assembled/page.mdx',
+            sha256: documentationDigest(prepared),
+            owner: 'consumer',
+          },
+        ],
+      };
+      io.module(
+        'documentation-corpus.mjs',
+        `export const documentationCorpus = ${JSON.stringify(documentationCorpus)};`,
+      );
+      const preparedArgs = [
+        ...args,
+        '--documentation-corpus',
+        './documentation-corpus.mjs',
+      ];
+      const gate1 = execute(checker, preparedArgs);
+      assert.equal(gate1.status, 0, gate1.stderr);
+      const preparedPolicy = execute(policy, [
+        ...preparedArgs,
+        '--baseline',
+        './baseline.json',
+        '--report',
+      ]);
+      assert.equal(preparedPolicy.status, 0, preparedPolicy.stderr);
+      const preparedReport = JSON.parse(preparedPolicy.stdout);
+      assert.equal(preparedReport.imports, 2);
+      assert.equal(preparedReport.preparedFiles, 1);
+      io.module('assembled/new.mdx', '# Untracked output');
+      for (const entry of [`${contractPath}/check-resolution.ts`, policy]) {
+        const rejected = execute(entry, [
+          ...preparedArgs,
+          ...(entry === policy ? ['--baseline', './baseline.json'] : []),
+        ]);
+        assert.equal(rejected.status, 1);
+        assert.match(
+          rejected.stderr,
+          /assembled\/new.mdx: prepared documentation has no ownership record/,
+        );
+      }
+      io.module(
+        'documentation-corpus.mjs',
+        'export const documentationCorpus = undefined;',
+      );
+      const malformed = execute(checker, preparedArgs);
+      assert.equal(malformed.status, 1);
+      assert.match(malformed.stderr, /documentationCorpus: must be an object/);
+      rmSync(path.join(io.directory, 'assembled'), { recursive: true });
     },
   );
 

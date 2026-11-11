@@ -330,7 +330,8 @@ import '@assets/icon.svg';`;
           },
         ];
       }
-      const corpus = discoverCorpus(cwd, contracts, { sections: [] });
+      contracts.documentationScope = { roots: ['docs'] };
+      const corpus = discoverCorpus(cwd, contracts);
       assert.equal(
         corpus.length,
         3,
