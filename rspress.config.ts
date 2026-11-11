@@ -40,6 +40,7 @@ export default defineConfig({
     // including requests forwarded through the /next/* rewrite.
     cleanUrls: true,
     exclude: [
+      '_ai/**',
       'lynx-compat-data/**/*',
       API_PARTIAL_ROUTE_EXCLUDE,
       '**/guide/start/fragments/**',
