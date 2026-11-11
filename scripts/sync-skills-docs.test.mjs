@@ -177,7 +177,7 @@ test('installed package mounts both sections and locales, shared modules, assets
     assert.ok(page.includes(`[Skill](${prefix}/ai/skills/lynx-devtool)`));
     assert.ok(
       page.includes(
-        `sourceEditUrl: "https://github.com/lynx-community/skills/edit/main/packages/skills-docs/content/${locale}/ai/agent-lynx/index.mdx"`,
+        `sourceEditUrl: "https://github.com/lynx-community/skills/blob/main/packages/skills-docs/content/${locale}/ai/agent-lynx/index.mdx"`,
       ),
     );
     assert.ok(page.includes('description: Lynx for your agent'));
@@ -214,7 +214,11 @@ test('installed package mounts both sections and locales, shared modules, assets
     assert.ok(skill.includes('[CLI](../agent-lynx/index.mdx)'));
     assert.ok(skill.includes(`[Recorder](${prefix}/guide/recorder#replay)`));
     assert.ok(skill.startsWith('---\nsourceEditUrl:'));
-    assert.ok(skill.includes(`/content/${locale}/ai/skills/lynx-devtool.mdx"`));
+    assert.ok(
+      skill.includes(
+        `sourceEditUrl: "https://github.com/lynx-community/skills/blob/main/packages/skills-docs/content/${locale}/ai/skills/lynx-devtool.mdx"`,
+      ),
+    );
   }
   assert.ok(existsSync(join(website, 'docs/_ai/conversation.tsx')));
   assert.equal(
