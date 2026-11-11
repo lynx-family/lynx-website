@@ -77,12 +77,6 @@ export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
   if (manifest.schemaVersion !== 1)
     throw new Error('Unsupported skills docs manifest version.');
 
-  // Open the source file before entering GitHub's edit or fork flow.
-  const editBaseUrl = manifest.editBaseUrl.replace(
-    /^(https:\/\/github\.com\/[^/]+\/[^/]+)\/edit\//,
-    '$1/blob/',
-  );
-
   const copies = [];
   const navigation = [];
   const sections = new Map();
@@ -171,7 +165,7 @@ export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
       text = text.replace(LYNXJS_LINK, (match, prefix, url) =>
         localPageExists(docs, url) ? prefix + url : match,
       );
-      const editUrl = `${editBaseUrl}/${locale}/${section.route}/${name.split(sep).join('/')}`;
+      const editUrl = `${manifest.editBaseUrl}/${locale}/${section.route}/${name.split(sep).join('/')}`;
       const editField = `sourceEditUrl: ${JSON.stringify(editUrl)}\n`;
       text = text.startsWith('---\n')
         ? text.replace(/^---\n/, `---\n${editField}`)

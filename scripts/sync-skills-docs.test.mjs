@@ -80,7 +80,7 @@ function fixture(t) {
       { source: 'public/ai/skills', destination: 'ai/skills' },
     ],
     editBaseUrl:
-      'https://github.com/lynx-community/skills/edit/main/packages/skills-docs/content',
+      'https://github.com/lynx-community/skills/blob/main/packages/skills-docs/content',
   };
   write(join(source, 'manifest.json'), manifest);
   write(
