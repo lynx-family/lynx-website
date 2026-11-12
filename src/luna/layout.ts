@@ -1,10 +1,10 @@
-import { resolveStudioLayout } from '@dugyu/luna-studio';
+import { resolveStudioLayout } from '@lynx-js/luna-studio';
 import type {
   StudioLayout,
   StudioModeGrid,
   StudioResolvedLayout,
   StudioStage,
-} from '@dugyu/luna-studio';
+} from '@lynx-js/luna-studio';
 
 const lunaStudioDemoModeGrid: StudioModeGrid = {
   compare: { cols: 4, rows: 1 },

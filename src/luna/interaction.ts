@@ -1,4 +1,4 @@
-import { getPayloadString, indexResolvedLayout } from '@dugyu/luna-studio';
+import { getPayloadString, indexResolvedLayout } from '@lynx-js/luna-studio';
 import type {
   FocusKeyResolver,
   InteractionParams,
@@ -8,7 +8,7 @@ import type {
   StageGlobalPropsBuilder,
   StudioResolvedLayout,
   StudioViewMode,
-} from '@dugyu/luna-studio';
+} from '@lynx-js/luna-studio';
 
 type StudioEvent = {
   type:

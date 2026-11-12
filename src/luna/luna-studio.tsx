@@ -1,13 +1,13 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { useDark, withBase } from '@rspress/core/runtime';
-import { useContainerResize } from '@dugyu/luna-stage';
-import { Choreography } from '@dugyu/luna-studio';
+import { useContainerResize } from '@lynx-js/luna-stage';
+import { Choreography } from '@lynx-js/luna-studio';
 import type {
   LunaThemeKey,
   LunaThemeMode,
   LunaThemeVariant,
   StudioViewMode,
-} from '@dugyu/luna-studio';
+} from '@lynx-js/luna-studio';
 import {
   Columns2,
   GalleryHorizontalEnd,
