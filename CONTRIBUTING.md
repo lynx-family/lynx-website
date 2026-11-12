@@ -213,8 +213,8 @@ and update this single dependency when it is released.
 Site-owned pages that must stay under an existing generated route live in
 `docs-own/{en,zh}/<route>`. `sync:skills-docs` copies them after the package
 content and merges their local `_meta.json` entries using `before` or `after`
-anchors. A package page with the same name keeps precedence during migration;
-once the package stops shipping it, the site-owned page takes over. A2UI and
+anchors. A site-owned page with the same name replaces the package page
+immediately, so the website can own it before the package drops it. A2UI and
 OpenUI use this path.
 
 For joint development, run the sync watcher alongside the website dev server:

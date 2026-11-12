@@ -26,10 +26,9 @@ const SECTIONS = new Map([
 const LYNXJS_LINK = /(\]\(|^\[[^\]]+\]:\s*)https:\/\/lynxjs\.org(\/[^)\s]*)/gm;
 const SITE_DOCS = 'docs-own';
 
-/** Merge site-owned entries into package navigation; package pages win during migration. */
+/** Merge site-owned entries into package navigation; site-owned pages win. */
 function mergeSiteEntries(entries, additions, siteDir) {
-  const result = [...entries];
-  const names = new Set(result.map((entry) => entry.name));
+  const siteNames = new Set();
   for (const item of additions) {
     if (
       (item.type && item.type !== 'file') ||
@@ -40,7 +39,16 @@ function mergeSiteEntries(entries, additions, siteDir) {
         `Invalid site-owned navigation entry: ${JSON.stringify(item)}`,
       );
     }
-    if (names.has(item.name)) continue;
+    if (siteNames.has(item.name)) {
+      throw new Error(`Duplicate site-owned navigation page: ${item.name}`);
+    }
+    siteNames.add(item.name);
+    if (!existsSync(within(siteDir, item.name))) {
+      throw new Error(`Missing site-owned page: ${item.name}`);
+    }
+  }
+  const result = entries.filter((entry) => !siteNames.has(entry.name));
+  for (const item of additions) {
     const { name, before, after, ...entry } = item;
     if (before && after) {
       throw new Error(
@@ -54,13 +62,9 @@ function mergeSiteEntries(entries, additions, siteDir) {
     if (anchor && index === -1) {
       throw new Error(`Missing site-owned navigation anchor: ${anchor}`);
     }
-    if (!existsSync(within(siteDir, name))) {
-      throw new Error(`Missing site-owned page: ${name}`);
-    }
     const target = { type: 'file', ...entry, name };
     if (anchor) result.splice(before ? index : index + 1, 0, target);
     else result.push(target);
-    names.add(name);
   }
   return result;
 }
@@ -145,11 +149,8 @@ export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
           throw new Error(`Missing sidebar page: ${locale}/${item.name}`);
         }
       }
-      const packageNames = new Set(items.map((item) => item.name));
       const siteEntries = readSiteEntries(siteDir);
-      const sitePages = siteEntries.filter(
-        (item) => !packageNames.has(item.name),
-      );
+      const sitePages = siteEntries;
       const mergedItems = mergeSiteEntries(items, siteEntries, siteDir);
       if (!localized.has(locale)) localized.set(locale, new Map());
       localized.get(locale).set(section.id, [
