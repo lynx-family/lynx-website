@@ -340,7 +340,7 @@ test('site-owned pages merge into the generated section navigation', (t) => {
   }
 });
 
-test('package pages keep precedence over site-owned pages during migration', (t) => {
+test('site-owned pages replace same-named package pages', (t) => {
   const { website } = fixture(t);
   const dir = join(website, 'docs-own/en/ai/skills');
   write(join(dir, '_meta.json'), [{ name: 'lynx-devtool.mdx' }]);
@@ -350,7 +350,13 @@ test('package pages keep precedence over site-owned pages during migration', (t)
     readFileSync(
       join(website, 'docs/en/ai/skills/lynx-devtool.mdx'),
       'utf8',
-    ).includes('# lynx-devtool'),
+    ).includes('# site-owned duplicate'),
+  );
+  assert.deepEqual(
+    JSON.parse(
+      readFileSync(join(website, 'docs/en/ai/skills/_meta.json'), 'utf8'),
+    ).map((entry) => entry.name),
+    ['lynx-devtool.mdx'],
   );
 });
 
