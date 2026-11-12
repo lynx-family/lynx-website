@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process';
 import {
   cpSync,
   existsSync,
+  mkdirSync,
   readFileSync,
   readdirSync,
   rmSync,
@@ -23,6 +24,51 @@ const SECTIONS = new Map([
   ['skills', 'ai/skills'],
 ]);
 const LYNXJS_LINK = /(\]\(|^\[[^\]]+\]:\s*)https:\/\/lynxjs\.org(\/[^)\s]*)/gm;
+const SITE_DOCS = 'docs-own';
+
+/** Merge site-owned entries into package navigation; package pages win during migration. */
+function mergeSiteEntries(entries, additions, siteDir) {
+  const result = [...entries];
+  const names = new Set(result.map((entry) => entry.name));
+  for (const item of additions) {
+    if (
+      (item.type && item.type !== 'file') ||
+      typeof item.name !== 'string' ||
+      !item.name
+    ) {
+      throw new Error(
+        `Invalid site-owned navigation entry: ${JSON.stringify(item)}`,
+      );
+    }
+    if (names.has(item.name)) continue;
+    const { name, before, after, ...entry } = item;
+    if (before && after) {
+      throw new Error(
+        `Site-owned page cannot use both before and after: ${name}`,
+      );
+    }
+    const anchor = before ?? after;
+    const index = anchor
+      ? result.findIndex((candidate) => candidate.name === anchor)
+      : -1;
+    if (anchor && index === -1) {
+      throw new Error(`Missing site-owned navigation anchor: ${anchor}`);
+    }
+    if (!existsSync(within(siteDir, name))) {
+      throw new Error(`Missing site-owned page: ${name}`);
+    }
+    const target = { type: 'file', ...entry, name };
+    if (anchor) result.splice(before ? index : index + 1, 0, target);
+    else result.push(target);
+    names.add(name);
+  }
+  return result;
+}
+
+function readSiteEntries(siteDir) {
+  const metaFile = join(siteDir, '_meta.json');
+  return existsSync(metaFile) ? JSON.parse(readFileSync(metaFile, 'utf8')) : [];
+}
 
 function within(root, name) {
   const target = resolve(root, name);
@@ -92,21 +138,36 @@ export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
         throw new Error(`Unsupported locale: ${locale}`);
       const from = within(source, content);
       const to = within(docs, `${locale}/${section.route}`);
+      const siteDir = join(website, SITE_DOCS, locale, section.route);
       const items = JSON.parse(readFileSync(join(from, '_meta.json'), 'utf8'));
       for (const item of items) {
         if (item.type !== 'file' || !existsSync(within(from, item.name))) {
           throw new Error(`Missing sidebar page: ${locale}/${item.name}`);
         }
       }
+      const packageNames = new Set(items.map((item) => item.name));
+      const siteEntries = readSiteEntries(siteDir);
+      const sitePages = siteEntries.filter(
+        (item) => !packageNames.has(item.name),
+      );
+      const mergedItems = mergeSiteEntries(items, siteEntries, siteDir);
       if (!localized.has(locale)) localized.set(locale, new Map());
       localized.get(locale).set(section.id, [
         { type: 'section-header', label: section.label },
-        ...items.map((page) => ({
+        ...mergedItems.map((page) => ({
           ...page,
           name: `${section.route.slice('ai/'.length)}/${page.name}`,
         })),
       ]);
-      copies.push({ from, to, locale, section });
+      copies.push({
+        from,
+        to,
+        locale,
+        section,
+        siteDir,
+        sitePages,
+        items: mergedItems,
+      });
     }
   }
   // Compose each locale once, so adding another section cannot overwrite the
@@ -155,8 +216,18 @@ export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
     rmSync(to, { recursive: true, force: true });
     cpSync(from, to, { recursive: true });
   }
-  for (const { to, locale, section } of copies) {
+  for (const { to, siteDir, sitePages } of copies) {
+    if (!sitePages?.length) continue;
+    for (const page of sitePages) {
+      const source = within(siteDir, page.name);
+      const target = within(to, page.name);
+      mkdirSync(dirname(target), { recursive: true });
+      cpSync(source, target);
+    }
+  }
+  for (const { to, locale, section, sitePages, items } of copies) {
     if (!locale) continue;
+    const siteNames = new Set((sitePages ?? []).map((page) => page.name));
     for (const name of readdirSync(to, { recursive: true })) {
       if (!/\.mdx?$/.test(name)) continue;
       const file = join(to, name);
@@ -165,13 +236,19 @@ export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
       text = text.replace(LYNXJS_LINK, (match, prefix, url) =>
         localPageExists(docs, url) ? prefix + url : match,
       );
-      const editUrl = `${manifest.editBaseUrl}/${locale}/${section.route}/${name.split(sep).join('/')}`;
-      const editField = `sourceEditUrl: ${JSON.stringify(editUrl)}\n`;
-      text = text.startsWith('---\n')
-        ? text.replace(/^---\n/, `---\n${editField}`)
-        : `---\n${editField}---\n\n${text}`;
+      if (!siteNames.has(name.split(sep).join('/'))) {
+        const editUrl = `${manifest.editBaseUrl}/${locale}/${section.route}/${name.split(sep).join('/')}`;
+        const editField = `sourceEditUrl: ${JSON.stringify(editUrl)}\n`;
+        text = text.startsWith('---\n')
+          ? text.replace(/^---\n/, `---\n${editField}`)
+          : `---\n${editField}---\n\n${text}`;
+      }
       writeFileSync(file, text);
     }
+    writeFileSync(
+      join(to, '_meta.json'),
+      JSON.stringify(items, null, 2) + '\n',
+    );
   }
   for (const { path, meta } of navigation)
     writeFileSync(path, JSON.stringify(meta, null, 2) + '\n');
