@@ -50,7 +50,11 @@ const BorderBeam: React.FC<BorderBeamProps> = ({
       const progress = (elapsed % duration) / duration;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawBeam(progress);
+      // Hidden containers have no drawable perimeter. Keep scheduling frames
+      // so the beam resumes after ResizeObserver reports a visible size.
+      if (canvas.width > 0 && canvas.height > 0) {
+        drawBeam(progress);
+      }
 
       animationFrameId = requestAnimationFrame(animate);
     };
