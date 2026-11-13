@@ -1,3 +1,6 @@
+// Initialize Semi's imperative renderer before theme or document components.
+// The adapter uses react-dom/client, which is supported by React 18 and 19.
+import '@douyinfe/semi-ui/react19-adapter';
 import {
   removeBase,
   useLang,

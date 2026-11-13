@@ -37,10 +37,16 @@ const sanitizeHeadingAnchors = () => {
     });
 };
 
-declare global {
+interface HtmlAttrsProps {
+  'data-subsite'?: string;
+  'data-api-reference'?: 'true' | null;
+  'data-scroll-locked'?: 'true' | null;
+}
+
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
-      htmlAttrs: unknown;
+      htmlAttrs: HtmlAttrsProps;
     }
   }
 }

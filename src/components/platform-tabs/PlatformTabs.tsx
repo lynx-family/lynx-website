@@ -212,8 +212,8 @@ export const PlatformTabs = ({
   const availablePlatforms = React.Children.toArray(children).reduce<
     Platform[]
   >((acc, child) => {
-    if (React.isValidElement(child) && child.props.platform) {
-      acc.push(child.props.platform as Platform);
+    if (React.isValidElement<PlatformTabProps>(child) && child.props.platform) {
+      acc.push(child.props.platform);
     }
     return acc;
   }, []);
@@ -300,7 +300,7 @@ export const PlatformTabs = ({
   );
 
   const tabContent = React.Children.toArray(children).map((child) => {
-    if (!React.isValidElement(child)) return null;
+    if (!React.isValidElement<PlatformTabProps>(child)) return null;
     return (
       <div
         key={child.props.platform}

@@ -13,7 +13,6 @@
  */
 import type * as LCD from '@lynx-js/lynx-compat-data';
 import { useI18n, useLocation, withBase } from '@rspress/core/runtime';
-import type React from 'react';
 import { useReducer } from 'react';
 import EditThis from '../../EditThis';
 import { BrowserInfoContext } from './browser-info';
@@ -138,6 +137,15 @@ function gatherPlatformsAndBrowsers(
 
 type CellIndex = [number, number];
 
+function toggleCell(
+  [activeRow, activeColumn]: CellIndex | [null, null],
+  [row, column]: CellIndex,
+): CellIndex | [null, null] {
+  return activeRow === row && activeColumn === column
+    ? [null, null]
+    : [row, column];
+}
+
 interface CompatibilityTableProps {
   /** Dot-separated accessor identifying the selected compatibility record. */
   query: string;
@@ -163,13 +171,8 @@ function FeatureListAccordion({
   browsers: LCD.PlatformName[];
   locale: string;
 }) {
-  const [[activeRow, activeColumn], dispatchCellToggle] = useReducer<
-    React.Reducer<CellIndex | [null, null], CellIndex>
-  >(
-    ([activeRow, activeColumn], [row, column]) =>
-      activeRow === row && activeColumn === column
-        ? [null, null]
-        : [row, column],
+  const [[activeRow, activeColumn], dispatchCellToggle] = useReducer(
+    toggleCell,
     [null, null],
   );
 

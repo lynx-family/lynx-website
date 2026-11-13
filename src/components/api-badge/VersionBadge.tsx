@@ -8,7 +8,7 @@ import styles from './VersionBadge.module.scss';
  * @param {Object} props - The component props.
  * @param {React.ReactNode} [props.children] - The content to display in the badge. If provided, it takes precedence over the `v` prop.
  * @param {number} [props.v] - The version number to display in the badge. Used if `children` is not provided.
- * @returns {JSX.Element} A badge element containing the Lynx icon and version information.
+ * @returns A badge element containing the Lynx icon and version information.
  *
  * @example
  * // Using the `v` prop
@@ -24,7 +24,7 @@ export function VersionBadge({
 }: {
   children?: React.ReactNode;
   v?: number;
-}): JSX.Element {
+}) {
   const content = children || v;
 
   return (
