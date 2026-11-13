@@ -288,6 +288,78 @@ test('invalid navigation slots and duplicate sections fail before modifying eith
   );
 });
 
+test('site-owned pages merge into the generated section navigation', (t) => {
+  const { website } = fixture(t);
+  for (const locale of ['en', 'zh']) {
+    const dir = join(website, `docs-own/${locale}/ai/skills`);
+    write(join(dir, '_meta.json'), [
+      { name: 'lynx-a2ui.mdx', before: 'lynx-devtool.mdx' },
+      { name: 'lynx-openui.mdx', after: 'lynx-a2ui.mdx' },
+    ]);
+    write(
+      join(dir, 'lynx-a2ui.mdx'),
+      '---\nsourceEditUrl: "https://github.com/lynx-family/lynx-website/blob/main/docs-own/en/ai/skills/lynx-a2ui.mdx"\n---\n# lynx-a2ui\n',
+    );
+    write(join(dir, 'lynx-openui.mdx'), '# lynx-openui\n');
+  }
+  syncSkillsDocs({ website });
+  for (const locale of ['en', 'zh']) {
+    const section = JSON.parse(
+      readFileSync(
+        join(website, `docs/${locale}/ai/skills/_meta.json`),
+        'utf8',
+      ),
+    );
+    assert.deepEqual(
+      section.map((entry) => entry.name),
+      ['lynx-a2ui.mdx', 'lynx-openui.mdx', 'lynx-devtool.mdx'],
+    );
+    const ai = JSON.parse(
+      readFileSync(join(website, `docs/${locale}/ai/_meta.json`), 'utf8'),
+    );
+    assert.deepEqual(
+      ai
+        .filter((entry) => entry.name?.startsWith('skills/'))
+        .map((entry) => entry.name),
+      [
+        'skills/lynx-a2ui.mdx',
+        'skills/lynx-openui.mdx',
+        'skills/lynx-devtool.mdx',
+      ],
+    );
+    const page = readFileSync(
+      join(website, `docs/${locale}/ai/skills/lynx-a2ui.mdx`),
+      'utf8',
+    );
+    assert.ok(
+      page.includes(
+        'sourceEditUrl: "https://github.com/lynx-family/lynx-website/',
+      ),
+    );
+    assert.ok(page.includes('/lynx-website/blob/main/docs-own/'));
+  }
+});
+
+test('site-owned pages replace same-named package pages', (t) => {
+  const { website } = fixture(t);
+  const dir = join(website, 'docs-own/en/ai/skills');
+  write(join(dir, '_meta.json'), [{ name: 'lynx-devtool.mdx' }]);
+  write(join(dir, 'lynx-devtool.mdx'), '# site-owned duplicate\n');
+  syncSkillsDocs({ website });
+  assert.ok(
+    readFileSync(
+      join(website, 'docs/en/ai/skills/lynx-devtool.mdx'),
+      'utf8',
+    ).includes('# site-owned duplicate'),
+  );
+  assert.deepEqual(
+    JSON.parse(
+      readFileSync(join(website, 'docs/en/ai/skills/_meta.json'), 'utf8'),
+    ).map((entry) => entry.name),
+    ['lynx-devtool.mdx'],
+  );
+});
+
 test('a missing skill page or locale fails before replacing generated content', (t) => {
   const { website, source, manifest } = fixture(t);
   const sentinel = join(website, 'docs/en/ai/agent-lynx/index.mdx');
