@@ -1,3 +1,4 @@
+import PageSdkSince from './versioning/PageSdkSince';
 import RspeedyMigrationNotice from './RspeedyMigrationNotice';
 
 /**
@@ -40,5 +41,10 @@ import RspeedyMigrationNotice from './RspeedyMigrationNotice';
  * ```
  */
 export default function BeforeDocContent() {
-  return <RspeedyMigrationNotice />;
+  return (
+    <>
+      <PageSdkSince />
+      <RspeedyMigrationNotice />
+    </>
+  );
 }

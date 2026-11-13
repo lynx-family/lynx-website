@@ -13,6 +13,7 @@ import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
 import { isGeneratedApiPage } from './api-reference';
 import { subsiteOf } from './api-subsites';
+import PageSdkSince from './versioning/PageSdkSince';
 
 const NULL_BYTE_RE = /\u0000/g;
 
@@ -77,6 +78,8 @@ export default function Layout({
         />
       </Head>
       <OgHead />
+      {/* Rspress omits document slots when exporting Markdown. */}
+      {import.meta.env?.SSG_MD && <PageSdkSince format="markdown" />}
       <BaseLayout
         {...props}
         afterNavTitle={afterNavTitle}

@@ -228,6 +228,73 @@ For site UI changes under `src/` and `theme/`, see the
 [Theme and Component Design guide](./src/README.md). It covers visual
 consistency, component ownership, style overrides, and compatibility checks.
 
+## Versioning
+
+### Page-level SDK Versions
+
+New handwritten guide pages with one SDK version requirement can declare it
+in frontmatter:
+
+```yaml
+---
+since: '4.3'
+---
+```
+
+`since` is the minimum Lynx SDK version for the capability or usage described
+by the whole page, not its creation or last-updated version. Use a quoted
+`x.y` string; numeric values, patch versions, and `next` are not accepted.
+Keep existing English/Chinese counterparts consistent. No declaration means
+no support assertion.
+
+The theme displays a capsule above the document. If `since` is at or below
+the site's `latestStable`, it shows `Lynx SDK x.y+`; otherwise it shows
+`Lynx SDK x.y · Pre-release`. Pre-release means not yet in a stable SDK
+release; it does not promise a beta/RC artifact or imply Experimental API
+stability.
+
+Each site supplies global SDK settings as the second argument to
+`pluginPageSdkSince(docsRoot, { latestStable, baseline })` in its Rspress
+configuration. The plugin shares these settings with the theme through
+`themeConfig.sdkVersioning` and uses the same `latestStable` for validation.
+Both versions must be quoted `x.y` strings, and `baseline` must not exceed
+`latestStable`. Omitting `baseline` displays every annotated version.
+
+The OSS site reads `latestStable` from
+`src/versioning/lynx-sdk-release.json` and explicitly sets `baseline: '3.2'`
+in `rspress.config.ts`. Downstream sites must supply their own settings;
+they do not inherit the OSS baseline. The existing one-argument plugin call
+retains the release JSON default without hiding any capsules.
+
+Capsules with `since <= baseline` are omitted entirely, including their
+spacing. Keep the frontmatter fact: exported Markdown still includes the
+version statement, and unannotated pages remain unspecified. The baseline
+is a display threshold, not an assertion that older SDKs are unsupported,
+and should not advance automatically with each release.
+
+After an SDK minor or major release becomes stable, update the site's `latestStable`
+and rebuild. Page declarations stay unchanged. This metadata is independent
+of the existing website version menu and installation dependency versions.
+
+Only `docs/{en,zh}/guide` document routes participate. Imported fragments,
+synced/generated references, and other product version axes are outside this
+contract. Do not duplicate API compatibility data, infer platform support, or
+apply one version to a page whose instructions require different versions.
+Retain explicit platform and local version restrictions in the body.
+
+Builds validate the metadata and locale parity using Rspress's actual routes.
+For changes to the version resolver or validation, run:
+
+```bash
+node --import tsx --test scripts/build/page-sdk-since.test.ts
+```
+
+This feature does not change deployment or release-branch policy. Making
+`main` the default documentation entry and ending routine release-site
+branching first requires validated scoped snapshots for historical content,
+including necessary dependency, example, and artifact bindings, and a
+version-retention strategy for synced/generated documentation.
+
 ## CSS Reference Style
 
 - Include a non-empty frontmatter `title` in CSS property and data-type
