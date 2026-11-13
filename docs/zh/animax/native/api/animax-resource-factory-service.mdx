@@ -1,0 +1,55 @@
+---
+description: 'AnimaXResourceFactoryService API 参考，用于在 iOS 和 Android 上创建自定义资源加载器。'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# AnimaXResourceFactoryService
+
+`AnimaXResourceFactoryService` 用于创建自定义资源加载器。AnimaX 通过此服务获取能够处理特定资源请求的 loader。
+
+<PlatformTabs className="animax-api-platform-tabs" queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+实现此协议以提供自定义资源加载器列表，例如网络、文件或 asset 加载器。
+
+## 创建加载器
+
+### createAnimaXLoaders
+
+创建并返回自定义加载器。每个 loader 通过 [AnimaXLoaderProtocol](./animax-loader-protocol) 声明自己能够处理的资源来源。
+
+**返回值**
+
+`NSArray<id<AnimaXLoaderProtocol>> *`
+
+## 注册方式
+
+```objc
+[[AnimaXServiceCenter sharedInstance] registerService:@protocol(AnimaXResourceFactoryService)
+                                             withImpl:myFactory];
+```
+
+</PlatformTabs.Tab>
+<PlatformTabs.Tab platform="android">
+
+## 创建加载器
+
+### createAnimaXLoaders
+
+创建并返回自定义加载器。每个 loader 通过 [AnimaXLoaderProtocol](./animax-loader-protocol) 声明自己能够处理的资源来源。
+
+**返回值**
+
+`List<IAnimaXLoader>`
+
+## 注册方式
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXResourceFactoryService.class,
+    myFactory);
+```
+
+</PlatformTabs.Tab>
+</PlatformTabs>
