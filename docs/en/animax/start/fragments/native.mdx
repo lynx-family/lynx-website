@@ -1,0 +1,237 @@
+import { PlatformTabs } from '@lynx';
+
+Integrate AnimaX into a native iOS or Android app, add dependencies, initialize the engine, and create your first `AnimaXView`.
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Add dependencies
+
+AnimaX iOS SDK is published via CocoaPods. Add the following to your `Podfile`:
+
+```ruby
+platform :ios, '12.0'
+
+target 'YourApp' do
+  # Core + rendering backend
+  pod 'AnimaX', '<animax_version>', :subspecs => [
+    'Core',
+    'Framework',
+    'RenderBackend/Skity',
+    'Textra',      # Required for complex text layout and multilingual text layers
+    'ThirdParty'
+  ]
+
+  # Rendering engine
+  pod 'skity', '<skity_version>'
+
+  # Text rendering
+  pod 'LynxTextra', '<textra_version>'
+
+  # Base framework
+  pod 'LynxBase/Framework', '<lynx_version>'
+end
+```
+
+Then run:
+
+```bash
+pod install
+```
+
+## Initialize AnimaX
+
+AnimaX on iOS does not require a global initialization step. The framework is initialized when you create the first `AnimaXView` with an `AnimaXContext`.
+
+Service registration can be done at app launch or lazily before the first view is created:
+
+```objc
+// In AppDelegate or before creating the first AnimaXView
+#import <AnimaX/AnimaXServiceCenter.h>
+
+// Register services — see next section
+// [[AnimaXServiceCenter sharedInstance] registerService:@protocol(...) withImpl:...];
+```
+
+## Inject basic capabilities
+
+Before playing network resources, follow [Extend Native Capabilities](/animax/native/services) to register a resource loader and image service. Follow the initialization instructions above for when to register these services.
+
+## Create AnimaXView and play
+
+```objc
+#import <AnimaX/AnimaXView.h>
+#import <AnimaX/AnimaXContext.h>
+#import <AnimaX/BaseAnimaXAbility.h>
+
+// 1. Create an ability (capability container)
+BaseAnimaXAbility *ability = [[BaseAnimaXAbility alloc] init];
+
+// 2. Create a context with the ability
+AnimaXContext *context = [[AnimaXContext alloc] initWithAbility:ability];
+
+// 3. Create the view
+AnimaXView *animaxView = [[AnimaXView alloc] initWithContext:context];
+animaxView.frame = CGRectMake(0, 0, 300, 300);
+
+// 4. Configure and load
+[animaxView setLoop:YES];
+[animaxView setAutoplay:YES];
+[animaxView setObjectfit:@"contain"];
+
+// Load from a URL (requires network loader service)
+[animaxView setSrc:@"https://example.com/animation.json"];
+
+// Or load from bundle
+NSString *path = [[NSBundle mainBundle] pathForResource:@"my_anim" ofType:@"json"];
+[animaxView setSrc:[NSURL fileURLWithPath:path].absoluteString];
+
+// 5. Add to view hierarchy
+[self.view addSubview:animaxView];
+```
+
+Or use the convenience factory for the default case:
+
+```objc
+AnimaXContext *context = [AnimaXContext contextWithDefaultAbility];
+AnimaXView *animaxView = [[AnimaXView alloc] initWithContext:context];
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+## Add dependencies
+
+AnimaX Android SDK is published to Maven Central. Add the following to your module-level `build.gradle`:
+
+```groovy
+dependencies {
+    // Core SDK
+    implementation "org.lynxsdk.lynx:animax-sdk:<animax_version>"
+
+    // Text rendering (optional, required for text layers)
+    implementation "org.lynxsdk.lynx:animax-textra:<animax_version>"
+
+    // Native runtime libraries
+    runtimeOnly "org.lynxsdk.lynx:lynx-base:<lynx_version>"
+    runtimeOnly "org.lynxsdk.lynx:skity-native:<skity_version>"
+    runtimeOnly "org.lynxsdk.lynx:lynxtextra:<textra_version>"
+}
+```
+
+If your app targets multiple ABI architectures, configure the `ndk` block:
+
+```groovy
+android {
+    defaultConfig {
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86_64"
+        }
+    }
+    packagingOptions {
+        pickFirsts = [
+            "lib/arm64-v8a/libanimax.so",
+            "lib/arm64-v8a/libanimax_textra.so",
+            "lib/arm64-v8a/liblynxbase.so",
+            "lib/arm64-v8a/libskity.so",
+            "lib/arm64-v8a/liblynxtextra.so",
+            "lib/arm64-v8a/libc++_shared.so",
+        ]
+    }
+}
+```
+
+## Initialize AnimaX
+
+Initialize AnimaX once in your `Application.onCreate()`. This loads the native libraries and sets up the application context.
+
+```java
+public class MyApplication extends Application {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        // (Optional) Register services before init — see next section
+        // AnimaXServiceCenter.inst().registerService(...);
+
+        // Initialize AnimaX. You can call it from a background thread.
+        AnimaX.inst().init(this);
+    }
+}
+```
+
+:::tip
+
+Register services (network loaders, image services) **before** calling `AnimaX.inst().init()` to ensure they are available when the first animation loads.
+
+:::
+
+## Inject basic capabilities
+
+Before playing network resources, follow [Extend Native Capabilities](/animax/native/services) to register a resource loader and image service. Follow the initialization instructions above for when to register these services.
+
+## Create AnimaXView and play
+
+### Create in code
+
+```java
+AnimaXView animaxView = new AnimaXView(this);
+animaxView.setAutoPlay(true);
+animaxView.setLoop(true);
+animaxView.setObjectFit(ObjectFit.CONTAIN);
+
+// Load from a URL (requires network loader service)
+animaxView.setSrc("https://example.com/animation.json");
+
+// Or load from assets
+animaxView.setSrc(UriUtil.fromLocalAsset("animations/my_anim.json"));
+
+// Or load from a file path
+animaxView.setSrc(UriUtil.fromLocalFile("/path/to/animation.json"));
+
+// Add to layout
+FrameLayout container = findViewById(R.id.animation_container);
+container.addView(animaxView,
+    new FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        (int) (280 * getResources().getDisplayMetrics().density)
+    )
+);
+```
+
+### Use from code
+
+```xml
+<com.lynx.animax.ui.AnimaXView
+    android:id="@+id/animax_view"
+    android:layout_width="match_parent"
+    android:layout_height="280dp"
+    app:animax_autoPlay="true"
+    app:animax_loop="true"
+    app:animax_objectFit="contain" />
+```
+
+Then in code:
+
+```java
+AnimaXView animaxView = findViewById(R.id.animax_view);
+animaxView.setSrc("https://example.com/animation.json");
+```
+
+:::tip
+
+`UriUtil.fromLocalAsset()` and `UriUtil.fromLocalFile()` are helper methods that build properly formatted URI strings for the resource loader.
+
+:::
+
+</PlatformTabs.Tab>
+
+</PlatformTabs>
+
+## Next steps
+
+- [Playback and Lifecycle](/animax/native/playback): configure playback, listen to events, and manage resources.
+- [Extend Native Capabilities](/animax/native/services): implement loaders, image services, and instance-level abilities.
+- For complete API signatures, see [Native API Reference](/animax/native/api/animax-view).
+- For runnable examples, check the [AnimaX demo app](https://github.com/RickAi/animax-demo).

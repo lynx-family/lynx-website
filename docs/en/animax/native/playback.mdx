@@ -1,0 +1,288 @@
+---
+description: 'After following Native Quick Start to create an AnimaXView, configure playback, listen to events, and manage resources.'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# Playback and Lifecycle
+
+After following [Native Quick Start](./quick-start) to create an `AnimaXView`, configure playback, listen to events, and manage resources.
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## Basic playback control
+
+After the animation is loaded (`onReady`), you can control playback:
+
+```objc
+// Start playback from the current position
+[animaxView play];
+
+// Pause at the current frame
+[animaxView pause];
+
+// Resume from paused position
+[animaxView resume];
+
+// Stop and reset to the first frame
+[animaxView stop];
+
+// Seek to a specific frame
+[animaxView seekTo:30];
+
+// Play a segment (frames 15 to 75)
+[animaxView playFrom:15 to:75];
+
+// Check if playing
+BOOL isPlaying = [animaxView isAnimating];
+
+// Get current frame (can be fractional)
+double currentFrame = [animaxView currentFrame];
+
+// Get total duration in milliseconds
+double durationMs = [animaxView durationInMS];
+```
+
+### Configure playback properties
+
+```objc
+[animaxView setLoop:YES];              // Loop indefinitely
+[animaxView setLoopCount:3];           // Loop 3 times
+[animaxView setSpeed:2.0];             // 2x speed
+[animaxView setAutoReverse:YES];       // Ping-pong on repeat
+[animaxView setStartFrame:24];         // Start frame
+[animaxView setEndFrame:144];          // End frame
+[animaxView setProgress:0.5];          // Initial position (0.0 - 1.0)
+[animaxView setMaxFrameRate:60];       // Cap frame rate
+[animaxView setObjectfit:@"contain"];  // Content fit mode
+```
+
+### Listen to events
+
+```objc
+// Conform to AnimaXAnimationListener
+@interface MyViewController () <AnimaXAnimationListener>
+@end
+
+@implementation MyViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // ... create animaxView ...
+
+    // Add self as listener (on the ability)
+    BaseAnimaXAbility *ability = animaxView.getAnimaXContext.ability;
+    [ability addAnimationListener:self];
+}
+
+- (void)onReady:(NSDictionary *)params {
+    // Animation is loaded; playback APIs are ready.
+    NSNumber *total = params[@"total"];
+}
+
+- (void)onStart:(NSDictionary *)params {
+    // Playback started
+}
+
+- (void)onCompletion:(NSDictionary *)params {
+    // Playback completed (non-looping)
+}
+
+- (void)onRepeat:(NSDictionary *)params {
+    // Loop completed and next started
+}
+
+- (void)onError:(NSDictionary *)params {
+    NSString *msg = params[@"msg"];
+    NSNumber *code = params[@"code"];
+}
+
+- (void)onUpdate:(NSDictionary *)params {
+    // Frame update — subscribe to frames first
+    NSNumber *current = params[@"current"];
+}
+
+- (void)onFps:(NSDictionary *)params {
+    NSNumber *fps = params[@"fps"];
+}
+
+- (void)onTapLayers:(NSDictionary *)params {
+    NSArray *layers = params[@"layerList"];
+}
+
+@end
+```
+
+:::info
+
+On iOS, you can add event listeners either directly on the view (`[animaxView addAnimationEventListener:self]`) or on the ability (`[ability addAnimationListener:self]`). The view method internally forwards to the ability, so both approaches work.
+
+:::
+
+### Subscribe to frame updates
+
+```objc
+// Subscribe to specific frames
+[animaxView subscribeUpdateEvent:0];
+[animaxView subscribeUpdateEvent:30];
+[animaxView subscribeUpdateEvent:60];
+
+// Or subscribe to all frames
+NSMutableArray *frames = [NSMutableArray array];
+for (int i = 0; i < totalFrames; i++) {
+    [frames addObject:@(i)];
+}
+[animaxView subscribeUpdateEvents:frames subscribe:YES];
+
+// Set FPS reporting interval (ms)
+[animaxView setFPSEventInterval:500];
+```
+
+## Memory management
+
+AnimaXView is a `UIView` — it is released when removed from the view hierarchy and deallocated. If you need to explicitly clean up, call `release` on the player:
+
+```objc
+- (void)dealloc {
+    // View and its resources are cleaned up automatically
+}
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+## Basic playback control
+
+After the animation is loaded (`onReady`), you can control playback:
+
+```java
+// Start playback from the current position
+animaxView.getPlayer().play();
+
+// Pause at the current frame
+animaxView.getPlayer().pause();
+
+// Resume from paused position
+animaxView.getPlayer().resume();
+
+// Stop and reset to the first frame
+animaxView.getPlayer().stop();
+
+// Seek to a specific frame
+animaxView.getPlayer().seek(30);
+
+// Play a segment (frames 15 to 75)
+animaxView.getPlayer().playSegment(15, 75);
+
+// Check if playing
+boolean isPlaying = animaxView.getPlayer().isAnimating();
+
+// Get current frame (can be fractional)
+double currentFrame = animaxView.getPlayer().getCurrentFrame();
+
+// Get total duration in milliseconds
+double durationMs = animaxView.getPlayer().getDurationMs();
+```
+
+### Configure playback properties
+
+```java
+animaxView.setLoop(true);                       // Loop indefinitely
+animaxView.getPlayer().setLoopCount(3);         // Loop 3 times (0 = infinite)
+animaxView.getPlayer().setSpeed(2.0f);          // 2x speed
+animaxView.getPlayer().setAutoReverse(true);    // Ping-pong on repeat
+animaxView.getPlayer().setStartFrame(24);       // Start frame
+animaxView.getPlayer().setEndFrame(144);        // End frame
+animaxView.getPlayer().setProgress(0.5f);       // Initial position (0.0 - 1.0)
+animaxView.getPlayer().setKeepLastFrame(true);  // Keep last frame after stop
+```
+
+### Listen to events
+
+```java
+animaxView.getPlayer().addAnimationListener(new AnimationListenerAdapter() {
+    @Override
+    public void onReady(AnimaXParam param) {
+        // Animation is loaded; playback APIs are ready.
+        double totalFrames = param.getTotalFrame();
+    }
+
+    @Override
+    public void onStart(AnimaXParam param) {
+        // Playback started
+    }
+
+    @Override
+    public void onComplete(AnimaXParam param) {
+        // Playback completed (non-looping)
+    }
+
+    @Override
+    public void onRepeat(AnimaXParam param) {
+        // Loop completed and next started
+    }
+
+    @Override
+    public void onError(AnimaXErrorParam param) {
+        String msg = param.getErrorMessage();
+        int code = param.getErrorCode();
+    }
+
+    @Override
+    public void onUpdate(AnimaXParam param) {
+        // Frame update — subscribe to frames first:
+        // animaxView.getPlayer().subscribeUpdateEvent(30);
+    }
+
+    @Override
+    public void onFPS(AnimaXFPSParam param) {
+        float fps = param.getFPS();
+    }
+
+    @Override
+    public void onTapLayers(AnimaXTapParam param) {
+        List<String> layers = param.getLayerNames();
+    }
+});
+```
+
+### Subscribe to frame updates
+
+```java
+// Subscribe to specific frames
+animaxView.getPlayer().subscribeUpdateEvent(0);
+animaxView.getPlayer().subscribeUpdateEvent(30);
+animaxView.getPlayer().subscribeUpdateEvent(60);
+
+// Or subscribe to all frames
+int totalFrames = (int) animaxView.getPlayer().getDurationMs() / 16;
+int[] frames = new int[totalFrames];
+for (int i = 0; i < totalFrames; i++) frames[i] = i;
+animaxView.getPlayer().subscribeUpdateEvents(frames, true);
+
+// Set FPS reporting interval (ms)
+animaxView.getPlayer().setFpsEventInterval(500);
+```
+
+### Memory management
+
+When the view is no longer needed, release it:
+
+```java
+@Override
+protected void onDestroy() {
+    super.onDestroy();
+    animaxView.release();
+}
+```
+
+</PlatformTabs.Tab>
+
+</PlatformTabs>
+
+## Next steps
+
+- For complete API signatures, see [Native API Reference](./api/animax-view).
+- For runnable examples, check the [AnimaX demo app](https://github.com/RickAi/animax-demo).

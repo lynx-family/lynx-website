@@ -1,0 +1,238 @@
+import { PlatformTabs } from '@lynx';
+
+将 AnimaX 集成到原生 iOS 或 Android 应用，添加依赖、初始化并创建第一个 `AnimaXView`。
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## 添加依赖
+
+AnimaX iOS SDK 通过 CocoaPods 发布。在 `Podfile` 中添加以下内容：
+
+```ruby
+platform :ios, '12.0'
+
+target 'YourApp' do
+  # 核心 + 渲染后端
+  pod 'AnimaX', '<animax_version>', :subspecs => [
+    'Core',
+    'Framework',
+    'RenderBackend/Skity',
+    'Textra',      # 文本图层复杂排版、多语言需要
+    'ThirdParty'
+  ]
+
+  # 渲染引擎
+  pod 'skity', '<skity_version>'
+
+  # 文本渲染
+  pod 'LynxTextra', '<textra_version>'
+
+  # 基础框架
+  pod 'LynxBase/Framework', '<lynx_version>'
+end
+```
+
+然后执行：
+
+```bash
+pod install
+```
+
+## 初始化 AnimaX
+
+iOS 上的 AnimaX 不需要全局初始化步骤。框架在你使用 `AnimaXContext` 创建第一个 `AnimaXView` 时自动初始化。
+
+服务注册可以在应用启动时完成，或者在创建第一个视图之前按需注册：
+
+```objc
+// 在 AppDelegate 中，或创建第一个 AnimaXView 之前
+#import <AnimaX/AnimaXServiceCenter.h>
+
+// 注册服务——见下一节
+// [[AnimaXServiceCenter sharedInstance] registerService:@protocol(...) withImpl:...];
+```
+
+## 注入基础能力
+
+播放网络资源前，请按照[扩展原生能力](/animax/native/services)注册网络资源加载器和图片服务。服务注册时机见本页的初始化说明。
+
+## 创建 AnimaXView 并播放
+
+```objc
+#import <AnimaX/AnimaXView.h>
+#import <AnimaX/AnimaXContext.h>
+#import <AnimaX/BaseAnimaXAbility.h>
+
+// 1. 创建 ability（能力容器）
+BaseAnimaXAbility *ability = [[BaseAnimaXAbility alloc] init];
+
+// 2. 使用 ability 创建 context
+AnimaXContext *context = [[AnimaXContext alloc] initWithAbility:ability];
+
+// 3. 创建视图
+AnimaXView *animaxView = [[AnimaXView alloc] initWithContext:context];
+animaxView.frame = CGRectMake(0, 0, 300, 300);
+
+// 4. 配置并加载
+[animaxView setLoop:YES];
+[animaxView setAutoplay:YES];
+[animaxView setObjectfit:@"contain"];
+
+// 从 URL 加载（需要网络加载器服务）
+[animaxView setSrc:@"https://example.com/animation.json"];
+
+// 或从应用包加载
+NSString *path = [[NSBundle mainBundle] pathForResource:@"my_anim" ofType:@"json"];
+[animaxView setSrc:[NSURL fileURLWithPath:path].absoluteString];
+
+// 5. 添加到视图层级
+[self.view addSubview:animaxView];
+```
+
+也可以使用便捷工厂方法处理默认情况：
+
+```objc
+AnimaXContext *context = [AnimaXContext contextWithDefaultAbility];
+AnimaXView *animaxView = [[AnimaXView alloc] initWithContext:context];
+```
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+## 添加依赖
+
+AnimaX Android SDK 已发布至 Maven Central。在模块级 `build.gradle` 中添加以下依赖：
+
+```groovy
+dependencies {
+    // 核心 SDK
+    implementation "org.lynxsdk.lynx:animax-sdk:<animax_version>"
+
+    // 文本渲染（可选，文本图层需要）
+    implementation "org.lynxsdk.lynx:animax-textra:<animax_version>"
+
+    // 原生运行时库
+    runtimeOnly "org.lynxsdk.lynx:lynx-base:<lynx_version>"
+    runtimeOnly "org.lynxsdk.lynx:skity-native:<skity_version>"
+    runtimeOnly "org.lynxsdk.lynx:lynxtextra:<textra_version>"
+}
+```
+
+如果你的应用需要支持多种 ABI 架构，请配置 `ndk` 块：
+
+```groovy
+android {
+    defaultConfig {
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86_64"
+        }
+    }
+    packagingOptions {
+        pickFirsts = [
+            "lib/arm64-v8a/libanimax.so",
+            "lib/arm64-v8a/libanimax_textra.so",
+            "lib/arm64-v8a/liblynxbase.so",
+            "lib/arm64-v8a/libskity.so",
+            "lib/arm64-v8a/liblynxtextra.so",
+            "lib/arm64-v8a/libc++_shared.so",
+        ]
+    }
+}
+```
+
+## 初始化 AnimaX
+
+在 `Application.onCreate()` 中初始化 AnimaX，只需执行一次。此操作会加载原生库并设置应用上下文。
+
+```java
+public class MyApplication extends Application {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        // （可选）在初始化之前注册服务——见下一节
+        // AnimaXServiceCenter.inst().registerService(...);
+
+        // 初始化 AnimaX, 可以子线程中调用
+        AnimaX.inst().init(this);
+    }
+}
+```
+
+:::tip
+
+在调用 `AnimaX.inst().init()` **之前**注册服务（网络加载器、图片服务），确保第一个动画加载时这些服务已经可用。
+
+:::
+
+## 注入基础能力
+
+播放网络资源前，请按照[扩展原生能力](/animax/native/services)注册网络资源加载器和图片服务。服务注册时机见本页的初始化说明。
+
+## 创建 AnimaXView 并播放
+
+### 代码创建
+
+```java
+AnimaXView animaxView = new AnimaXView(this);
+animaxView.setAutoPlay(true);
+animaxView.setLoop(true);
+animaxView.setObjectFit(ObjectFit.CONTAIN);
+
+// 从 URL 加载（需要网络加载器服务）
+animaxView.setSrc("https://example.com/animation.json");
+
+// 或从 assets 加载
+animaxView.setSrc(UriUtil.fromLocalAsset("animations/my_anim.json"));
+
+// 或从文件路径加载
+animaxView.setSrc(UriUtil.fromLocalFile("/path/to/animation.json"));
+
+// 添加到布局
+FrameLayout container = findViewById(R.id.animation_container);
+container.addView(animaxView,
+    new FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        (int) (280 * getResources().getDisplayMetrics().density)
+    )
+);
+```
+
+### 代码中使用
+
+```xml
+<com.lynx.animax.ui.AnimaXView
+    android:id="@+id/animax_view"
+    android:layout_width="match_parent"
+    android:layout_height="280dp"
+    app:animax_autoPlay="true"
+    app:animax_loop="true"
+    app:animax_objectFit="contain" />
+```
+
+然后在代码中：
+
+```java
+AnimaXView animaxView = findViewById(R.id.animax_view);
+animaxView.setSrc("https://example.com/animation.json");
+```
+
+:::tip
+
+`UriUtil.fromLocalAsset()` 和 `UriUtil.fromLocalFile()` 是辅助方法，用于为资源加载器构建格式正确的 URI 字符串。
+
+:::
+
+</PlatformTabs.Tab>
+
+</PlatformTabs>
+
+## 下一步
+
+- [播放控制与生命周期](/animax/native/playback)：配置播放、监听事件和管理资源。
+- [扩展原生能力](/animax/native/services)：实现加载器、图片服务和实例级能力。
+- 完整的 API 签名请参阅 [原生 API 参考](/animax/native/api/animax-view)。
+- Lynx 组件用法请参阅 [`<animax-view>`](/api/elements/built-in/animax-view)。
+- 可运行的示例请查看 [AnimaX 示例应用](https://github.com/RickAi/animax-demo)。

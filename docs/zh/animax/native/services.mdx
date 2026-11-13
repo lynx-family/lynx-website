@@ -1,0 +1,283 @@
+---
+description: '通过网络资源加载器、图片服务和实例级能力扩展 AnimaX。接入步骤见原生快速开始。'
+---
+
+import { PlatformTabs } from '@lynx';
+
+# 扩展原生能力
+
+通过网络资源加载器、图片服务和实例级能力扩展 AnimaX。接入步骤见[原生快速开始](./quick-start)。
+
+<PlatformTabs queryKey="platform">
+<PlatformTabs.Tab platform="ios">
+
+## 注入基础能力
+
+AnimaX 使用服务注册模式来管理网络资源加载和图片解码等能力。如果不注册这些服务，AnimaX 只能从本地文件和应用包中加载资源。
+
+### 网络资源加载器
+
+实现 [`AnimaXLoaderProtocol`](./api/animax-loader-protocol) 来处理网络请求。以下是使用 `NSURLSession` 的示例：
+
+```objc
+// HttpLoader.h
+#import <AnimaX/AnimaXLoaderProtocol.h>
+
+@interface HttpLoader : NSObject <AnimaXLoaderProtocol>
+@end
+
+// HttpLoader.m
+#import "HttpLoader.h"
+#import <AnimaX/AnimaXLoaderResponse.h>
+
+@implementation HttpLoader
+
+- (void)handleRequest:(AnimaXLoaderRequest *)request
+           completion:(AnimaXLoaderCompletionHandler)completion {
+    NSURL *url = [NSURL URLWithString:request.url];
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession]
+        dataTaskWithURL:url
+        completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            if (error) {
+                AnimaXLoaderResponse *resp =
+                    [AnimaXLoaderResponse responseWithError:error];
+                completion(resp);
+                return;
+            }
+            AnimaXLoaderResponse *resp =
+                [AnimaXLoaderResponse responseWithPayload:data];
+            completion(resp);
+        }];
+    [task resume];
+}
+
+- (AnimaXLoaderScheme)getScheme {
+    return AnimaXLoaderSchemeHttp;
+}
+
+@end
+```
+
+通过 [`AnimaXResourceFactoryService`](./api/animax-resource-factory-service) 注册加载器：
+
+```objc
+#import <AnimaX/AnimaXServiceCenter.h>
+#import <AnimaX/AnimaXResourceFactoryService.h>
+
+// 在 AppDelegate 中，或创建第一个视图之前
+@interface MyResourceFactory : NSObject <AnimaXResourceFactoryService>
+@end
+
+@implementation MyResourceFactory
+- (NSArray<id<AnimaXLoaderProtocol>> *)createAnimaXLoaders {
+    return @[[[HttpLoader alloc] init]];
+}
+@end
+
+[[AnimaXServiceCenter sharedInstance]
+    registerService:@protocol(AnimaXResourceFactoryService)
+           withImpl:[[MyResourceFactory alloc] init]];
+```
+
+### 图片加载服务
+
+在 iOS 上，实现 [`AnimaXImageDecoderService`](./api/animax-image-service) 来提供自定义图片解码：
+
+```objc
+#import <AnimaX/AnimaXImageDecoderService.h>
+
+@interface MyImageDecoderService : NSObject <AnimaXImageDecoderService>
+@end
+
+@implementation MyImageDecoderService
+
+- (UIImage *)loadImageData:(NSData *)data {
+    // 使用你的图片管线（SDWebImage、Kingfisher 等）进行解码。
+    // 返回 nil 则回退到默认的 UIImage 解码。
+    return [UIImage imageWithData:data];
+}
+
+@end
+```
+
+注册服务：
+
+```objc
+[[AnimaXServiceCenter sharedInstance]
+    registerService:@protocol(AnimaXImageDecoderService)
+           withImpl:[[MyImageDecoderService alloc] init]];
+```
+
+## 注入实例级能力
+
+对于大多数应用，全局的 `AnimaXServiceCenter` 已经足够。如果你需要实例级能力注入，例如不同页面使用不同的图片加载策略——可以创建自定义 ability。
+
+```objc
+// CustomAbility.h
+#import <AnimaX/BaseAnimaXAbility.h>
+
+@interface CustomAbility : BaseAnimaXAbility
+@end
+
+// CustomAbility.m
+#import "CustomAbility.h"
+#import <AnimaX/AnimaXServiceCenter.h>
+
+@implementation CustomAbility
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        // 注册仅对此视图实例有效的服务
+        // [self registerService:@protocol(...) withImpl:...];
+    }
+    return self;
+}
+
+@end
+
+// 使用自定义 ability
+CustomAbility *ability = [[CustomAbility alloc] init];
+AnimaXContext *context = [[AnimaXContext alloc] initWithAbility:ability];
+AnimaXView *animaxView = [[AnimaXView alloc] initWithContext:context];
+```
+
+:::info
+
+通过 `registerService` 在 ability 上注册的服务优先级高于 `AnimaXServiceCenter` 中的全局服务。
+
+:::
+
+</PlatformTabs.Tab>
+
+<PlatformTabs.Tab platform="android">
+
+## 注入基础能力
+
+AnimaX 使用服务注册模式来管理网络资源加载和图片解码等能力。如果不注册这些服务，AnimaX 只能从本地文件和应用包中加载资源。
+
+### 网络资源加载器
+
+实现 [`IAnimaXLoader`](./api/animax-loader-protocol) 来处理网络请求。以下是使用 OkHttp 的示例：
+
+```java
+public class HttpLoader implements IAnimaXLoader {
+    private final OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build();
+
+    @Override
+    public void load(IAnimaXLoaderRequest request,
+                     IAnimaXLoaderCompletionHandler completionHandler) {
+        String uri = request.getUri();
+        Request httpRequest = new Request.Builder().url(uri).build();
+
+        client.newCall(httpRequest).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                completionHandler.onComplete(
+                    AnimaXLoaderResponse.createErrorResponse(e));
+            }
+
+            @Override
+            public void onResponse(Call call, Response response)
+                    throws IOException {
+                if (!response.isSuccessful()) {
+                    completionHandler.onComplete(
+                        AnimaXLoaderResponse.createErrorResponse(
+                            new Exception("HTTP " + response.code())));
+                    return;
+                }
+                byte[] bytes = response.body().bytes();
+                completionHandler.onComplete(
+                    AnimaXLoaderResponse.createByteArrayResponse(bytes));
+            }
+        });
+    }
+
+    @Override
+    public AnimaXLoaderScheme getScheme() {
+        return AnimaXLoaderScheme.HTTP;
+    }
+}
+```
+
+在 `Application.onCreate()` 中通过 [`IAnimaXResourceFactoryService`](./api/animax-resource-factory-service) 注册加载器：
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXResourceFactoryService.class,
+    new IAnimaXResourceFactoryService() {
+        @Override
+        public List<IAnimaXLoader> createAnimaXLoaders() {
+            return Collections.singletonList(new HttpLoader());
+        }
+    }
+);
+```
+
+### 图片加载服务
+
+AnimaX 将图片加载委托给 [`IAnimaXImageService`](./api/animax-image-service)，让你可以复用应用中已有的图片管线（Fresco、Glide、Coil 等）。
+
+```java
+public class MyImageService implements IAnimaXImageService {
+    @Override
+    public boolean loadImage(IAnimaXLoaderRequest request,
+                             IAnimaXLoaderCompletionHandler completionHandler) {
+        // 在这里委托给你的图片库。
+        // 如果该服务处理了请求，返回 true；
+        // 返回 false 则回退到资源加载器链。
+        String uri = request.getUri();
+        // ... 加载 bitmap 并调用 completionHandler.onComplete(...)
+        return false;
+    }
+}
+```
+
+在 `Application.onCreate()` 中注册：
+
+```java
+AnimaXServiceCenter.inst().registerService(
+    IAnimaXImageService.class,
+    new MyImageService()
+);
+```
+
+## 注入实例级能力
+
+对于大多数应用，全局的 `AnimaXServiceCenter` 已经足够。如果你需要实例级能力，例如不同页面使用不同的图片加载策略——可以创建自定义 ability。
+
+```java
+public class MyCustomAbility extends NativeAbility {
+
+    public MyCustomAbility() {
+        super();
+        // 注册仅对此视图实例有效的服务
+        registerService(IAnimaXImageService.class, new MyScopedImageService());
+    }
+}
+
+// 创建 context 时使用自定义 ability
+AnimaXContext context = new AnimaXContext.Builder(
+    new MyCustomAbility(), this
+).build();
+AnimaXView animaxView = new AnimaXView(context);
+```
+
+:::info
+
+在 ability 上注册的服务优先级高于 `AnimaXServiceCenter` 中的全局服务，这允许实例级服务覆盖全局服务。
+
+:::
+
+</PlatformTabs.Tab>
+
+</PlatformTabs>
+
+## 下一步
+
+- 完整的 API 签名请参阅 [原生 API 参考](./api/animax-view)。
+- Lynx 组件用法请参阅 [`<animax-view>`](/api/elements/built-in/animax-view)。
+- 可运行的示例请查看 [AnimaX 示例应用](https://github.com/RickAi/animax-demo)。
