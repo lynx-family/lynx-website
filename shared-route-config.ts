@@ -164,6 +164,20 @@ export const SUBSITES_CONFIG: SubsiteConfig[] = [
       dark: 'https://vuejs.org/logo.svg',
     },
   },
+  {
+    value: 'angular-lynx',
+    label: 'AngularLynx',
+    description: 'Angular to Lynx',
+    descriptionZh: '用 Angular 开发 Lynx 应用',
+    external: 'https://angularlynx.js.org',
+    home: '',
+    url: '',
+    category: 'js-framework',
+    logo: {
+      light: 'https://angularlynx.js.org/logo.png',
+      dark: 'https://angularlynx.js.org/logo.png',
+    },
+  },
 
   // ── Native Framework ──────────────────────────────────────────
   {
