@@ -27,14 +27,17 @@ export const ResponsiveDualColumn: React.FC<ResponsiveDualColumnProps> = ({
 
   return (
     <div className={styles.container}>
-      {React.Children.map(children, (child, index) =>
-        React.cloneElement(child as React.ReactElement, {
+      {React.Children.map(children, (child, index) => {
+        if (!React.isValidElement<{ style?: React.CSSProperties }>(child)) {
+          return child;
+        }
+        return React.cloneElement(child, {
           style: {
             flex: partition ? partition[index] : 1,
-            ...(child as React.ReactElement).props.style,
+            ...child.props.style,
           },
-        }),
-      )}
+        });
+      })}
     </div>
   );
 };

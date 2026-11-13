@@ -49,8 +49,8 @@ export const ChoiceTabs = ({
   const tabs = React.Children.toArray(children).reduce<
     React.ReactElement<ChoiceTabProps>[]
   >((acc, child) => {
-    if (React.isValidElement(child) && child.props.value) {
-      acc.push(child as React.ReactElement<ChoiceTabProps>);
+    if (React.isValidElement<ChoiceTabProps>(child) && child.props.value) {
+      acc.push(child);
     }
     return acc;
   }, []);

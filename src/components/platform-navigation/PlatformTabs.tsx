@@ -142,8 +142,8 @@ export const PlatformTabs = ({
   const availablePlatforms = React.Children.toArray(children).reduce<
     Platform[]
   >((acc, child) => {
-    if (React.isValidElement(child) && child.props.platform) {
-      acc.push(child.props.platform as Platform);
+    if (React.isValidElement<PlatformTabProps>(child) && child.props.platform) {
+      acc.push(child.props.platform);
     }
     return acc;
   }, []);
@@ -221,7 +221,8 @@ export const PlatformTabs = ({
   // Find the active tab content
   const activeTabContent = React.Children.toArray(children).find((child) => {
     return (
-      React.isValidElement(child) && child.props.platform === activePlatform
+      React.isValidElement<PlatformTabProps>(child) &&
+      child.props.platform === activePlatform
     );
   });
 
