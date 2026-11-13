@@ -90,6 +90,7 @@ export { HtmlViewer } from './html-viewer';
 export { ImageWall } from './ImageWall';
 export { InlineIcon } from './InlineIcon';
 export { default as Mermaid } from './Mermaid/Mermaid';
+export { MetricComparison } from './metric-comparison';
 export { VideoList } from './VideoList';
 export { ThemedImage } from './ThemedImage';
 export { YouTubeIframe } from './YoutubeIframe';

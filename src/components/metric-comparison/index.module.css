@@ -1,0 +1,162 @@
+/* Categorical slots validated with the dataviz palette checks (light and dark). */
+.root {
+  --metric-slot-0: #5f9e00;
+  --metric-slot-1: #4a78c2;
+  --metric-track: var(--rp-c-bg-soft, rgba(0, 0, 0, 0.04));
+  margin: 24px 0;
+  padding: 0;
+}
+
+:global(:root.dark) .root {
+  --metric-slot-0: #66a600;
+  --metric-slot-1: #5b86d0;
+  --metric-track: rgba(255, 255, 255, 0.06);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--rp-c-text-2);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.swatch[data-slot='0'],
+.bar[data-slot='0'] {
+  background: var(--metric-slot-0);
+}
+
+.swatch[data-slot='1'],
+.bar[data-slot='1'] {
+  background: var(--metric-slot-1);
+}
+
+.group + .group {
+  margin-top: 20px;
+}
+
+.groupTitle {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rp-c-text-1);
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.panel {
+  position: relative;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--rp-c-bg-soft, rgba(0, 0, 0, 0.03));
+}
+
+.panelTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rp-c-text-1);
+}
+
+.panelHint {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--rp-c-text-2);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  border-radius: 4px;
+  outline: none;
+  transition: opacity 120ms ease;
+}
+
+.row:focus-visible {
+  box-shadow: 0 0 0 2px var(--rp-c-brand);
+}
+
+.row[data-dimmed] {
+  opacity: 0.45;
+}
+
+.seriesLabel {
+  font-size: 12px;
+  color: var(--rp-c-text-2);
+}
+
+.track {
+  height: 10px;
+  border-radius: 0 4px 4px 0;
+  background: var(--metric-track);
+  overflow: hidden;
+}
+
+.bar {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+}
+
+.value {
+  min-width: 64px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--rp-c-text-1);
+}
+
+/* Overlays the panel heading, so it never covers content outside the panel. */
+.tooltip {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--rp-c-bg-mute, #f1f1f1);
+  box-shadow: var(--rp-shadow-2, 0 2px 8px rgba(0, 0, 0, 0.12));
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--rp-c-text-1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.tooltip[data-visible] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row,
+  .tooltip {
+    transition: none;
+  }
+}
