@@ -1,0 +1,411 @@
+---
+title: 'Lynx 构建工具链：原生 Rsbuild 支持'
+description: '使用标准的 Rsbuild 配置、CLI 和插件构建 Lynx 应用，Lynx 特有的适配由 pluginLynx 提供。'
+date: 2026-10-15
+sidebar: false
+authors:
+  [
+    'upupming',
+    'huxpro',
+    'chenjiahan',
+    'HuJean',
+    'colinaaa',
+    'jkzing',
+    'luhc228',
+    'Yradex',
+    'gaoachao',
+  ]
+---
+
+import { BlogHeader } from '@lynx';
+import { PackageManagerTabs } from '@theme';
+
+<BlogHeader />
+
+{/* cspell:ignore rstackjs */}
+
+今天，我们很高兴宣布 [`@lynx-js/react-rsbuild-plugin`](/api/packages/react-rsbuild-plugin) 从 [0.20 版本](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/plugin-react/CHANGELOG.md#0200)开始支持了原生 [Rsbuild](https://rsbuild.rs/zh/)。[Rspeedy](https://lynxjs.org/zh/rspeedy/index.html) 仍会继续维护，但我们更推荐新 Lynx 项目直接使用 Rsbuild，以复用 Rsbuild 已有的基础建设。
+
+## 从 Rspeedy 到原生 Rsbuild
+
+### Rspeedy 的由来
+
+最初，我们选择 Rsbuild 作为 Lynx 的构建基础，是希望复用 Web 生态中已有的构建能力。但 Lynx 与浏览器存在较多差异：Lynx 不需要生成 HTML，部分面向浏览器的配置无法直接使用，模块加载、产物格式和 dev server 也需要专门适配。
+
+如果直接开放全部配置，并由用户自行组合适配插件，用户需要先确认哪些配置适用、哪些能力必须额外接入。因此，我们在 Rsbuild 之上封装了 [Rspeedy](https://lynxjs.org/zh/rspeedy/index.html)，提供独立的配置文件和 CLI，屏蔽不适用的配置，并设置适合 Lynx 项目的默认值。
+
+### 逐步对齐 Rsbuild 配置
+
+后续迭代中，Rspeedy 在模块加载、产物格式和 dev server 等方面支持了更多 Rsbuild 配置，可用范围逐渐接近原生 Rsbuild。
+
+随着支持的配置增多，两套接口的维护成本也随之增加。用户需要确认 Rsbuild 配置在 Rspeedy 中是否可用，我们也需要跟进上游变化，实现新增配置，并更新类型校验和文档。我们也开始思考 Lynx 是否可以直接使用原生 Rsbuild 构建。
+
+为此，我们逐项梳理了 Rspeedy 与 Rsbuild 的配置差异，发现大部分配置可以直接沿用 Rsbuild，只有 Lynx 特有的配置项和默认值需要保留。
+
+### 引入 pluginLynx
+
+我们将 Lynx 特有的配置项、默认值和构建适配抽出为 [`pluginLynx`]，供 Rspeedy 和原生 Rsbuild 共用。
+
+<svg
+  id="lynx-build-before-after"
+  xmlns="http://www.w3.org/2000/svg"
+  width="1000"
+  height="430"
+  viewBox="0 0 1000 430"
+  style={{ width: '100%', height: 'auto', display: 'block' }}
+  fontFamily="'SFMono-Regular', 'Menlo', 'PingFang SC', sans-serif"
+  fontSize="28"
+  fill="var(--rp-c-text-1)"
+  textAnchor="middle"
+  dominantBaseline="middle"
+  role="img"
+  aria-labelledby="lynx-build-before-after-title lynx-build-before-after-desc"
+>
+  <title id="lynx-build-before-after-title">
+    {'从三层封装到 Rsbuild + pluginLynx'}
+  </title>
+  <desc id="lynx-build-before-after-desc">
+    {
+      '之前，Rspeedy 封装 Rsbuild，Rsbuild 基于 Rspack。现在，Lynx 适配由 pluginLynx 提供，项目直接使用 Rsbuild 和 Rspack 两层构建工具。'
+    }
+  </desc>
+  <defs>
+    <marker
+      id="lynx-build-before-after-arrow"
+      viewBox="0 0 10 10"
+      refX="8"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto"
+    >
+      <path
+        d="M1 1L8 5L1 9"
+        fill="none"
+        stroke="color-mix(in srgb, var(--rp-c-text-2) 65%, transparent)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </marker>
+  </defs>
+  <rect width="1000" height="430" fill="var(--rp-c-bg)" />
+  <text x="250" y="48" fontSize="22" fill="var(--rp-c-text-2)">
+    {'之前'}
+  </text>
+  <text x="750" y="48" fontSize="22" fill="var(--rp-c-brand)">
+    {'现在'}
+  </text>
+  <g fill="var(--rp-c-bg)" stroke="var(--rp-c-divider)" strokeWidth="1.5">
+    <rect x="70" y="100" width="360" height="64" rx="12" />
+    <rect x="70" y="215" width="360" height="64" rx="12" />
+    <rect x="70" y="330" width="360" height="64" rx="12" />
+    <rect x="570" y="330" width="360" height="64" rx="12" />
+  </g>
+  <rect
+    x="570"
+    y="100"
+    width="360"
+    height="179"
+    rx="12"
+    fill="var(--rp-c-brand-tint)"
+    stroke="var(--rp-c-brand)"
+    strokeWidth="1.5"
+  />
+  <text x="250" y="132">
+    {'Rspeedy'}
+  </text>
+  <text x="250" y="247">
+    {'Rsbuild'}
+  </text>
+  <text x="250" y="362">
+    {'Rspack'}
+  </text>
+  <text x="750" y="189.5" fontSize="26">
+    {'Rsbuild + pluginLynx'}
+  </text>
+  <text x="750" y="362">
+    {'Rspack'}
+  </text>
+  <g
+    fill="none"
+    stroke="color-mix(in srgb, var(--rp-c-text-2) 65%, transparent)"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    markerEnd="url(#lynx-build-before-after-arrow)"
+  >
+    <path d="M250 215V164" />
+    <path d="M250 330V279" />
+    <path d="M750 330V279" />
+    <path d="M460 189.5H540" />
+  </g>
+</svg>
+
+两种入口的配置方式如下：
+
+<svg
+  id="lynx-rsbuild-architecture"
+  xmlns="http://www.w3.org/2000/svg"
+  width="1000"
+  height="880"
+  viewBox="0 0 1000 880"
+  style={{ width: '100%', height: 'auto', display: 'block' }}
+  fontFamily="'SFMono-Regular', 'Menlo', 'PingFang SC', sans-serif"
+  fontSize="26"
+  fill="var(--rp-c-text-1)"
+  textAnchor="middle"
+  dominantBaseline="middle"
+  role="img"
+  aria-labelledby="lynx-rsbuild-architecture-title lynx-rsbuild-architecture-desc"
+>
+  <title id="lynx-rsbuild-architecture-title">
+    {'Lynx 项目的两种构建入口'}
+  </title>
+  <desc id="lynx-rsbuild-architecture-desc">
+    {
+      'Rspeedy 使用 lynx.config.ts，把顶层的 Lynx 配置项转交给 pluginLynx；Rsbuild 使用 rsbuild.config.ts，在 plugins 中显式调用 pluginLynx。ReactLynx 项目在两种入口中均使用 pluginReactLynx。未显式配置 pluginLynx 时，pluginReactLynx 会自动添加使用默认配置的 pluginLynx。未来，其他框架插件也可以复用 pluginLynx 的 Lynx 适配。'
+    }
+  </desc>
+  <defs>
+    <marker
+      id="lynx-rsbuild-architecture-arrow"
+      viewBox="0 0 10 10"
+      refX="8"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto"
+    >
+      <path
+        d="M1 1L8 5L1 9"
+        fill="none"
+        stroke="color-mix(in srgb, var(--rp-c-text-2) 65%, transparent)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </marker>
+  </defs>
+  <rect width="1000" height="880" fill="var(--rp-c-bg)" />
+  <rect
+    x="60"
+    y="40"
+    width="340"
+    height="140"
+    rx="12"
+    fill="var(--rp-c-bg)"
+    stroke="var(--rp-c-divider)"
+    strokeWidth="1.5"
+  />
+  <text x="230" y="78">
+    {'Rspeedy'}
+  </text>
+  <text x="230" y="114" fontSize="20" fill="var(--rp-c-text-2)">
+    {'lynx.config.ts'}
+  </text>
+  <text x="230" y="150" fontSize="18" fill="var(--rp-c-text-2)">
+    {'现有项目'}
+  </text>
+  <rect
+    x="600"
+    y="40"
+    width="340"
+    height="140"
+    rx="12"
+    fill="var(--rp-c-brand-tint)"
+    stroke="var(--rp-c-brand)"
+    strokeWidth="1.5"
+  />
+  <text x="770" y="78" fill="var(--rp-c-brand)">
+    {'Rsbuild'}
+  </text>
+  <text x="770" y="114" fontSize="20" fill="var(--rp-c-text-2)">
+    {'rsbuild.config.ts'}
+  </text>
+  <text x="770" y="150" fontSize="18" fill="var(--rp-c-brand)">
+    {'新项目推荐'}
+  </text>
+  <g
+    fill="none"
+    stroke="color-mix(in srgb, var(--rp-c-text-2) 65%, transparent)"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    markerEnd="url(#lynx-rsbuild-architecture-arrow)"
+  >
+    <path d="M130 180V570" />
+    <path d="M910 180V570" />
+    <path d="M330 180V235H670V180" markerEnd="none" />
+    <path d="M400 235V300" />
+    <path d="M400 410V570" strokeDasharray="6 6" />
+    <path d="M735 410V570" strokeDasharray="6 6" />
+    <path d="M500 710V770" />
+  </g>
+  <rect
+    x="240"
+    y="300"
+    width="320"
+    height="110"
+    rx="12"
+    fill="var(--rp-c-bg)"
+    stroke="var(--rp-c-divider)"
+    strokeWidth="1.5"
+  />
+  <text x="400" y="340" fontSize="23">
+    {'pluginReactLynx'}
+  </text>
+  <text x="400" y="378" fontSize="20" fill="var(--rp-c-text-2)">
+    {'ReactLynx 编译'}
+  </text>
+  <rect
+    x="610"
+    y="300"
+    width="250"
+    height="110"
+    rx="12"
+    fill="var(--rp-c-bg)"
+    stroke="var(--rp-c-divider)"
+    strokeWidth="1.5"
+    strokeDasharray="6 6"
+  />
+  <text x="735" y="340" fontSize="23">
+    {'其他框架插件'}
+  </text>
+  <text x="735" y="378" fontSize="20" fill="var(--rp-c-text-2)">
+    {'未来'}
+  </text>
+  <rect x="20" y="450" width="220" height="90" fill="var(--rp-c-bg)" />
+  <rect x="790" y="465" width="200" height="60" fill="var(--rp-c-bg)" />
+  <rect x="260" y="465" width="280" height="60" fill="var(--rp-c-bg)" />
+  <text x="130" y="468" fontSize="20" fill="var(--rp-c-text-2)">
+    {'顶层的 Lynx'}
+  </text>
+  <text x="130" y="496" fontSize="20" fill="var(--rp-c-text-2)">
+    {'配置项由'}
+  </text>
+  <text x="130" y="524" fontSize="20" fill="var(--rp-c-text-2)">
+    {'Rspeedy 转交'}
+  </text>
+  <text x="890" y="482" fontSize="20" fill="var(--rp-c-text-2)">
+    {'在 plugins 中'}
+  </text>
+  <text x="890" y="510" fontSize="20" fill="var(--rp-c-text-2)">
+    {'显式配置'}
+  </text>
+  <text x="400" y="482" fontSize="20" fill="var(--rp-c-text-2)">
+    {'未配置 pluginLynx 时'}
+  </text>
+  <text x="400" y="510" fontSize="20" fill="var(--rp-c-text-2)">
+    {'自动添加并使用默认配置'}
+  </text>
+  <rect
+    x="60"
+    y="570"
+    width="880"
+    height="140"
+    rx="16"
+    fill="var(--rp-c-brand-tint)"
+    stroke="var(--rp-c-brand)"
+    strokeWidth="1.5"
+  />
+  <text x="500" y="616" fill="var(--rp-c-brand)">
+    {'pluginLynx'}
+  </text>
+  <text x="500" y="664" fontSize="20" fill="var(--rp-c-text-2)">
+    {'Lynx 特有的配置项 · 默认值 · 构建适配'}
+  </text>
+  <rect
+    x="300"
+    y="770"
+    width="400"
+    height="70"
+    rx="12"
+    fill="var(--rp-c-bg)"
+    stroke="var(--rp-c-divider)"
+    strokeWidth="1.5"
+  />
+  <text x="500" y="805">
+    {'Rspack'}
+  </text>
+</svg>
+
+ReactLynx 的编译仍由 [`pluginReactLynx()`](/api/packages/react-rsbuild-plugin/functions/pluginReactLynx) 负责。原生 Rsbuild 项目如果不需要调整 Lynx 特有的配置项，只需添加 `pluginReactLynx()`。它会自动添加使用默认配置的 `pluginLynx`，如果显式配置了 `pluginLynx`，`pluginReactLynx()` 不会重复添加。
+
+未来，其他框架也可以通过各自的插件接入（例如 [`pluginVueLynx`](https://vue.lynxjs.org/guide/api/plugin/Function.pluginVueLynx)），复用 `pluginLynx` 中的 Lynx 特有的配置项。
+
+### Rspeedy 插件就是 Rsbuild 插件
+
+我们在 Rspeedy 设计时就没有引入新的插件 API，所有插件都使用 `...-rsbuild-plugin` 的格式命名。这也是因为我们希望插件保持对 Rsbuild 的兼容性，现在迁移原生 Rsbuild 之后 Lynx 所有的 Rsbuild 插件都能直接像往常在 Rspeedy 那样正常工作。（比如 [`@lynx-js/qrcode-rsbuild-plugin`](/api/packages/qrcode-rsbuild-plugin)、[`@lynx-js/external-bundle-rsbuild-plugin`](/api/packages/external-bundle-rsbuild-plugin)）
+
+### 使用原生 Rsbuild 的优势
+
+- **配置直接参照 Rsbuild 文档。** 此前使用 Rsbuild 配置时，需要先确认它在 Rspeedy 中是否可用、名称是否一致。现在可以直接参照 [Rsbuild 文档](https://rsbuild.rs/zh/)，Lynx 特有的配置项则查看 [Lynx 构建配置参考](/api/build/index)。
+- **直接使用 Rsbuild 插件。** 例如接入 Rsdoctor 时，不再使用 Rspeedy 的 [`tools.rsdoctor`](/api/packages/rspeedy/interfaces/Tools#rsdoctor)，直接参考 [Rsdoctor 的快速上手](https://rsdoctor.rs/zh/guide/start/quick-start)配置即可。
+- **工具链一致。** 应用使用 Rsbuild，组件库使用 [Rslib](https://rslib.rs/zh/)，测试使用 [Rstest](https://rstest.rs/zh/)，它们的配置风格和文档体系一致。
+- **Agent 更容易理解配置。** 配置直接遵循 Rsbuild 的用法，Agent 不需要再理解 Rspeedy 与 Rsbuild 之间的配置转换。可安装 [Rstack Agent Skills](https://github.com/rstackjs/agent-skills) 中的最佳实践技能：
+
+  <PackageManagerTabs
+    command="skills add rstackjs/agent-skills --skill rsbuild-best-practices"
+    dlx
+  />
+
+  同一仓库还提供 [Rslib](https://github.com/rstackjs/agent-skills#rslib-skills)、[Rstest](https://github.com/rstackjs/agent-skills#rstest-skills) 和[构建分析相关技能](https://github.com/rstackjs/agent-skills#rsdoctor-analysis)，可按项目需要选用。
+
+## 使用原生 Rsbuild
+
+### 新 Lynx 项目
+
+新 Lynx 项目推荐使用 [`@lynx-js/create-lynx`](https://github.com/lynx-family/lynx-stack/tree/main/packages/rspeedy/create-lynx) 创建。
+
+<PackageManagerTabs command="create @lynx-js/lynx@latest" />
+
+Lynx 应用可以按提示选择 Rsbuild 和 [TypeScript](/guide/build/typescript)。ReactLynx 组件库则按提示选择 Rslib 和 TypeScript，构建配置、类型声明与发布方式见 [Rslib 的 ReactLynx 指南](https://rslib.rs/guide/solution/reactlynx)。
+
+应用模板和组件库模板都配置了 [Rstest](https://rstest.rs/zh/) 与 [ReactLynx Testing Library](/api/react/testing-library/index)。
+
+### Rspeedy 迁移到原生 Rsbuild
+
+完整迁移步骤见 [Rspeedy 迁移指南](/guide/build/rspeedy#migrating-an-rspeedy-project)。
+
+这里有一个最小示例，原有的 `lynx.config.ts` 配置了 [`output.filename.bundle`](/api/build/output/filename/bundle) 来修改 Bundle 文件名。
+
+将 [`lynx.config.ts`](/api/packages/rspeedy) 改名为 [`rsbuild.config.ts`](https://rsbuild.rs/zh/config/)，配置改动如下：
+
+```diff title="lynx.config.ts → rsbuild.config.ts"
+ import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+-import { defineConfig } from '@lynx-js/rspeedy';
++import { pluginLynx } from '@lynx-js/rsbuild-plugin';
++import { defineConfig } from '@rsbuild/core';
+
+ export default defineConfig({
+   source: {
+     entry: { main: './src/index.tsx' },
+   },
+-  output: {
+-    filename: { bundle: 'app.lynx.bundle' },
+-  },
+-  plugins: [pluginReactLynx()],
++  plugins: [
++    pluginLynx({
++      output: {
++        filename: { bundle: 'app.lynx.bundle' },
++      },
++    }),
++    pluginReactLynx(),
++  ],
+ });
+```
+
+### 继续使用 Rspeedy
+
+Rspeedy 我们仍然会继续维护，现有项目无需立即迁移。但是在本次支持原生 Rsbuild 的过程中，我们做了很多破坏性变更，来进一步缩小 Rspeedy 和 Rsbuild 的配置差异。
+
+继续使用 Rspeedy 的项目，从 0.15 升级时需要注意以下破坏性变更：
+
+- **0.17 移除 [`dev.client`](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/core/CHANGELOG.md#0170)**：使用该配置项的项目需将其删除。这是 Rspeedy 最开始因为没有原生 WebSocket 而使用的 Polyfill 配置入口，目前 Lynx 已经原生支持 [`LynxWebSocketModule`](https://github.com/lynx-family/lynx-stack/tree/main/packages/rspeedy/websocket)，业务不再需要这个配置。
+- **0.18 对齐 Rsbuild 的 [CSS Modules](https://rsbuild.rs/zh/config/output/css-modules#cssmoduleslocalidentname) 默认类名**：开发环境对齐 Rsbuild 的默认值 `[path][name]__[local]-[hash:base64:6]`，生产环境不变。
+- **0.18 对齐 Rsbuild，默认关闭开发进度条**：需要时可显式开启 [`dev.progressBar`](https://rsbuild.rs/zh/config/dev/progress-bar)。
+- **产物结构调整**：0.17 将中间产物目录从 `.rspeedy/` 改为 `.lynx/`，并移除 [`output.distPath.intermediate`](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/core/CHANGELOG.md#0170)。[`@lynx-js/template-webpack-plugin`](https://github.com/lynx-family/lynx-stack/tree/main/packages/webpack/template-webpack-plugin) [0.14.0](https://github.com/lynx-family/lynx-stack/blob/main/packages/webpack/template-webpack-plugin/CHANGELOG.md#0140) 将懒加载组件产物的默认目录从 `async/` 改为 `lazy-bundle/`。
+
+完整版本记录见 [CHANGELOG](https://github.com/lynx-family/lynx-stack/blob/main/packages/rspeedy/core/CHANGELOG.md)。
+
+[`pluginLynx`]: /api/packages/rsbuild-plugin/index
