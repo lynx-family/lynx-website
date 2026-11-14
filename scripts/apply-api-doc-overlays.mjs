@@ -3,6 +3,7 @@
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { applyLynxtronWebHostDocOverlays } from './apply-lynxtron-web-host-doc-overlays.mjs';
 
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 
@@ -145,3 +146,5 @@ ${content.trimEnd()}
     console.log(`Added the Lynx Go example to docs/${locale}/${page}`);
   }
 }
+
+await applyLynxtronWebHostDocOverlays();

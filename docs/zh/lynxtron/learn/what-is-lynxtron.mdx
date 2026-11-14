@@ -37,6 +37,8 @@ UI 层就是标准的 Lynx。你可以使用 Lynx 支持的运行时 DSL（如 R
 
 与 Electron 的多进程模型（主进程 + 渲染进程）不同，Lynxtron 运行在**单个进程**中，通过**主线程 + Lynx 后台线程**形成和 Electron 双进程模型对偶的双线程隔离；其中 Lynx 后台线程可以被多个窗口共享，也可以为窗口使用独立后台线程。
 
+本文中的 **Electron Renderer** 指 Electron 的 Chromium 渲染进程。Lynxtron 使用 Lynx 渲染 UI，没有与之对应的独立 Chromium 渲染进程：输入、布局和渲染由主线程承担，UI 业务逻辑主要在 Lynx 后台线程执行。因此，下表描述的是职责对应关系，并不表示 Lynxtron 中存在一个 Renderer 进程或名为 Renderer 的线程。
+
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/lynxtron-architecture.png"
   alt="Lynxtron 单进程双线程架构"
@@ -90,6 +92,19 @@ Lynxtron 有三种线程间通信模式，对应 [Electron 的 IPC](https://www.
 BTS 所在的 Lynx 后台线程直接运行在 Node.js 上，但 BTS 仍然处于隔离 context，不是 Node.js 全局环境，不能直接访问 Node.js 接口；所有 Node.js 能力都需要经过 preload scripts 显式暴露。
 
 → [了解更多：Lynxtron 中 Node.js 与 Lynx 的通信](/lynxtron/learn/Communication-Between-Node-And-Lynx)
+
+## 原生能力接入
+
+Lynxtron 的原生能力可以供 Node.js 宿主或 Lynx UI 调用：
+
+| 调用环境               | 接入方式                                                                   | 能力如何生效                                                                                                                                                            |
+| ---------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 在 Node.js 中调用      | [Node.js addon](/zh/lynxtron/Native-Libraries/NodeJS-Native-Modules)       | 通过 `import` 或 `require` 加载包的宿主入口；根据运行时 ABI 兼容性决定是否 rebuild                                                                                      |
+| 在 Lynx runtime 中调用 | [Lynx native library](/zh/lynxtron/Native-Libraries/Lynx-Native-Libraries) | 通过[静态注册宏](/zh/lynxtron/api/@lynx-js/lynx-library-headers/index.mdx)注册模块和元素。加载或链接 library 后，Lynx 即可使用这些能力。AutoLink 可以生成宿主侧加载代码 |
+
+library 作者推荐使用注册宏：`LYNX_REGISTER_NATIVE_MODULE` 通过 `lynx_env_register_native_module` 注册原生模块；`LYNX_REGISTER_ELEMENT` 通过 `lynx_env_register_extension_module` 注册扩展模块，由该模块在 Lynx 视图创建时注册元素。
+
+同一个 library 可以同时提供两类能力。加载其 Node.js 入口，不代表它导出的接口会自动成为 Lynx `NativeModules`；library 需要单独注册 Lynx 能力。
 
 ## 下一步
 

@@ -1,0 +1,148 @@
+import Go from '@lynx/go/Go';
+
+# Running Lynxtron on the Web
+
+Lynxtron can share Lynx UI code between a desktop application and a browser. The Web target uses Lynx for Web and browser implementations of host capabilities. Create a project with Web support to keep both targets in the same project.
+
+## Create and run a Web target
+
+Follow the [Quick Start](/lynxtron/introduction) to prepare your development environment, then explicitly enable Web support:
+
+```bash
+npm create @lynx-js/lynxtron@latest my-app -- --web
+cd my-app
+npm install
+npm run dev:web
+```
+
+Open the browser URL printed by the Web development server. Use `npm run dev` to run the desktop target instead.
+
+To build and preview the Web output locally:
+
+```bash
+npm run build:web
+npm run start:web
+```
+
+The template's `start:web` script builds the Web target again and serves `dist/web`. Serve these files over HTTP; opening `index.html` through a `file:` URL does not provide the same script and Worker loading environment.
+
+The [create-lynxtron CLI](/lynxtron/api/@lynx-js/create-lynxtron/index.mdx) keeps or removes Web files, dependencies, scripts, and configuration according to `--web` or `--no-web`.
+
+## Share host capability interfaces with Symmetric Host
+
+To run the same Lynx UI on desktop and Web, the host capabilities it calls also need consistent interfaces. For example, when the UI requests a dialog, the desktop host opens a native dialog and the Web host opens a browser dialog.
+
+Lynxtron uses the **Symmetric Host** pattern to organize these capabilities: shared UI calls a consistent host interface, each host implements it using its own platform APIs, and adapters handle the differences.
+
+In the generated template, the two host capability paths are:
+
+| UI interface                   | Desktop implementation                                                           | Web implementation                                                                               |
+| ------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `NativeModules.bridge`         | Registered desktop host handlers                                                 | Handlers registered through `setupSymmetricHost`, running on the browser main thread through RPC |
+| `NativeModules.nodejs.exposed` | Capabilities exported by Node.js preload through `contextBridge.exposeInLynxBTS` | Capabilities exported by a Web adapter script loaded into the Lynx background Worker             |
+
+The `nodejs` module name preserves the UI interface; it does not give the browser a Node.js runtime. Implement filesystem, native window, and other desktop capabilities with browser alternatives where available, or make unsupported operations explicit. The browser main thread and the Lynx background Worker have different APIs: keep DOM access in the host, and keep Worker-compatible logic in the background adapter.
+
+## Explore shared UI with Notes
+
+Create a note, edit its content, and save it in the Web preview below. Then inspect `src/app/api.ts` in the source panel: `getNotesApi` presents one business API to the UI and adapts it to the available desktop or Web module.
+
+<Go
+  example="cross-platform-notes"
+  designWidth={800}
+  designHeight={600}
+  defaultFile="src/app/api.ts"
+  defaultEntryName="main"
+  deepLinkUrl="lynxtron-go://showcase/open?id=@lynxtron-examples/cross-platform-notes"
+  defaultTab="web"
+  webPreviewMode="responsive"
+  highlight="{71-87,151-178,182-217}"
+  nativeFramework="lynxtron"
+/>
+
+The desktop adapter stores notes in the filesystem, while the browser adapter uses `localStorage`. The UI keeps the same list, edit, and save operations. This example manually registers a `webNotes` module and unifies the business API; it does not call `setupSymmetricHost`. The next sections explain the generated template’s host setup.
+
+## Generated project layout
+
+| File or directory                    | Responsibility                                                           |
+| ------------------------------------ | ------------------------------------------------------------------------ |
+| `src/app/`                           | Shared Lynx UI and calls to host capabilities                            |
+| `src/main/desktop/main.ts`           | Desktop process and window setup                                         |
+| `src/main/desktop/preload.ts`        | Desktop capabilities exported to Lynx through the context bridge         |
+| `src/main/web/web-host.ts`           | Browser entry, `<lynx-view>` creation, and Web host setup                |
+| `src/main/web/nodejs_adapter_web.ts` | Web background adapter exporting capabilities through the context bridge |
+| `src/main/web/index.html`            | HTML entry for the browser host                                          |
+| `lynx.config.ts`                     | Lynx UI build configuration for desktop and Web                          |
+| `rsbuild.config.ts`                  | Host builds, adapter output, and the Web development server              |
+
+The template builds the Web adapter as `nodejs-adapter-web.js` and places the Web host and UI bundle in `dist/web`. Keep adapter URLs aligned with the host build configuration.
+
+## Register a browser main-thread capability
+
+[`setupSymmetricHost`](/lynxtron/api/@lynx-js/lynxtron/web-host/Function.setupSymmetricHost.mdx) runs in the browser main thread and configures Native Modules on a `<lynx-view>`. Import it from `@lynx-js/lynxtron/web-host`; use the desktop package entry only in desktop code.
+
+The following is a minimal bridge-only example. Replace `src/main/web/web-host.ts` with this entry and use the UI below. Register the host before setting the bundle URL and mounting the view.
+
+```ts title="src/main/web/web-host.ts"
+import '@lynx-js/web-core/client';
+import { setupSymmetricHost } from '@lynx-js/lynxtron/web-host';
+
+const lynxView = document.createElement('lynx-view');
+lynxView.style.cssText = 'display:block;width:100vw;height:100vh';
+
+setupSymmetricHost(lynxView, {
+  bridge: {
+    showDialog(data: { message: string }) {
+      window.alert(data.message);
+      return { shown: true };
+    },
+  },
+});
+
+lynxView.setAttribute('url', './main.web.bundle');
+document.body.replaceChildren(lynxView);
+```
+
+Call the registered method from a Lynx background event handler. The Web bridge delivers the handler's result to the trailing callback; do not rely on the proxy's Promise resolving to that result.
+
+```tsx title="src/app/App.tsx"
+export function App() {
+  function showDialog() {
+    'background only';
+    NativeModules.bridge.showDialog(
+      { message: 'Hello from Lynx UI' },
+      (result: { shown: boolean }) => console.log(result.shown),
+    );
+  }
+
+  return <text bindtap={showDialog}>Show dialog</text>;
+}
+```
+
+This example registers only `bridge`. It does not register `nodejs`; the original template UI, which calls `NativeModules.nodejs.exposed.echo`, needs the background adapter as well. To share this new UI with desktop, register the same `showDialog` method on the desktop host.
+
+## Export background adapter capabilities
+
+The generated Web adapter uses the cross-platform context bridge import:
+
+```ts title="src/main/web/nodejs_adapter_web.ts"
+import { contextBridge } from '@lynx-js/lynxtron/context-bridge';
+
+contextBridge.exposeInLynxBTS({
+  echo(message: string) {
+    return `Echo from Web: ${message}`;
+  },
+});
+```
+
+The current Web host implementation loads the built adapter script into the Lynx background Worker and exposes its exports as `NativeModules.nodejs.exposed`. It uses `importScripts`, so the adapter must be built as a Worker-compatible script rather than passed as raw TypeScript or an unbundled ES module.
+
+Configure the built adapter with `nodejs.scriptURL`. Here, `lynxView` is the browser element created above:
+
+```ts
+setupSymmetricHost(lynxView, {
+  nodejs: { scriptURL: './nodejs-adapter-web.js' },
+});
+```
+
+Configure `bridge` and `nodejs` together in one call when you need both. The current implementation assigns a new `nativeModulesMap` and `onNativeModulesCall`; repeated calls replace the previous registration rather than adding to it.
