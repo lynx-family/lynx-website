@@ -49,7 +49,7 @@ const DrawerContent = React.forwardRef<
 
   // Floating side drawers: inset from viewport edges (macOS-style) + animate past the gap
   const sideDrawerGap = 12
-  const sideDrawerStyle = isHorizontal
+  const sideDrawerStyle: (React.CSSProperties & { '--initial-transform'?: string }) | undefined = isHorizontal
     ? {
         ...style,
         ...(direction === "right" && {
@@ -62,8 +62,8 @@ const DrawerContent = React.forwardRef<
           top: `${sideDrawerGap}px`,
           bottom: `${sideDrawerGap}px`,
         }),
-        '--initial-transform': `calc(100% + ${sideDrawerGap}px)` as React.CSSProperties['--initial-transform'],
-      } as React.CSSProperties
+        '--initial-transform': `calc(100% + ${sideDrawerGap}px)`,
+      }
     : style
 
   return (
@@ -86,13 +86,8 @@ const DrawerContent = React.forwardRef<
         style={sideDrawerStyle}
         {...props}
       >
-        {/* Handle bar - horizontal for vertical drawers, vertical for horizontal drawers */}
-        {isHorizontal ? (
-          <div className={cn(
-            "absolute top-1/2 -translate-y-1/2 h-[100px] w-2 rounded-full bg-muted",
-            direction === "right" ? "left-4" : "right-4"
-          )} />
-        ) : (
+        {/* Top handle for vertical drawers; side drawers keep the content clear. */}
+        {!isHorizontal && (
           <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
         )}
         {children}

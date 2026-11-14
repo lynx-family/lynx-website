@@ -2,7 +2,7 @@ import versionData from '@version-data';
 
 import { Link } from '@rspress/core/theme';
 
-import { useI18n } from '@rspress/core/runtime';
+import { useI18n } from '../hooks/use-i18n';
 
 type VersionTableProps = {
   type: 'developing' | 'release_candidate' | 'latest' | 'previous';
@@ -10,9 +10,7 @@ type VersionTableProps = {
 
 export function VersionTable({ type }: VersionTableProps) {
   const t = useI18n();
-  const versionList = versionData.versions.filter(
-    (item: any) => item.type === type,
-  );
+  const versionList = versionData.versions.filter((item) => item.type === type);
   if (versionList.length === 0) {
     return null;
   }
@@ -55,7 +53,7 @@ export function VersionTable({ type }: VersionTableProps) {
         </thead>
 
         <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-          {versionList.map((item: any) => (
+          {versionList.map((item) => (
             <tr key={item.version_number}>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                 {item.version_number ?? '---'}

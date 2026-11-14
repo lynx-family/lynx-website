@@ -105,6 +105,10 @@ try {
   }
 
   const requiredEntries = [
+    'package/dist/index.js',
+    'package/dist/index.d.ts',
+    'package/dist/types/types.d.ts',
+    'package/dist/platforms/platforms.json',
     'package/web-css-support.json',
     'package/css/properties/align-content.json',
     'package/css/properties/background-color.json',
@@ -141,8 +145,67 @@ try {
   );
   JSON.parse(fs.readFileSync(installedJsonPath, 'utf8'));
 
+  run(
+    process.execPath,
+    [
+      '--input-type=module',
+      '--eval',
+      `
+import assert from 'node:assert/strict';
+import { getFullPlatformName, isPlatformName } from '${packageJson.name}';
+assert.equal(getFullPlatformName('android'), 'Android');
+assert.equal(isPlatformName('android'), true);
+assert.equal(isPlatformName('not-a-platform'), false);
+`,
+    ],
+    { cwd: consumerDir },
+  );
+
+  fs.writeFileSync(
+    path.join(consumerDir, 'consumer.ts'),
+    `
+import {
+  getFullPlatformName,
+  isPlatformName,
+  type PlatformName,
+} from '${packageJson.name}';
+
+const platform: PlatformName = 'android';
+const label: string = getFullPlatformName(platform);
+const candidate: string = 'ios';
+if (isPlatformName(candidate)) {
+  getFullPlatformName(candidate);
+}
+// @ts-expect-error Platform keys remain constrained at the package boundary.
+getFullPlatformName('not-a-platform');
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'tsconfig.json'),
+    JSON.stringify({
+      compilerOptions: {
+        target: 'ES2020',
+        module: 'NodeNext',
+        moduleResolution: 'NodeNext',
+        strict: true,
+        noEmit: true,
+        types: [],
+      },
+      files: ['consumer.ts'],
+    }),
+  );
+  run(
+    process.execPath,
+    [
+      fileURLToPath(import.meta.resolve('typescript/bin/tsc')),
+      '--project',
+      path.join(consumerDir, 'tsconfig.json'),
+    ],
+    { cwd: consumerDir },
+  );
+
   console.log(
-    `[pack-check] ${packageJson.name} tarball contains ${generatedFiles.length} CSS property files and installs cleanly.`,
+    `[pack-check] ${packageJson.name} tarball contains ${generatedFiles.length} CSS property files; JSON access, helper imports, and consumer types pass.`,
   );
 } finally {
   fs.rmSync(packDir, { recursive: true, force: true });

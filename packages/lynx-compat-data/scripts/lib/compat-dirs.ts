@@ -16,6 +16,7 @@ const rootDir = path.join(dirname, '..', '..');
  * Directories that are not compat data directories.
  * These are excluded from validation and linting:
  * - .vscode: IDE configuration
+ * - dist: Compiled helper runtime and declarations
  * - platforms: Platform definitions (separate schema)
  * - schemas: JSON schemas for validation
  * - scripts: Build/lint scripts
@@ -25,6 +26,7 @@ const rootDir = path.join(dirname, '..', '..');
  */
 const EXCLUDED_DIRS = [
   '.vscode',
+  'dist',
   'platforms',
   'schemas',
   'scripts',

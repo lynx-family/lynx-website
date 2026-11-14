@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface GridBackgroundProps {
   gridSize?: number;
@@ -126,10 +126,10 @@ class Meteor {
   }
 }
 
-const MeteorsBackground: React.FC<GridBackgroundProps> = ({
+const MeteorsBackground = ({
   gridSize = 30,
   meteorCount = 20,
-}) => {
+}: GridBackgroundProps) => {
   if (import.meta.env.SSG_MD) {
     return null;
   }

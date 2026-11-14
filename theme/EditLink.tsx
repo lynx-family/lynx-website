@@ -1,4 +1,5 @@
-import { useI18n, usePageData } from '@rspress/core/runtime';
+import { usePageData } from '@rspress/core/runtime';
+import { useI18n } from '@/hooks/use-i18n';
 import {
   EditLink as OriginalEditLink,
   IconEdit,

@@ -128,6 +128,15 @@ const sTO = sTO['lynx-api'].global.setTimeout as Identifier;
 
 But to make it more robust, we have also exported utility functions to help you work with the data in a type-safe manner at runtime.
 
+For example, use the platform-name helper without accessing the platform JSON
+structure in the caller:
+
+```ts
+import { getFullPlatformName } from '@lynx-js/lynx-compat-data';
+
+getFullPlatformName('android'); // "Android"
+```
+
 ```ts
 import { isPlatformStatement } from '@lynx-js/lynx-compat-data';
 import iosJson from '@lynx-js/lynx-compat-data/platforms/ios.json';
@@ -212,8 +221,9 @@ The build process consists of the following steps:
    ```bash
    pnpm run gen-css
    ```
-2. **Generate TypeScript declarations** for all JSON data files.
-3. **Generate platforms data**.
+2. **Generate platforms data**.
+3. **Generate TypeScript declarations** for all JSON data files.
+4. **Compile runtime helpers and their declarations**.
 
 Run all build steps at once:
 
@@ -221,10 +231,45 @@ Run all build steps at once:
 pnpm run build
 ```
 
+The build also compiles `index.ts` into the helper runtime and declarations in
+`dist/`. To refresh only those entry points after editing helpers or data types:
+
+```bash
+pnpm run build:runtime
+```
+
+The package root exports data types and runtime helpers such as
+`getFullPlatformName` and `isPlatformStatement`. JSON subpaths remain available.
+The website's `prepare` lifecycle runs `build:package` for local consumers.
+Generated `dist/` files are not committed.
+
+### Prepare package artifacts
+
+From the OSS repository root, prepare the package for a workspace or submodule
+consumer with one command:
+
+```bash
+pnpm --filter @lynx-js/lynx-compat-data run build:package
+```
+
+This generates CSS property data, fixes key names, validates compatibility data,
+and compiles the helper runtime and declarations. It uses the committed platform
+metadata and schema types; `build` additionally regenerates those maintained
+files.
+
+Published packages already include generated CSS and `dist/`. Consumers can
+reuse complete artifacts from an installed package or a prepared OSS checkout.
+If either output is missing, install the OSS checkout's dependencies and run
+`build:package` there before copying the package into the consuming site.
+
+Site-specific statistics are generated after any data overlays are applied.
+Pass the consuming site's documentation root to `gen-stats` with `--docs-root`
+or `LYNX_COMPAT_DOCS_ROOT`; `build:package` does not choose a site's routes.
+
 ### Package
 
-Before packing or publishing, the `prepack` lifecycle generates CSS property
-compatibility data, fixes generated key names, and validates the package data.
+Before packing or publishing, the `prepack` lifecycle runs `build:package`,
+using the same artifact preparation as workspace and submodule consumers.
 
 To verify the packed package contract locally:
 
@@ -235,7 +280,8 @@ pnpm run pack:check
 This check creates a package tarball, verifies that generated
 `css/properties/*.json` files are included, installs the tarball into a clean
 temporary consumer with scripts disabled, and reads
-`css/properties/custom-property.json`.
+`css/properties/custom-property.json`. It also imports runtime helpers from the
+package root and type-checks a consumer using both helpers and data types.
 
 ### Test
 

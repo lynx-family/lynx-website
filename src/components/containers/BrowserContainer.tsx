@@ -5,7 +5,7 @@ type BrowserContainerProps = {
   children: React.ReactNode;
 };
 
-const BrowserContainer: React.FC<BrowserContainerProps> = ({ children }) => {
+const BrowserContainer = ({ children }: BrowserContainerProps) => {
   return (
     <div className="lynx-doc-component-browser-container">
       <div className="lynx-doc-component-header">

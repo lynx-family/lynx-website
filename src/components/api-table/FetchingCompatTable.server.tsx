@@ -1,7 +1,9 @@
 import React from 'react';
 import type * as LCD from '@lynx-js/lynx-compat-data';
+import { useLang } from '@rspress/core/runtime';
 import fs from 'fs';
 import path from 'path';
+import { localizeMdnUrl } from './compat-table/links';
 
 const LCD_BASE_PATH = path?.join?.(
   __dirname,
@@ -85,6 +87,8 @@ type FetchingCompatTableProps = {
  * loads source code and fetches the data from the server-side file system.
  */
 export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
+  const locale = useLang();
+
   // Use the utility function within useMemo
   const { module, accessor } = React.useMemo(() => parseQuery(query), [query]);
 
@@ -146,10 +150,9 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
     }
 
     // MDN URL
-    if (compat.mdn_url) {
-      parts.push(
-        `**MDN Reference:** [${compat.mdn_url}](${compat.mdn_url})\n\n`,
-      );
+    const mdnUrl = localizeMdnUrl(compat.mdn_url, locale);
+    if (mdnUrl) {
+      parts.push(`**MDN Reference:** [${mdnUrl}](${mdnUrl})\n\n`);
     }
 
     // Spec URLs
@@ -238,7 +241,7 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
     }
 
     return parts.join('');
-  }, [compatData, platformData, accessor, query, module]);
+  }, [compatData, platformData, accessor, query, module, locale]);
 
   return <>{markdownContent}</>;
 }

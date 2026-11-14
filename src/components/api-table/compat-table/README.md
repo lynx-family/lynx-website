@@ -2,7 +2,17 @@
 
 The Compatibility Table component displays feature compatibility across platforms.
 
-This component is a **presentational** component awaiting a data-fetching container. It serves as a precursor to the `<FetchingCompatTable>` (the internal implementation of `<APITable>` used in the docs).
+`CompatTable` renders compatibility data supplied through props.
+`FetchingCompatTable` loads that data and lazy-loads the table component.
+`APITable` is the documentation entry point: it reads the query from props or
+page frontmatter and renders `FetchingCompatTable`.
+
+`CompatTable` retains an internal client-side error boundary that displays a
+fallback when its child components fail to render. `FetchingCompatTable` owns
+loading and fetch error states, and provides an additional error boundary for
+table code loading failures and errors thrown by `CompatTable` itself.
+Neither boundary reports errors to a monitoring service.
+Use `<APITable>` in documentation for data loading and this error handling.
 
 ## License
 
@@ -13,6 +23,11 @@ The source files in this directory are licensed under the **Mozilla Public Licen
 If a copy of the MPL was not distributed with these files, you can obtain one at <http://mozilla.org/MPL/2.0/>.
 
 ## Usage
+
+The example below renders `CompatTable` directly, bypassing `APITable` and
+`FetchingCompatTable`. The caller supplies data and retains the table's internal
+error boundary. Errors thrown by `CompatTable` itself, such as empty data, still
+require a caller-provided boundary.
 
 ```tsx
 // Import the data statically

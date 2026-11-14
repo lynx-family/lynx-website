@@ -6,8 +6,10 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "types": "types/types.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
+    "dist",
     "types",
     "lynx-api",
     "lynx-native-api",
@@ -21,14 +23,16 @@
     "test"
   ],
   "scripts": {
-    "build": "npm run gen-css && npm run lint && (npm run gen-platforms & npm run gen-types)",
+    "build": "npm run gen-css && npm run lint && npm run gen-platforms && npm run gen-types && npm run build:runtime",
+    "build:package": "npm run gen-css && npm run lint:keys -- --fix && npm run lint && npm run build:runtime",
+    "build:runtime": "node scripts/build-runtime.mjs",
     "gen-css": "node --loader=ts-node/esm --no-warnings=ExperimentalWarning scripts/generate-css-from-defines.ts",
     "gen-platforms": "node --loader=ts-node/esm --no-warnings=ExperimentalWarning scripts/gen-platforms.ts",
     "gen-stats": "node --loader=ts-node/esm --no-warnings=ExperimentalWarning scripts/generate-stats.ts",
     "gen-types": "node --loader=ts-node/esm --no-warnings=ExperimentalWarning scripts/gen-types.ts",
     "lint": "node --loader=ts-node/esm --no-warnings=ExperimentalWarning scripts/validate.ts",
     "lint:keys": "node --loader=ts-node/esm --no-warnings=ExperimentalWarning scripts/lint-key-names.ts",
-    "prepack": "npm run gen-css && npm run lint:keys -- --fix && npm run lint",
+    "prepack": "npm run build:package",
     "pack:check": "node scripts/check-pack-contents.mjs",
     "test": "vitest run"
   },

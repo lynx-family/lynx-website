@@ -35,7 +35,7 @@ export interface GalaxyRingsProps {
   style?: React.CSSProperties;
 }
 
-export const GalaxyRings: React.FC<GalaxyRingsProps> = (props) => {
+export const GalaxyRings = (props: GalaxyRingsProps) => {
   const {
     sizePx,
     tiltDeg = 60,

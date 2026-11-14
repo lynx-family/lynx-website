@@ -1,15 +1,19 @@
 import { cn } from '@/lib/utils';
 import { useLang } from '@rspress/core/runtime';
 import React from 'react';
-import { APIItem } from '../APIStatusDashboard';
+import { APIItem } from '../APIItem';
 import { PLATFORM_CONFIG } from '../constants';
 import type { APIStats, DisplayPlatformName, FeatureInfo } from '../types';
 
-const PlatformIcon: React.FC<{
+const PlatformIcon = ({
+  platform,
+  className,
+  style,
+}: {
   platform: string;
   className?: string;
   style?: React.CSSProperties;
-}> = ({ platform, className, style }) => {
+}) => {
   const Icon = PLATFORM_CONFIG[platform]?.icon;
   return Icon ? <Icon className={className} style={style} /> : null;
 };
@@ -41,10 +45,7 @@ interface RecentPageProps {
   selectedPlatforms: DisplayPlatformName[];
 }
 
-export const RecentPage: React.FC<RecentPageProps> = ({
-  stats,
-  selectedPlatforms,
-}) => {
+export const RecentPage = ({ stats, selectedPlatforms }: RecentPageProps) => {
   const lang = useLang();
   const t = lang === 'zh' ? i18n.zh : i18n.en;
 
