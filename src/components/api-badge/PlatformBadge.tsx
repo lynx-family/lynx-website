@@ -1,5 +1,5 @@
 import type * as LCD from '@lynx-js/lynx-compat-data';
-import { getFullPlatformName } from '@lynx-js/lynx-compat-data';
+import platformData from '@lynx-js/lynx-compat-data/platforms/platforms.json';
 import { Badge } from '@rspress/core/theme';
 
 import { PlatformIcon } from '../platform/PlatformIcon';
@@ -28,7 +28,7 @@ function mapPlatformNameToTechnicalName(platform: ExtendedPlatformName) {
   if (platform === 'windows') {
     return 'Windows';
   }
-  return getFullPlatformName(platform);
+  return platformData.platforms[platform].name;
 }
 
 /**
@@ -61,7 +61,6 @@ const TYPE_TO_MODIFIER: Record<NonNullable<BadgeProps['type']>, string> = {
   warning: 'platform-badge--only',
   danger: 'platform-badge--no',
   tip: '',
-  note: '',
 };
 
 /**
@@ -171,7 +170,10 @@ function createNoPlatformComponent(platform: ExtendedPlatformName) {
 }
 
 // Generate components
-const generatedComponents: Record<string, React.FC> = {};
+const generatedComponents: Record<
+  string,
+  ReturnType<typeof createPlatformOnlyComponent>
+> = {};
 
 for (const platform of platformNames) {
   // Component name derivation MUST use the technical name so `ClayOnly` and
@@ -185,18 +187,16 @@ for (const platform of platformNames) {
   const componentNameOnly = `${name}Only`;
   const componentNameNo = `No${name}`;
 
-  const PlatformOnly = createPlatformOnlyComponent(platform);
-  const NoPlatform = createNoPlatformComponent(platform);
+  const PlatformOnly = Object.assign(createPlatformOnlyComponent(platform), {
+    displayName: componentNameOnly,
+  });
+  const NoPlatform = Object.assign(createNoPlatformComponent(platform), {
+    displayName: componentNameNo,
+  });
 
   // Assign to generatedComponents object with the correct names
   generatedComponents[componentNameOnly] = PlatformOnly;
   generatedComponents[componentNameNo] = NoPlatform;
-
-  // Set the display names for React DevTools
-  // @ts-ignore
-  PlatformOnly.displayName = componentNameOnly;
-  // @ts-ignore
-  NoPlatform.displayName = componentNameNo;
 }
 
 // Although we can dynamically generate components, we have to explicitly list all exports

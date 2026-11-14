@@ -152,11 +152,15 @@ const CATEGORY_CHARTS = CATEGORY_FILTERS.filter(
   (c) => c.id !== 'all' && c.id !== 'lynx-api',
 );
 
-const PlatformIcon: React.FC<{
+const PlatformIcon = ({
+  platform,
+  className,
+  style,
+}: {
   platform: string;
   className?: string;
   style?: React.CSSProperties;
-}> = ({ platform, className, style }) => {
+}) => {
   const Icon = PLATFORM_CONFIG[platform]?.icon;
   return Icon ? <Icon className={className} style={style} /> : null;
 };
@@ -263,12 +267,12 @@ interface ParityChartProps {
   compact?: boolean;
 }
 
-const ParityChart: React.FC<ParityChartProps> = ({
+const ParityChart = ({
   timeline,
   selectedPlatforms,
   focusScale,
   compact = false,
-}) => {
+}: ParityChartProps) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   if (!timeline || timeline.length < 2) return null;
@@ -521,13 +525,13 @@ interface VersionBrushProps {
   hint: string;
 }
 
-const VersionBrush: React.FC<VersionBrushProps> = ({
+const VersionBrush = ({
   versions,
   startIndex,
   endIndex,
   onChange,
   hint,
-}) => {
+}: VersionBrushProps) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<'start' | 'end' | 'window' | null>(null);
   const dragOriginRef = useRef<{
@@ -691,10 +695,10 @@ interface CoveragePageProps {
   selectedPlatforms: DisplayPlatformName[];
 }
 
-export const CoveragePage: React.FC<CoveragePageProps> = ({
+export const CoveragePage = ({
   stats,
   selectedPlatforms,
-}) => {
+}: CoveragePageProps) => {
   const lang = useLang();
   const t = lang === 'zh' ? i18n.zh : i18n.en;
   const { summary, timeline: baseTimeline, features } = stats;

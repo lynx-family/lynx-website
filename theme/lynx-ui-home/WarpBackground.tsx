@@ -140,7 +140,7 @@ const Beam = ({
   );
 };
 
-export const WarpBackground: React.FC<WarpBackgroundProps> = ({
+export const WarpBackground = ({
   children,
   warpHeight,
   perspective = 100,
@@ -157,7 +157,7 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
   gridSize = beamSize,
   gridLineWidth = 1,
   ...props
-}) => {
+}: WarpBackgroundProps) => {
   const { style, ...restProps } = props;
   const resolvedHeight = warpHeight ?? style?.height ?? '80vh';
 

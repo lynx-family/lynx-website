@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { cn } from '../../lib/utils';
 import { Card, CardContent } from '../ui/card';
 import { Link } from '@rspress/core/theme';
@@ -55,11 +55,11 @@ interface CardLinkGroupProps {
  * @example
  * ```tsx
  * <CardLinkGroup>
- *   <CardLinkGroup.Tab active url="/docs/ios">
+ *   <CardLinkGroup.Tab active to="/docs/ios">
  *     <div className="icon icon-ios bg-current h-8 w-8" />
  *     <span>iOS Documentation</span>
  *   </CardLinkGroup.Tab>
- *   <CardLinkGroup.Tab url="/docs/android">
+ *   <CardLinkGroup.Tab to="/docs/android">
  *     <div className="icon icon-android bg-current h-8 w-8" />
  *     <span>Android Documentation</span>
  *   </CardLinkGroup.Tab>

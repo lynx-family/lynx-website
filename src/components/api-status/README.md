@@ -27,9 +27,9 @@ This system provides real-time visibility into Lynx API compatibility across all
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Runtime                                   │
 ├─────────────────────────────────────────────────────────────────┤
-│  api-stats.json ──▶ APIStatusDashboard.tsx                       │
-│                          ├── CoverageCard.tsx                    │
-│                          ├── CategoryTable.tsx                   │
+│  api-stats.json ──▶ APIStatusLayout.tsx                          │
+│                          ├── pages/                             │
+│                          ├── CategoryTable.tsx ──▶ APIItem.tsx   │
 │                          └── types.ts                            │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -79,22 +79,19 @@ import { APIStatusLayout } from '@api-status';
 
 ## Components
 
-### APIStatusDashboard
+### APIStatusLayout
 
-The main dashboard component with:
+The public dashboard entry with shared platform selection and navigation:
 
-- Hero section with overall statistics
-- Tabbed interface (Overview, Categories, Recently Added)
-- Platform coverage cards
-- Category breakdown table
+- `CoveragePage`: overall coverage and version trends
+- `CategoriesPage`: category breakdowns
+- `RecentPage`: recently added APIs
+- `SearchPage`: filtered API search
 
-### CoverageCard
+### APIItem
 
-A card component showing platform-specific coverage:
-
-- Platform icon and name
-- Coverage percentage with progress bar
-- Supported/total API count
+The shared API button used by search, recent APIs, and expanded categories.
+It shows selected-platform support and opens compatibility details in a drawer.
 
 ### CategoryTable
 

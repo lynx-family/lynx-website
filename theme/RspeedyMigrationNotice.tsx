@@ -1,9 +1,5 @@
-import {
-  removeBase,
-  useI18n,
-  useLang,
-  useLocation,
-} from '@rspress/core/runtime';
+import { removeBase, useLang, useLocation } from '@rspress/core/runtime';
+import { useI18n } from '@/hooks/use-i18n';
 
 import { Callout } from '@rspress/core/theme-original';
 

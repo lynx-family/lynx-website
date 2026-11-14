@@ -1,11 +1,11 @@
-import React from 'react';
+import type React from 'react';
 import { cn } from '../../lib/utils';
 import { Card, CardContent } from '../ui/card';
 import { PlatformIconGroup } from './PlatformIconGroup';
-import { Platform } from './types';
+import type { Platform } from './types';
 import { Link } from '@rspress/core/theme';
 
-interface CardLinkTabProps {
+interface PlatformCardLinkTabProps {
   /** Whether this tab is currently active */
   active?: boolean;
   /** The URL to navigate to when clicked */
@@ -19,15 +19,15 @@ interface CardLinkTabProps {
 }
 
 /**
- * Component for rendering a single card link tab
+ * Component for rendering a single platform card link tab
  */
-const CardLinkTab = ({
+const PlatformCardLinkTab = ({
   active,
   to,
   children,
   className,
   platforms,
-}: CardLinkTabProps) => {
+}: PlatformCardLinkTabProps) => {
   return (
     <Link
       href={to}
@@ -51,7 +51,7 @@ const CardLinkTab = ({
   );
 };
 
-interface CardLinkGroupProps {
+interface PlatformCardLinkGroupProps {
   /** Child components to render within the group */
   children: React.ReactNode;
   /** Optional className for styling */
@@ -64,24 +64,27 @@ interface CardLinkGroupProps {
  *
  * @example
  * ```tsx
- * <CardLinkGroup>
- *   <CardLinkGroup.Tab
+ * <PlatformCardLinkGroup>
+ *   <PlatformCardLinkGroup.Tab
  *     active
  *     to="/docs/ios"
  *     platforms={['ios', 'ios-simulator']}
  *   >
  *     iOS Documentation
- *   </CardLinkGroup.Tab>
- *   <CardLinkGroup.Tab
+ *   </PlatformCardLinkGroup.Tab>
+ *   <PlatformCardLinkGroup.Tab
  *     to="/docs/android"
  *     platforms={['android']}
  *   >
  *     Android Documentation
- *   </CardLinkGroup.Tab>
- * </CardLinkGroup>
+ *   </PlatformCardLinkGroup.Tab>
+ * </PlatformCardLinkGroup>
  * ```
  */
-export const CardLinkGroup = ({ children, className }: CardLinkGroupProps) => {
+export const PlatformCardLinkGroup = ({
+  children,
+  className,
+}: PlatformCardLinkGroupProps) => {
   return (
     <div className={cn('w-full flex flex-wrap gap-4', className)}>
       {children}
@@ -89,4 +92,4 @@ export const CardLinkGroup = ({ children, className }: CardLinkGroupProps) => {
   );
 };
 
-CardLinkGroup.Tab = CardLinkTab;
+PlatformCardLinkGroup.Tab = PlatformCardLinkTab;

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { useLang } from '@rspress/core/runtime';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { CategoryTable, type HighlightMode } from '../CategoryTable';
 import type { APIStats, DisplayPlatformName } from '../types';
 
@@ -24,10 +24,10 @@ interface CategoriesPageProps {
   selectedPlatforms: DisplayPlatformName[];
 }
 
-export const CategoriesPage: React.FC<CategoriesPageProps> = ({
+export const CategoriesPage = ({
   stats,
   selectedPlatforms,
-}) => {
+}: CategoriesPageProps) => {
   const lang = useLang();
   const t = lang === 'zh' ? i18n.zh : i18n.en;
 

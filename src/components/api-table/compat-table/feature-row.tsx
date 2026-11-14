@@ -41,7 +41,7 @@ function getSupportClassName(
   let { flags, version_added, version_removed, partial_implementation } =
     getCurrentSupport(support)!;
 
-  let className;
+  let className: ReturnType<typeof getSupportClassName>;
   if (version_added === null) {
     className = 'unknown';
   } else if (versionIsPreview(version_added, browser)) {
@@ -125,7 +125,7 @@ function labelFromString(
     return <>{version.slice(1)}</>;
   }
   if (version === 'preview') {
-    return browser.preview_name;
+    return 'Preview';
   }
 
   if (browser.type === 'web') {
@@ -232,7 +232,7 @@ const CellText = React.memo(
 
       case 'preview':
         title = 'Preview platform support';
-        label = status.label || browser.preview_name;
+        label = status.label || 'Preview';
         break;
 
       case 'unknown':
@@ -282,7 +282,7 @@ const CellText = React.memo(
   },
 );
 
-function Icon({ name }: { name: string }) {
+function Icon({ name }: { name: keyof typeof LEGEND_LABELS }) {
   const title = LEGEND_LABELS[name] ?? name;
 
   return (
@@ -312,10 +312,8 @@ function CellIcons({ support }: { support: LCD.SupportStatement | undefined }) {
 
 function FlagsNote({
   supportItem,
-  browser,
 }: {
   supportItem: LCD.SimpleSupportStatement;
-  browser: LCD.PlatformStatement;
 }) {
   const hasAddedVersion = typeof supportItem.version_added === 'string';
   const hasRemovedVersion = typeof supportItem.version_removed === 'string';
@@ -348,9 +346,6 @@ function FlagsNote({
         );
       })}
       .
-      {browser.pref_url &&
-        flags.some((flag) => flag.type === 'preference') &&
-        ` To change preferences in ${browser.name}, visit ${browser.pref_url}.`}
     </>
   );
 }
@@ -364,7 +359,11 @@ function getNotes(
       .slice()
       .reverse()
       .flatMap((item, i) => {
-        const supportNotes = [
+        type SupportNote = {
+          iconName: keyof typeof LEGEND_LABELS;
+          label: React.ReactNode;
+        };
+        const noteItems: (SupportNote | SupportNote[] | null)[] = [
           item.version_removed &&
           !asList(support).some(
             (otherItem) => otherItem.version_added === item.version_removed,
@@ -400,7 +399,7 @@ function getNotes(
           item.flags
             ? {
                 iconName: 'disabled',
-                label: <FlagsNote browser={browser} supportItem={item} />,
+                label: <FlagsNote supportItem={item} />,
               }
             : null,
           item.notes
@@ -442,9 +441,8 @@ function getNotes(
                   label: 'No support',
                 }
               : null,
-        ]
-          .flat()
-          .filter(isTruthy);
+        ];
+        const supportNotes = noteItems.flat().filter(isTruthy);
 
         const hasNotes = supportNotes.length > 0;
         return (

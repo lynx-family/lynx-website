@@ -14,7 +14,6 @@
 import type * as LCD from '@lynx-js/lynx-compat-data';
 import { useContext } from 'react';
 import { BrowserInfoContext } from './browser-info';
-import { HIDDEN_BROWSERS } from './index';
 import {
   asList,
   getFirst,
@@ -46,6 +45,7 @@ function getActiveLegendItems(
   compat: LCD.Identifier,
   name: string,
   browserInfo: LCD.Platforms,
+  browsers: LCD.PlatformName[],
 ) {
   const legendItems = new Set<LEGEND_KEY>();
 
@@ -59,19 +59,13 @@ function getActiveLegendItems(
       if (status.deprecated) {
         legendItems.add('deprecated');
       }
-      if (!status.standard_track) {
-        legendItems.add('nonstandard');
-      }
     }
 
-    for (const [browser, browserSupport] of Object.entries(
-      feature.compat.support,
-    )) {
-      if (HIDDEN_BROWSERS.includes(browser)) {
-        continue;
-      }
+    // Explain only the columns displayed by this table.
+    for (const browser of browsers) {
+      const browserSupport = feature.compat.support[browser];
       if (!browserSupport) {
-        legendItems.add('no');
+        legendItems.add('unknown');
         continue;
       }
       const firstSupportItem = getFirst(browserSupport);
@@ -115,17 +109,19 @@ function getActiveLegendItems(
       }
     }
   }
-  return Object.keys(LEGEND_LABELS)
-    .filter((key) => legendItems.has(key as LEGEND_KEY))
-    .map((key) => [key, LEGEND_LABELS[key]]);
+  return (Object.keys(LEGEND_LABELS) as LEGEND_KEY[])
+    .filter((key) => legendItems.has(key))
+    .map((key): [LEGEND_KEY, string] => [key, LEGEND_LABELS[key]]);
 }
 
 export function Legend({
   compat,
   name,
+  browsers,
 }: {
   compat: LCD.Identifier;
   name: string;
+  browsers: LCD.PlatformName[];
 }) {
   const browserInfo = useContext(BrowserInfoContext);
 
@@ -142,32 +138,33 @@ export function Legend({
         Tip: you can click/tap on a cell for more information.
       </p>
       <dl className="bc-legend-items-container">
-        {getActiveLegendItems(compat, name, browserInfo).map(([key, label]) =>
-          ['yes', 'partial', 'no', 'unknown', 'preview'].includes(key) ? (
-            <div className="bc-legend-item" key={key}>
-              <dt className="bc-legend-item-dt" key={key}>
-                <span className={`bc-supports-${key} bc-supports`}>
+        {getActiveLegendItems(compat, name, browserInfo, browsers).map(
+          ([key, label]) =>
+            ['yes', 'partial', 'no', 'unknown', 'preview'].includes(key) ? (
+              <div className="bc-legend-item" key={key}>
+                <dt className="bc-legend-item-dt" key={key}>
+                  <span className={`bc-supports-${key} bc-supports`}>
+                    <abbr
+                      className={`bc-level bc-level-${key} icon icon-${key}`}
+                      title={label}
+                    >
+                      <span className="visually-hidden">{label}</span>
+                    </abbr>
+                  </span>
+                </dt>
+                <dd className="bc-legend-item-dd">{label}</dd>
+              </div>
+            ) : (
+              <div className="bc-legend-item" key={key}>
+                <dt className="bc-legend-item-dt">
                   <abbr
-                    className={`bc-level bc-level-${key} icon icon-${key}`}
+                    className={`legend-icons icon icon-${key}`}
                     title={label}
-                  >
-                    <span className="visually-hidden">{label}</span>
-                  </abbr>
-                </span>
-              </dt>
-              <dd className="bc-legend-item-dd">{label}</dd>
-            </div>
-          ) : (
-            <div className="bc-legend-item" key={key}>
-              <dt className="bc-legend-item-dt">
-                <abbr
-                  className={`legend-icons icon icon-${key}`}
-                  title={label}
-                ></abbr>
-              </dt>
-              <dd className="bc-legend-item-dd">{label}</dd>
-            </div>
-          ),
+                  ></abbr>
+                </dt>
+                <dd className="bc-legend-item-dd">{label}</dd>
+              </div>
+            ),
         )}
       </dl>
     </section>

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import styles from './index.module.less';
 
 interface BorderBeamProps {
@@ -8,12 +8,12 @@ interface BorderBeamProps {
   className?: string;
 }
 
-const BorderBeam: React.FC<BorderBeamProps> = ({
+const BorderBeam = ({
   color = '#12e5e5',
   size = 3,
   duration = 4,
   className = '',
-}) => {
+}: BorderBeamProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 

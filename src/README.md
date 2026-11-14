@@ -74,8 +74,9 @@ downstream compatibility contracts.
   fallback. Platform identity colors live in `platform/platform-colors.ts`;
   status and chart colors remain local to their domains.
 - Domains own labels, groups, status, and illustrations. `PlatformIconGroup`
-  keeps the legacy navigation grouping; `FeatureIcon` selects Lynxtron feature
-  illustrations. Neither changes the shared platform mapping.
+  keeps the legacy navigation grouping; `PlatformTabs` owns navigation state;
+  `FeatureIcon` selects Lynxtron feature illustrations. These components do not
+  change the shared platform mapping.
 - These modules are private implementation details, not new `@lynx` exports.
   Public badge/tab names and props remain unchanged. `PlatformTabs.className`
   targets its container; it does not target each glyph.

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useLang } from '@rspress/core/runtime';
 import { Link } from '@rspress/core/theme';
 import styles from './index.module.less';
@@ -57,8 +56,10 @@ const trySubtitle = {
   zh: '跟随教程，几分钟上手',
 } as const;
 
-export const ShowCase: React.FC<{ showMarquee?: boolean }> = ({
+export const ShowCase = ({
   showMarquee = false,
+}: {
+  showMarquee?: boolean;
 }) => {
   const lang = useLang() as 'en' | 'zh';
 

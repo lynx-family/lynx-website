@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useLang } from '@rspress/core/runtime';
 import cls from 'classnames';
 import { FeatureIcon, type FeatureIconVariant } from './FeatureIcon';
@@ -51,12 +51,12 @@ type CardContentProps = {
   iconVariant: FeatureIconVariant;
 };
 
-const SmallCard: FC<CardContentProps & { className?: string }> = ({
+const SmallCard = ({
   title,
   desc,
   iconVariant,
   className,
-}) => {
+}: CardContentProps & { className?: string }) => {
   return (
     <div className={cls(styles['ah-card'], styles['ah-small'], className)}>
       <div className={styles['ah-icon']}>
@@ -70,12 +70,12 @@ const SmallCard: FC<CardContentProps & { className?: string }> = ({
   );
 };
 
-const LargeCard: FC<CardContentProps & { children?: ReactNode }> = ({
+const LargeCard = ({
   title,
   desc,
   iconVariant,
   children,
-}) => {
+}: CardContentProps & { children?: ReactNode }) => {
   return (
     <div className={cls(styles['ah-card'], styles['ah-large'])}>
       <SmallCard title={title} desc={desc} iconVariant={iconVariant} />
@@ -88,7 +88,7 @@ const LargeCard: FC<CardContentProps & { children?: ReactNode }> = ({
  * The feature-card row on the Lynxtron home: two small cards plus a
  * double-width card hosting the ExtensibleWidget illustration.
  */
-export const LynxtronFeatures: FC = () => {
+export const LynxtronFeatures = () => {
   const lang = useLang() === 'zh' ? 'zh' : 'en';
   const [light, multi, extensible] = FEATURES;
   return (

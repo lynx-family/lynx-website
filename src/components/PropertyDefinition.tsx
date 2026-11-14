@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../lib/utils';
-import { useI18n } from '@rspress/core/runtime';
+import { useI18n } from '../hooks/use-i18n';
 import { Table, TableBody, TableCell, TableRow } from './ui/table';
 
 interface PropertyDefinitionProps {
@@ -12,14 +12,14 @@ interface PropertyDefinitionProps {
   className?: string;
 }
 
-export const PropertyDefinition: React.FC<PropertyDefinitionProps> = ({
+export const PropertyDefinition = ({
   initialValue,
   appliesTo,
   inherited,
   animatable,
   percentages,
   className,
-}) => {
+}: PropertyDefinitionProps) => {
   const text = useI18n();
 
   const data = [

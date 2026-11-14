@@ -1,3 +1,2 @@
-export { CardLinkGroup } from './CardLinkGroup';
-export { PlatformTabs } from './PlatformTabs';
+export { PlatformCardLinkGroup } from './PlatformCardLinkGroup';
 export type { Platform } from './types';
