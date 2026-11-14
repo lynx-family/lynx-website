@@ -31,6 +31,14 @@ public interface CDPEventListener {
 }
 ```
 
+### Harmony
+
+```ts title="CDPEventListener.ets"
+export interface CDPEventListener {
+  onEvent: (event: string) => void;
+}
+```
+
 ### Parameters
 
 - `event`: A JSON string containing the CDP Event content.
@@ -236,6 +244,101 @@ public class MainActivity extends Activity {
       LynxBaseInspectorOwner strongOwner = weakOwner.get();
       strongOwner.removeCDPEventListener(name);
     }, 10000);
+  }
+}
+```
+
+#### Harmony
+
+```ts title="TestCDPEventListener.ets"
+import { CDPEventListener } from '@lynx/lynx';
+
+export class TestCDPEventListener implements CDPEventListener {
+  private readonly name: string;
+
+  constructor(name: string) {
+    this.name = name;
+  }
+
+  public getName(): string {
+    return this.name;
+  }
+
+  public onEvent(event: string): void {
+    console.info(`TestCDPEventListener onEvent: ${event}`);
+  }
+}
+```
+
+```ts title="PageLoadClient.ets"
+import {
+  LynxBaseInspectorOwner,
+  LynxContext,
+  LynxPipelineInfo,
+  LynxViewClient,
+} from '@lynx/lynx';
+import { TestCDPEventListener } from './TestCDPEventListener';
+
+export class PageLoadClient extends LynxViewClient {
+  private context?: LynxContext;
+  // Keep a strong reference: DevTool only holds a weak reference to the listener.
+  private listener?: TestCDPEventListener;
+  private owner?: WeakRef<LynxBaseInspectorOwner>;
+
+  public onPageStarted(
+    lynxContext: LynxContext,
+    pipelineInfo: LynxPipelineInfo,
+  ): void {
+    this.context = lynxContext;
+  }
+
+  public onLoadSuccess(url: string): void {
+    const owner = this.context?.getBaseInspectorOwner();
+    if (!owner) {
+      return;
+    }
+    this.owner = new WeakRef(owner);
+    this.addCDPEventListener(owner, 'TestListener');
+  }
+
+  private addCDPEventListener(
+    owner: LynxBaseInspectorOwner,
+    name: string,
+  ): void {
+    this.listener = new TestCDPEventListener(name);
+    owner.addCDPEventListener(name, this.listener);
+
+    const method =
+      '{"id":1,"method":"Page.startScreencast","params":{"format":"jpeg","mode":"fullscreen"}}';
+    owner.invokeCDPFromSDK(method, (result: string) => {});
+
+    setTimeout(() => {
+      this.owner?.deref()?.removeCDPEventListener(name);
+    }, 10000);
+  }
+}
+```
+
+```ts title="Index.ets"
+import { LynxView } from '@lynx/lynx';
+import { PageLoadClient } from './PageLoadClient';
+
+@Entry
+@Component
+struct Index {
+  // ...
+
+  private clients: PageLoadClient[] = [new PageLoadClient()];
+
+  build() {
+    Column() {
+      LynxView({
+        // ...
+        clients: this.clients,
+      })
+        .width('100%')
+        .height('100%');
+    }
   }
 }
 ```
