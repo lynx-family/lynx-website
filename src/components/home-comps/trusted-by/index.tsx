@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './index.module.less';
 
 export interface AppIcon {
@@ -29,9 +28,12 @@ const defaultApps: AppIcon[] = [
   },
 ];
 
-const IconList: React.FC<{ apps: AppIcon[]; offset?: number }> = ({
+const IconList = ({
   apps,
   offset = 0,
+}: {
+  apps: AppIcon[];
+  offset?: number;
 }) => (
   <div className={styles['icon-group']}>
     {apps.map((app) => (
@@ -48,9 +50,7 @@ const IconList: React.FC<{ apps: AppIcon[]; offset?: number }> = ({
   </div>
 );
 
-export const TrustedBy: React.FC<{ apps?: AppIcon[] }> = ({
-  apps = defaultApps,
-}) => {
+export const TrustedBy = ({ apps = defaultApps }: { apps?: AppIcon[] }) => {
   return (
     <div className={styles['trusted-by']}>
       <div className={styles['marquee-outer']}>

@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { useLang } from '@rspress/core/runtime';
 import React, { useState } from 'react';
-import { APIItem } from './APIStatusDashboard';
+import { APIItem } from './APIItem';
 import { PLATFORM_CONFIG } from './constants';
 import type { APIInfo, CategoryStats, DisplayPlatformName } from './types';
 import { CATEGORY_DISPLAY_NAMES, CLAY_PLATFORMS } from './types';
@@ -65,7 +65,7 @@ const getCoverageColor = (
     : getCoverageColorGreen(coverage);
 };
 
-const ChevronRightIcon: React.FC<{ className?: string }> = ({ className }) => (
+const ChevronRightIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
     viewBox="0 0 24 24"
@@ -100,15 +100,7 @@ const texts = {
 };
 
 // Collapsible section for API lists
-const CollapsibleAPISection: React.FC<{
-  title: string;
-  count: number;
-  description: string;
-  bgClass: string;
-  platformColor?: string;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}> = ({
+const CollapsibleAPISection = ({
   title,
   count,
   description,
@@ -116,6 +108,14 @@ const CollapsibleAPISection: React.FC<{
   platformColor,
   defaultOpen = false,
   children,
+}: {
+  title: string;
+  count: number;
+  description: string;
+  bgClass: string;
+  platformColor?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
 }) => {
   const [open, setOpen] = useState(defaultOpen);
   if (count === 0) return null;
@@ -156,13 +156,13 @@ interface ExpandedRowProps {
   category: string;
 }
 
-const ExpandedRow: React.FC<ExpandedRowProps> = ({
+const ExpandedRow = ({
   missingMap,
   exclusiveMap,
   colSpan,
   selectedPlatforms,
   category,
-}) => {
+}: ExpandedRowProps) => {
   const lang = useLang();
   const t = lang === 'zh' ? texts.zh : texts.en;
 
@@ -275,20 +275,7 @@ const groupTexts = {
 };
 
 // Render a single category row
-const CategoryRow: React.FC<{
-  catKey: string;
-  stats: CategoryStats;
-  displayName: string;
-  missing?: Partial<Record<DisplayPlatformName, APIInfo[]>>;
-  exclusive?: Partial<Record<DisplayPlatformName, APIInfo[]>>;
-  displayPlatforms: DisplayPlatformName[];
-  isExpanded: boolean;
-  onCategoryClick?: (category: string) => void;
-  highlightMode: HighlightMode;
-  colSpan: number;
-  selectedPlatforms: DisplayPlatformName[];
-  rowIndex: number;
-}> = ({
+const CategoryRow = ({
   catKey,
   stats,
   displayName,
@@ -301,6 +288,19 @@ const CategoryRow: React.FC<{
   colSpan,
   selectedPlatforms,
   rowIndex,
+}: {
+  catKey: string;
+  stats: CategoryStats;
+  displayName: string;
+  missing?: Partial<Record<DisplayPlatformName, APIInfo[]>>;
+  exclusive?: Partial<Record<DisplayPlatformName, APIInfo[]>>;
+  displayPlatforms: DisplayPlatformName[];
+  isExpanded: boolean;
+  onCategoryClick?: (category: string) => void;
+  highlightMode: HighlightMode;
+  colSpan: number;
+  selectedPlatforms: DisplayPlatformName[];
+  rowIndex: number;
 }) => {
   const totalMissingCount = displayPlatforms.reduce(
     (sum, p) => sum + (missing?.[p]?.length || 0),
@@ -405,14 +405,14 @@ const CategoryRow: React.FC<{
   );
 };
 
-export const CategoryTable: React.FC<CategoryTableProps> = ({
+export const CategoryTable = ({
   categories,
   categoryGroups,
   selectedPlatforms = ['web_lynx'],
   expandedCategory = null,
   onCategoryClick,
   highlightMode = 'green',
-}) => {
+}: CategoryTableProps) => {
   const lang = useLang();
   const gt = lang === 'zh' ? groupTexts.zh : groupTexts.en;
 
@@ -455,7 +455,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
   }
 
   // Group header row
-  const GroupHeader: React.FC<{ label: string }> = ({ label }) => (
+  const GroupHeader = ({ label }: { label: string }) => (
     <tr className="bg-muted/30">
       <td colSpan={colSpan} className="px-4 py-1.5">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

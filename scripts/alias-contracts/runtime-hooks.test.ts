@@ -67,6 +67,7 @@ test('shared hook imports retain OSS identity across runtime mounts', async (t) 
         target: 'ES2022',
         module: 'ESNext',
         moduleResolution: 'bundler',
+        resolveJsonModule: true,
         strict: true,
         noEmit: true,
         skipLibCheck: true,
@@ -82,6 +83,8 @@ test('shared hook imports retain OSS identity across runtime mounts', async (t) 
       recursive: true,
     },
   );
+  // The consuming site owns translation content at its repository root.
+  cpSync(path.join(repository, 'i18n.json'), path.join(cwd, 'i18n.json'));
   mkdirSync(path.join(cwd, 'oss-source/lib'));
   cpSync(
     path.join(repository, 'src/lib/utils.ts'),
@@ -304,6 +307,44 @@ test('shared hook imports retain OSS identity across runtime mounts', async (t) 
       },
     );
   }
+
+  await t.test(
+    'shared i18n keys remain typed when OSS source mounts at src/oss',
+    () => {
+      mkdirSync(path.join(cwd, 'src'));
+      symlinkSync(path.join(cwd, 'oss-source'), path.join(cwd, 'src/oss'));
+      const probe = 'src/i18n-probe.ts';
+      const validCalls = [
+        "import { useI18n } from './oss/hooks/use-i18n';",
+        "import type { SiteI18nText } from './oss/hooks/site-i18n';",
+        "import translations from '../i18n.json';",
+        'translations satisfies SiteI18nText;',
+        'const t = useI18n();',
+        "const siteLabel: string = t('api.reference');",
+        "const builtInLabel: string = t('editLinkText');",
+      ].join('\n');
+      const diagnostics = (content: string) => {
+        write(probe, content);
+        return ts.getPreEmitDiagnostics(
+          ts.createProgram([path.join(cwd, probe)], parsed.options),
+        );
+      };
+      assert.deepEqual(
+        diagnostics(validCalls).map((diagnostic) =>
+          ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'),
+        ),
+        [],
+      );
+      const invalid = diagnostics(
+        `${validCalls}\nt('api.reference.misspelled');`,
+      );
+      assert.deepEqual(
+        invalid.map(({ code }) => code),
+        [2345],
+      );
+      assert.equal(invalid[0]?.file?.fileName, path.join(cwd, probe));
+    },
+  );
 
   await t.test(
     'a consumer forwarding barrel cannot implement an OSS-private request',

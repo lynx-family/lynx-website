@@ -4,6 +4,9 @@ The Compatibility Table component displays feature compatibility across platform
 
 This component is a **presentational** component awaiting a data-fetching container. It serves as a precursor to the `<FetchingCompatTable>` (the internal implementation of `<APITable>` used in the docs).
 
+`FetchingCompatTable` owns loading, fetch errors, and the render error boundary.
+Use `<APITable>` in documentation to retain that error handling.
+
 ## License
 
 This component is ported from [yari (the MDN Web Docs)](https://github.com/mdn/yari/tree/main/client/src/document/ingredients/browser-compatibility-table), which reads data from [MDN BCD](https://github.com/mdn/browser-compat-data).

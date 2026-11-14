@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { type FC, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface VideoListProps {
   videos: {
@@ -14,7 +14,7 @@ interface VideoListProps {
   playbackRate?: number;
 }
 
-export const VideoList: FC<VideoListProps> = ({
+export const VideoList = ({
   videos,
   autoPlay = true,
   muted = true,
@@ -22,7 +22,7 @@ export const VideoList: FC<VideoListProps> = ({
   loop = true,
   style = {},
   playbackRate = 1,
-}) => {
+}: VideoListProps) => {
   const videoRefs = useRef<HTMLVideoElement[]>([]);
 
   useEffect(() => {

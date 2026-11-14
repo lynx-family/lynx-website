@@ -1,6 +1,5 @@
 import { cn } from '../../../lib/utils';
 import cls from 'classnames';
-import React from 'react';
 import { useLang } from '@rspress/core/runtime';
 import { Button } from '@rspress/core/theme';
 import { DotPattern } from './DotPattern';
@@ -21,7 +20,7 @@ const tailText = {
   en: '',
 };
 
-export const Banner: React.FC = () => {
+export const Banner = () => {
   const lang = useLang() as 'en' | 'zh';
 
   return (

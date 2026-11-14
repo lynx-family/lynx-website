@@ -1,4 +1,5 @@
-import { useI18n, usePage } from '@rspress/core/runtime';
+import { usePage } from '@rspress/core/runtime';
+import { useI18n } from '../../hooks/use-i18n';
 
 interface Props {
   /**

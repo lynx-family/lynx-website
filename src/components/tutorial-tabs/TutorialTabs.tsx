@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Link } from '@rspress/core/theme';
-import { useI18n, useLang, withBase } from '@rspress/core/runtime';
+import { useLang, withBase } from '@rspress/core/runtime';
+import { useI18n } from '../../hooks/use-i18n';
 import { useEffect, useRef } from 'react';
 import { BorderBeam } from '@/components/home-comps/border-beam';
 import { getLangPrefix } from '@route-config';
@@ -74,14 +75,14 @@ export const TutorialTabs = ({
   );
 };
 
-const DEFAULT_TABS: Array<{ slug: string; labelKey: string; path: string }> = [
+const DEFAULT_TABS = [
   { slug: 'gallery', labelKey: 'learn.gallery', path: '/learn/gallery' },
   {
     slug: 'product-detail',
     labelKey: 'learn.product-detail',
     path: '/learn/product-detail',
   },
-];
+] as const;
 
 interface LearnTutorialTabsProps {
   active: string;
@@ -99,7 +100,7 @@ export const LearnTutorialTabs = ({
   const tabs: TutorialTabItem[] = DEFAULT_TABS.map((d) => ({
     slug: d.slug,
     href: withBase(`${langPrefix}${d.path}`),
-    label: t(d.labelKey as any) as string,
+    label: t(d.labelKey),
   }));
   return <TutorialTabs tabs={tabs} active={active} className={className} />;
 };

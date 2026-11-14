@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLang } from '@rspress/core/runtime';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../ui/sidebar';
 import { TooltipProvider } from '../ui/tooltip';
@@ -57,7 +57,7 @@ const PAGE_META: Record<
   },
 };
 
-export const APIStatusLayout: React.FC = () => {
+export const APIStatusLayout = () => {
   if (import.meta.env.SSG_MD) {
     // TODO: support SSG-MD
     return <>{'APIStatusLayout'}</>;

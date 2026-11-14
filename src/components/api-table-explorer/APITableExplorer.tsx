@@ -142,7 +142,7 @@ const i18nTexts = {
   },
 };
 
-const APITableExplorer: React.FC = () => {
+const APITableExplorer = () => {
   const lang = useLang();
   const texts = lang === 'zh' ? i18nTexts.zh : i18nTexts.en;
   const catLabels = lang === 'zh' ? categoryLabels.zh : categoryLabels.en;
