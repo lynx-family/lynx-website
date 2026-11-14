@@ -50,7 +50,7 @@ names. Direct subpaths retain their separate owner policy.
 Source areas use normalized repository-relative roots. Mounted/generated areas
 need non-empty `origins`; authoritative areas omit them. Explicit roots must
 not overlap. Producer-derived importer classification is assembled by the
-shared corpus layer, not by adding broad language trees to this registry.
+OSS adapter, not by adding broad language trees to this registry.
 
 Local resolver overrides require an exact specifier, reason, parity,
 lifecycle, and removal condition. They describe declared exceptions, not
@@ -62,17 +62,27 @@ and removes obsolete keys together with their records.
 Consumers supply physical data and optional private aliases without redefining
 OSS owners or aliases:
 
-| Option                          | Required module export | Default when omitted                                      |
-| ------------------------------- | ---------------------- | --------------------------------------------------------- |
-| `--source-map <module>`         | `sourceAreas`          | OSS source map                                            |
-| `--resolver-overrides <module>` | `resolverOverrides`    | Empty with a consumer source map; otherwise OSS overrides |
-| `--alias-extensions <module>`   | `aliasExtensions`      | Empty                                                     |
+| Option                            | Required module export | Default when omitted                                      |
+| --------------------------------- | ---------------------- | --------------------------------------------------------- |
+| `--source-map <module>`           | `sourceAreas`          | OSS source map                                            |
+| `--resolver-overrides <module>`   | `resolverOverrides`    | Empty with a consumer source map; otherwise OSS overrides |
+| `--alias-extensions <module>`     | `aliasExtensions`      | Empty                                                     |
+| `--documentation-corpus <module>` | `documentationCorpus`  | No additional prepared-document corpus                    |
 
 Modules may be `.mjs` or `.ts`. Paths resolve from the caller's working
 directory; `file:` URLs are also accepted. Consumers must declare `tsx`
 directly and run the checker with `node --import tsx`.
-Each requested export must be an array; explicitly exporting `undefined`
-is invalid and does not select the default for an omitted option.
+Source maps, resolver overrides and alias extensions export arrays.
+Source-map modules can also export `ownerExtensions` for documentation identities
+(described below), and `documentationScope`, with complete documentation `roots`
+and an optional `trackedSource: { id, owner }`.
+All executable files in that scope require ownership, including files
+without imports. Only Git-tracked files may use the declared authoritative
+fallback; generated areas and final prepared-file ownership take precedence.
+Package lookup and manifest conversion belong to the site's integration
+layer. Shared checkers read this contract without selecting producer packages.
+`documentationCorpus` exports an object described below. Explicitly exporting
+`undefined` is invalid and does not select the default for an omitted option.
 
 The checker keeps a private snapshot of shared policy and deep-copies defaults
 before loading any consumer module. Mutating registry exports cannot alter
@@ -80,11 +90,14 @@ the policy used by that invocation or later calls in the same process.
 
 A replacement source map must retain **every OSS source-area ID and owner**,
 including classification-only areas. Roots, roles, and origins may change
-with the layout. New IDs must be consumer-owned. This is distinct from
+with the layout. New IDs must be consumer-owned or belong to a registered
+documentation owner. This is distinct from
 `additionalOwners`, which governs where a particular alias may resolve.
 
 The optional `boundary` marks documentation or runtime trees, including relocated
 mounts. Shared IDs inherit their OSS boundary when omitted and cannot change it.
+Documentation source areas cannot overlap canonical runtime roots, regardless
+of owner.
 Site configuration modules outside either tree do not become runtime modules.
 
 `moduleSpecifierFields` registers JSON generator settings on the area whose
@@ -94,7 +107,10 @@ Missing files are permitted; present files must parse and contain string values.
 Consumers register their own generator settings in their source map.
 Namespace settings may name directories without a barrel; Gate 3 uses the
 effective resolver's ordered roots to check their first existing target.
-Gate 2 probes executable requests only.
+They obey importer and implementation ownership, rather than executable bare/
+subpath spelling rules. TypeScript may retain a bare directory mapping for a
+subpaths-only namespace, as used by shadcn configuration; executable imports
+still require the supported subpath form. Gate 2 probes executable requests only.
 
 The following is a **partial excerpt**, not a complete replacement map:
 
@@ -133,6 +149,116 @@ node --import tsx \
 
 The packaged checker path, option names, module export names, and
 caller-working-directory behavior are downstream compatibility interfaces.
+
+### Prepared Consumer Documentation
+
+With `--source-map`, consumers can additionally pass
+`--documentation-corpus ./generated/documentation-corpus.mjs`. This module
+exports a `DocumentationCorpus` from [`types.ts`](./types.ts). All three
+entries accept it; Gate 1 validates its schema, and Gates 2/3 verify complete
+output coverage, final hashes and importer permissions after prepare.
+
+Call `snapshotDocumentation(cwd, roots, ownership, canonical)` from the packaged
+[`documentation-corpus.ts`](./documentation-corpus.ts) once at the end of prepare.
+The helper walks the final trees and computes hashes; the site's `ownership`
+callback returns `{ owner, origins?, imports? }` for each final file. Import
+`canonical` from the packaged [`corpus.ts`](./corpus.ts). Keep this generated
+module in an ignored directory; do not maintain a second filename inventory.
+
+| Field     | Contract                                                                             |
+| --------- | ------------------------------------------------------------------------------------ |
+| `roots`   | Non-overlapping repository-relative prepared directories.                            |
+| `files`   | Every executable output's `{ file, sha256, owner, origins?, imports? }` record.      |
+| `owner`   | Default importer owner for the final file.                                           |
+| `imports` | Optional `{ index, specifier, owner, origins? }` overrides for mixed-owner requests. |
+| `origins` | Optional canonical `{ repository, root }` metadata.                                  |
+
+`file` paths resolve from the caller's working directory. `owner` references a
+registered identity. Final file ownership overrides physical importer mappings,
+including the tracked-document fallback. `sha256` hashes final UTF-8 content
+and must match the current file; `documentationDigest` computes this hash.
+
+`index` is zero-based syntax order returned by `parseImports(file, content)`
+in [`corpus.ts`](./corpus.ts), **before** the corpus sorts requests for diagnostics.
+It includes all recognized static module requests, including re-exports and
+static dynamic imports. `specifier` must exactly match the raw request at that
+index, including query/hash suffixes. A mismatch requires regenerating the
+annotations; refreshing the file hash alone does not rebind them. Plain Markdown
+has no executable requests. Duplicate, negative or nonexistent indices fail;
+an import's owner is its override or the file owner. This check does not
+distinguish requests with identical specifiers or prove ownership authenticity.
+
+Synchronized files inherit the upstream file owner. Local additions and full
+overrides declare the consumer owner. Prose, link and frontmatter edits can
+retain the file owner; only mixed-owner executable imports need overrides.
+Same-owner generation and rewriting need no operation records. The checker
+accepts the site's ownership declarations and does not prove their authenticity
+or validate source files, composition steps or full-text edit history.
+The previous `sources`/`segments` schema is retired and fails with a migration
+diagnostic.
+
+OSS `prepare` publishes `scripts/alias-contracts/documentation-corpus.json` after
+all generators finish; `pnpm prepare:alias-corpus` refreshes it independently.
+It retains website, lynx-ui, lynx-stack and skills ownership from the OSS adapter.
+Downstream preparation reads it from its prepared OSS checkout or installed
+package, inherits ownership for synchronized files, applies final local
+ownership decisions, then snapshots its own complete trees. The consumer
+does not need hooks in every generator or to simulate producer composition.
+
+In prepared mode, the verified inventory is the only documentation importer
+entry point. Scope and documentation source areas do not add importers or
+classify prepared file owners. Source areas continue to classify resolver
+targets, enforce documentation/runtime boundaries, and discover runtime source
+and registered configuration values.
+
+Gates 2/3 walk every declared root, including untracked `.md`, `.mdx`, JS and
+TS files, including files without imports. They reject missing roots, stale
+outputs, undeclared or missing executable files and duplicate canonical files.
+Hidden/dependency directories and `docs/public`
+resources stay outside the executable corpus. Declare complete documentation
+trees, not public resource directories.
+
+This input classifies **importers only**. It neither registers alias targets
+nor extends their implementation permissions. Relocated output roots retain
+the documentation boundary in both directions and cannot overlap runtime
+areas or escape their roots through symlinks.
+
+For a site-local producer, export `ownerExtensions` from the source-map module:
+
+```ts
+export const ownerExtensions = [
+  {
+    id: 'consumer:tools-docs',
+    description: 'Tools documentation',
+    scope: 'documentation',
+  },
+];
+```
+
+`SourceArea.owner`, `PreparedDocument.owner` and import overrides reference this same ID.
+An extension uses `consumer:<name>` with lowercase words separated by hyphens.
+It cannot replace shared owners or participate in alias ownership, importer
+lists or target permissions. Its source areas require `boundary: 'documentation'`
+and cannot declare generator module-specifier fields or overlap runtime mounts.
+Use a source area for a tree with one owner; use final import overrides for mixed outputs.
+Extended owners follow the public aliases' existing `consumer` import policy,
+including canonical spelling and migration checks. They gain no access to
+consumer-private aliases; generated imports still require zero migration debt.
+Package lookup and manifest conversion belong to the site's preparation adapter.
+
+Every prepared import is generated and receives no independent migration
+allowance, even when copied unchanged. Migrate authoritative sources and
+generator settings, then regenerate to zero. Authoritative-to-generated
+allowance mapping is deferred; final hashes and canonical origins do not
+establish occurrence identity.
+
+```bash
+node --import tsx \
+  node_modules/@lynx-js/lynx-doc/scripts/alias-contracts/check-import-policy.ts \
+  --source-map ./scripts/alias-source-areas.mjs \
+  --documentation-corpus ./generated/documentation-corpus.mjs \
+  --baseline ./scripts/import-policy-baseline.json
+```
 
 ### Consumer Private Aliases
 
@@ -225,6 +351,10 @@ Run `check:alias-resolution` from the active site's repository root after
 prepare. It accepts the same three consumer modules as `check-registry.ts` and
 uses the site's effective Rspress web/SSG resolvers and TypeScript configuration.
 
+Direct Gate 2/3 CLI calls require `--source-map`. Calls without a source map fail
+with a diagnostic directing OSS users to `oss.ts resolution` or `oss.ts imports`;
+the package scripts already use these adapters.
+
 Downstream sites invoke the installed entry directly:
 
 ```bash
@@ -235,10 +365,12 @@ node --import tsx \
   --alias-extensions ./scripts/alias-extensions.ts
 ```
 
-With `--source-map`, `docs/` and `sharedDocs/` are scanned only within declared
-source areas; other documents and transitive producer packages are not inferred.
-Mixed-ownership trees require explicit, non-overlapping areas for every region
-that must be checked. Undeclared documents remain outside the corpus.
+With `--source-map`, unprepared documentation is scanned within declared source
+areas and optional `documentationScope` roots. With `--documentation-corpus`,
+only its verified inventory supplies documentation importers; other documents
+and transitive producer packages are not inferred. A source map without either
+documentation input retains its existing scope. Prepared mixed-owner trees use
+the final ownership input above rather than broad consumer-owned source areas.
 
 For downstream contract changes, also run `pnpm run build` and
 `pnpm pack --dry-run`, then obtain packaged-checker, prepare, resolver-check,
@@ -277,6 +409,25 @@ Canonical mounts are scanned once. A future generator that duplicates an
 authoritative violating import must first provide an explicit occurrence mapping
 so output validation can reuse that allowance; repository/root `origins` metadata
 alone does not establish that relationship.
+
+The OSS package scripts invoke [`oss.ts`](./oss.ts), which supplies the
+site's default contracts to Gates 2/3. Its `documentationScope` covers the
+complete prepared `docs/` and `sharedDocs/` trees. Every executable file
+needs an owner and source role, including
+files without imports. Only Git-tracked site documents receive the
+authoritative website fallback. Unregistered copied/generated files fail
+coverage, even when they import only ordinary npm packages.
+
+The OSS adapter looks up lynx-stack and skills manifests and translates
+their destination data into source areas with explicit owner and origin
+bindings. Shared corpus and CLI code contain no producer package names or
+manifest schemas. Skills `sections` include localized MDX and scenario TS;
+`sharedContent` includes shared TSX support modules. These copies retain
+producer ownership and generated roles. Public assets remain excluded.
+Adding a producer requires registering its owner and preparation-derived
+source areas; no alias or filename inventory is required. Coverage does
+not verify npm dependency declarations or the host rendering environment,
+and a missing declaration cannot be excused by a migration baseline.
 
 Consumers run Gate 3 after their own prepare with an explicit local JSON baseline
 (`[]` when there is no debt):

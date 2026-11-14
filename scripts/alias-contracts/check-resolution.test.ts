@@ -530,6 +530,10 @@ declare module '*.svg';`,
           policy.filter((entry) => !entry.baselinable),
           [],
         );
+        const namespace = await run([], {
+          '@fixture2': ['consumer/local/subpaths'],
+        });
+        assert.deepEqual(namespace.result.errors, []);
         assert.equal(
           policy.filter((entry) => entry.rule === 'migration-subpath').length,
           2,

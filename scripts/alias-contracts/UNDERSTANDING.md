@@ -130,10 +130,21 @@ the private namespace remains available inside its owner.
 
 The explicit Gate 1 source map classifies implementation and producer areas.
 It is not a complete importer map: `docs/en` and `docs/zh` mix website
-content with synchronized producer content. The shared corpus layer for
-Gates 2/3 derives destinations from producer manifests and applies the
+content with synchronized producer content. The OSS integration adapter
+derives destinations from producer manifests and applies the
 website-owner fallback only to unmatched documents. That work introduces
 the `lynx-stack` owner without adding an `@lynx-stack` alias.
+
+Consumers can separately supply a preparation-derived `documentationCorpus`.
+Its declared roots are scanned completely; final file owners and optional
+syntax-request overrides classify importers without recording generation steps.
+Each override binds its syntax index to the expected raw specifier. The verified
+inventory is the only documentation importer entry point in prepared mode;
+source areas continue to govern resolver targets and runtime discovery.
+OSS publishes a final ownership snapshot for downstream synchronization. This
+is an importer map, not an alias implementation source map. The
+[prepared documentation contract](./README.md#prepared-consumer-documentation)
+requires regeneration to zero and does not map migration allowances.
 
 Gate 2 establishes the shared executable-import corpus and uses it for resolver
 verification. Gate 3 reuses those records for import policy and exact
@@ -156,9 +167,9 @@ actual runtime and TypeScript behavior:
 | `check-resolution.ts` | Apply policy across runtime and TypeScript probes.              |
 
 `check-registry.ts` remains the policy boundary. Its `loadContracts()` helper
-loads and validates the same `--source-map`, `--resolver-overrides`, and
-`--alias-extensions` modules for all three gates, so later gates cannot reinterpret or
-bypass Gate 1 policy.
+loads and validates the same `--source-map`, `--resolver-overrides`,
+`--alias-extensions`, and optional `--documentation-corpus` modules for all three
+gates, so later gates cannot reinterpret or bypass Gate 1 policy.
 
 The corpus is syntax-only and ownership-aware. The runtime layer materializes
 Rspress's real `web`, `node`, and `node_md` resolvers. The export reader follows
@@ -192,5 +203,5 @@ Canonical spelling checks do not rewrite the resolver request.
 Documentation/runtime boundary metadata follows relocated source areas. Ordinary
 OSS locale documents use the corpus fallback, while producer destinations retain
 manifest ownership. Generated violations cannot create their own baseline
-entries. Current generated documentation is checked with zero debt; provenance
+entries. Current generated documentation is checked with zero debt; ownership
 descriptions alone cannot grant an allowance for a duplicated import.

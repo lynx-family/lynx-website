@@ -17,8 +17,9 @@ import {
   canonical,
   classifySource,
   discoverCorpus,
+  documentationRoots,
+  aliasAllowsImporter,
   matchingAlias,
-  readProducerManifest,
   resolvedResource,
   resourcePath,
   type ImportRecord,
@@ -192,6 +193,7 @@ export async function checkImportPolicy(
   const violations: PolicyViolation[] = [];
   const options = readTsConfig(cwd).options;
   const tsHost = ts.createCompilerHost(options);
+  const roots = documentationRoots(contracts);
   for (const record of corpus) {
     const seen = new Set<string>();
     const request = resourcePath(record.specifier);
@@ -205,6 +207,7 @@ export async function checkImportPolicy(
     );
     if (!alias && !relative && !override && !retiredAssetAlias) continue;
     const bare = request === alias?.specifier;
+    const configuration = record.kind === 'configuration';
     const targets: { environment: string; file?: string; area?: SourceArea }[] =
       [];
     if (!override) {
@@ -279,18 +282,16 @@ export async function checkImportPolicy(
     }
     if (alias) {
       if (
-        (bare && alias.kind === 'subpaths-only') ||
-        (!bare && alias.kind === 'exact')
+        !configuration &&
+        ((bare && alias.kind === 'subpaths-only') ||
+          (!bare && alias.kind === 'exact'))
       )
         add(
           'alias-shape',
           'supported-alias-form',
           'unsupported alias import form',
         );
-      if (
-        !alias.allowedImporters.includes(record.owner) ||
-        (alias.visibility === 'owner-private' && record.owner !== alias.owner)
-      ) {
+      if (!aliasAllowsImporter(alias, record.owner)) {
         const legacy =
           alias.id === 'oss-private-source' && record.owner === 'consumer';
         add(
@@ -315,7 +316,11 @@ export async function checkImportPolicy(
           );
           continue;
         }
-        for (const message of targetErrors(alias, bare, target.area))
+        for (const message of targetErrors(
+          alias,
+          configuration ? 'namespace' : bare,
+          target.area,
+        ))
           add(
             'target-policy',
             'owning-public-entry',
@@ -324,14 +329,18 @@ export async function checkImportPolicy(
             target.area?.owner ?? null,
           );
       }
-      if (alias.lifecycle.state === 'migration')
+      if (!configuration && alias.lifecycle.state === 'migration')
         add(
           'migration-alias',
           'reviewed-host-adapter',
           'legacy alias namespace',
           true,
         );
-      else if (!bare && alias.subpaths?.lifecycle.state === 'migration')
+      else if (
+        !configuration &&
+        !bare &&
+        alias.subpaths?.lifecycle.state === 'migration'
+      )
         add(
           'migration-subpath',
           `bare-entry:${alias.specifier}`,
@@ -354,6 +363,7 @@ export async function checkImportPolicy(
       const modifier = record.specifier.slice(request.length);
       const spelling = request.replace(/\.(?:[cm]?[jt]sx?)$/, '');
       if (
+        !configuration &&
         alias.visibility === 'public' &&
         ((alias.canonical.omitSourceExtensions && spelling !== request) ||
           (alias.canonical.omitIndex && spelling.endsWith('/index')))
@@ -372,6 +382,7 @@ export async function checkImportPolicy(
           contracts.sourceAreas,
           record,
           targets.flatMap((target) => (target.file ? [target.file] : [])),
+          roots,
         ) !== undefined
       )
         add(
@@ -399,8 +410,9 @@ export function formatViolation(entry: PolicyViolation): string {
 }
 
 export async function runImportPolicyCli(
-  args = process.argv.slice(2),
+  args: readonly string[] = process.argv.slice(2),
   cwd = process.cwd(),
+  defaults?: Parameters<typeof loadContracts>[2],
 ): Promise<number> {
   let runtime: Runtime | undefined;
   try {
@@ -425,13 +437,17 @@ export async function runImportPolicyCli(
     const options = parseArguments(sharedArgs);
     if (options.help) {
       console.log(
-        'Usage: node --import tsx scripts/alias-contracts/check-import-policy.ts [--source-map <module>] [--resolver-overrides <module>] [--alias-extensions <module>] [--baseline <json>] [--report]',
+        'Usage: node --import tsx scripts/alias-contracts/check-import-policy.ts --source-map <module> --baseline <json> [--resolver-overrides <module>] [--alias-extensions <module>] [--documentation-corpus <module>] [--report]',
       );
       return 0;
     }
+    if (!options.sourceMap && !defaults)
+      throw new Error(
+        'Use oss.ts imports for OSS checks, or provide --source-map.',
+      );
     if (options.sourceMap && !baselineFile)
       throw new Error('Consumer import policy requires --baseline <json>');
-    const contracts = await loadContracts(options, cwd);
+    const contracts = await loadContracts(options, cwd, defaults);
     const baseline = parseBaseline(
       JSON.parse(
         readFileSync(
@@ -444,11 +460,7 @@ export async function runImportPolicyCli(
         ),
       ),
     );
-    const corpus = discoverCorpus(
-      cwd,
-      contracts,
-      readProducerManifest(cwd, !!options.sourceMap),
-    );
+    const corpus = discoverCorpus(cwd, contracts);
     runtime = await createRuntime(cwd);
     const violations = await checkImportPolicy(cwd, contracts, corpus, runtime);
     const errors = [
@@ -460,6 +472,9 @@ export async function runImportPolicyCli(
         JSON.stringify(
           {
             imports: corpus.length,
+            ...(contracts.documentationCorpus
+              ? { preparedFiles: contracts.documentationCorpus.files.length }
+              : {}),
             violations,
             inventory: baselineInventory(violations),
             errors,

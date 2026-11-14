@@ -33,6 +33,11 @@ export const owners = [
       'Generated documentation owned by the lynx-stack OSS repository.',
   },
   {
+    id: 'skills',
+    description:
+      'Documentation and shared modules owned by the skills producer.',
+  },
+  {
     id: 'consumer',
     description:
       'Source owned by the active host; both the OSS website and downstream sites are consumers.',
