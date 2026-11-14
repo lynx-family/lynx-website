@@ -26,6 +26,12 @@ import { APISummary, APITable } from '@lynx';
 void invokeCDPFromSDK(final String cdpMsg, final CDPResultCallback callback);
 ```
 
+### Harmony
+
+```ts title="LynxBaseInspectorOwner.ets"
+invokeCDPFromSDK(cdpMsg: string, callback: CDPResultCallback): void;
+```
+
 ### 参数说明
 
 - `msg` / `cdpMsg`: 要发送的消息，符合 CDP Method 格式的 JSON 字符串。
@@ -147,6 +153,76 @@ public class MainActivity extends Activity {
   }
 }
 ```
+
+#### Harmony
+
+```ts title="PageLoadClient.ets"
+import {
+  LynxBaseInspectorOwner,
+  LynxContext,
+  LynxPipelineInfo,
+  LynxViewClient,
+} from '@lynx/lynx';
+
+export class PageLoadClient extends LynxViewClient {
+  private context?: LynxContext;
+
+  public onPageStarted(
+    lynxContext: LynxContext,
+    pipelineInfo: LynxPipelineInfo,
+  ): void {
+    this.context = lynxContext;
+  }
+
+  public onLoadSuccess(url: string): void {
+    const owner = this.context?.getBaseInspectorOwner();
+    if (!owner) {
+      // 该页面未开启调试能力。
+      return;
+    }
+    this.invokeCDPMethod(owner);
+  }
+
+  private invokeCDPMethod(owner: LynxBaseInspectorOwner): void {
+    const method = '{"id":1,"method":"DOM.getDocument","params":{}}';
+    owner.invokeCDPFromSDK(method, (result: string) => {
+      console.info(`CDPResultCallback: ${result}`);
+    });
+  }
+}
+```
+
+```ts title="Index.ets"
+import { LynxView } from '@lynx/lynx';
+import { PageLoadClient } from './PageLoadClient';
+
+@Entry
+@Component
+struct Index {
+  // ...
+
+  private clients: PageLoadClient[] = [new PageLoadClient()];
+
+  build() {
+    Column() {
+      LynxView({
+        // ...
+        clients: this.clients,
+      })
+        .width('100%')
+        .height('100%');
+    }
+  }
+}
+```
+
+:::note
+
+鸿蒙端会在 ArkTS UI 线程（UI task runner）上回调，可以直接在回调中更新 UI 状态。每次调用只会接收一个结果，收到首个响应后回调引用即被释放。
+
+鸿蒙端需要在创建 `LynxView` 时就把 client 传进去。`clients` 不是状态变量，之后再赋值不会传到 view。client 会在 `onPageStarted` 中拿到 `LynxContext`，该回调早于页面加载完成；因此应在 `onLoadSuccess` 中发送 CDP method，而不是在 `onCreate` 中发送。
+
+:::
 
 ## 兼容性
 
