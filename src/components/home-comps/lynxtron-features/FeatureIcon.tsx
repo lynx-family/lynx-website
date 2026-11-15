@@ -1,4 +1,4 @@
-import type { CSSProperties, FC } from 'react';
+import type { CSSProperties } from 'react';
 import { MaskIcon } from '../../icons/MaskIcon';
 
 import appleUrl from './assets/home-icon-apple.svg';
@@ -30,11 +30,11 @@ type FeatureIconProps = {
  * so it can be tinted by the surrounding theme (several of the source
  * SVGs hardcode their stroke color).
  */
-export const FeatureIcon: FC<FeatureIconProps> = ({
+export const FeatureIcon = ({
   variant,
   className,
   style,
-}) => {
+}: FeatureIconProps) => {
   return (
     <MaskIcon src={MASK_URLS[variant]} className={className} style={style} />
   );

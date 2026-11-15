@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import extensionWidgetUrl from './assets/extension-widget.svg';
 import { FeatureIcon } from './FeatureIcon';
 import styles from './extensible-widget.module.less';
@@ -8,7 +7,7 @@ import cls from 'classnames';
  * Decorative graph for the "Natively Extensible" card on the Lynxtron
  * home: platform/language icons plugged into the extension socket art.
  */
-export const ExtensibleWidget: FC = () => {
+export const ExtensibleWidget = () => {
   return (
     <div className={styles['extensible-widget']}>
       <div className={styles['graph']}>

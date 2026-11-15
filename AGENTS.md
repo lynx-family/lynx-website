@@ -257,6 +257,17 @@ Do not add new `@site/*` dependencies. For new code:
 Follow the contributor-facing [Theme and Component Design](./src/README.md)
 guide for changes to `src/` and `theme/`.
 
+### React Component Style
+
+- Prefer function components and Hooks for new or updated React components.
+- Define props with an explicit `type` or `interface` and annotate the function
+  parameters directly. Let TypeScript infer the return type unless a contract
+  requires an explicit annotation. Do not annotate component implementations
+  with `React.FC`, `React.FunctionComponent`, or equivalent aliases.
+- Keep class components when a React API requires them, such as native error
+  boundaries using `getDerivedStateFromError` or `componentDidCatch`. Preserve
+  existing error handling when modernizing components.
+
 ## Change Rules
 
 Apply the section-specific rules above, including the resolver, host-root, and

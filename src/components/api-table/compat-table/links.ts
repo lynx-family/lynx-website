@@ -1,4 +1,27 @@
 /**
+ * Use the site's English or Chinese language for MDN documentation links.
+ * Preserve the document path, query, and fragment, and leave other URLs alone.
+ */
+export function localizeMdnUrl(
+  url: string | undefined,
+  locale: string,
+): string | undefined {
+  const mdnLocale =
+    locale === 'zh' || locale === 'zh-CN'
+      ? 'zh-CN'
+      : locale === 'en' || locale === 'en-US'
+        ? 'en-US'
+        : undefined;
+
+  if (!url || !mdnLocale) return url;
+
+  return url.replace(
+    /^(https?:\/\/developer\.mozilla\.org\/)[^/]+(?=\/docs(?:\/|[?#]|$))/,
+    `$1${mdnLocale}`,
+  );
+}
+
+/**
  * Reduce a rendered or authored documentation path to its page route.
  *
  * Rspress may render an extensionless route as either `<route>.html` or

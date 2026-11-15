@@ -11,14 +11,14 @@ interface FlexItemProps {
   children: React.ReactNode;
 }
 
-export const FlexItem: React.FC<FlexItemProps> = ({ minWidth, children }) => {
+export const FlexItem = ({ minWidth, children }: FlexItemProps) => {
   return <div style={{ minWidth: `${minWidth}px`, flex: 1 }}>{children}</div>;
 };
 
-export const ResponsiveDualColumn: React.FC<ResponsiveDualColumnProps> = ({
+export const ResponsiveDualColumn = ({
   partition,
   children,
-}) => {
+}: ResponsiveDualColumnProps) => {
   if (partition && React.Children.count(children) !== partition.length) {
     throw new Error(
       'Partition array length must match the number of children.',

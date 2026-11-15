@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
@@ -56,7 +56,7 @@ export interface ImageWallProps {
   initialIndex?: number;
 }
 
-export const ImageWall: React.FC<ImageWallProps> = ({
+export const ImageWall = ({
   images,
   srcBase,
   rows = 2,
@@ -71,7 +71,7 @@ export const ImageWall: React.FC<ImageWallProps> = ({
   tileClassName,
   enablePreview = true,
   initialIndex,
-}) => {
+}: ImageWallProps) => {
   const instanceId = useId();
   const dataAttr = `image-wall-${instanceId.replace(/[:]/g, '')}`;
   const [open, setOpen] = useState(false);

@@ -15,6 +15,7 @@ import type * as LCD from '@lynx-js/lynx-compat-data';
 import React, { useContext } from 'react';
 import { BrowserInfoContext } from './browser-info';
 import { LEGEND_LABELS } from './legend';
+import { localizeMdnUrl } from './links';
 import {
   SupportStatementExtended,
   asList,
@@ -27,9 +28,16 @@ import {
   isTruthy,
   versionIsPreview,
 } from './utils';
-// import { DEFAULT_LOCALE } from '../../../../../libs/constants';
-const DEFAULT_LOCALE = 'en-US';
 
+/**
+ * Return the support-state suffix used by compatibility-table CSS classes.
+ * The result describes support; it is not a complete CSS class name.
+ *
+ * @example
+ * const supportClassName = getSupportClassName(support, browser);
+ * const levelClassName = `bc-level-${supportClassName}`;
+ * const iconClassName = `icon-${supportClassName}`;
+ */
 function getSupportClassName(
   support: SupportStatementExtended | undefined,
   browser: LCD.PlatformStatement,
@@ -41,13 +49,18 @@ function getSupportClassName(
   let { flags, version_added, version_removed, partial_implementation } =
     getCurrentSupport(support)!;
 
-  let className;
+  let className: ReturnType<typeof getSupportClassName>;
   if (version_added === null) {
     className = 'unknown';
   } else if (versionIsPreview(version_added, browser)) {
     className = 'preview';
   } else if (version_added) {
     className = 'yes';
+    // Removed support uses `no`; flag-gated support uses it for the default
+    // configuration, not to claim the feature has no implementation.
+    // CellIcons adds the `disabled` icon and FlagsNote describes the required
+    // flags, so the UI also explains that support requires configuration.
+    // Preview and partial support have their own classifications.
     if (version_removed || (flags && flags.length)) {
       className = 'no';
     }
@@ -125,7 +138,8 @@ function labelFromString(
     return <>{version.slice(1)}</>;
   }
   if (version === 'preview') {
-    return browser.preview_name;
+    // LCD has no platform-specific preview_name; use the generic support label.
+    return 'Preview';
   }
 
   if (browser.type === 'web') {
@@ -232,7 +246,7 @@ const CellText = React.memo(
 
       case 'preview':
         title = 'Preview platform support';
-        label = status.label || browser.preview_name;
+        label = status.label || 'Preview';
         break;
 
       case 'unknown':
@@ -282,7 +296,7 @@ const CellText = React.memo(
   },
 );
 
-function Icon({ name }: { name: string }) {
+function Icon({ name }: { name: keyof typeof LEGEND_LABELS }) {
   const title = LEGEND_LABELS[name] ?? name;
 
   return (
@@ -310,12 +324,15 @@ function CellIcons({ support }: { support: LCD.SupportStatement | undefined }) {
   return icons.length ? <div className="bc-icons">{icons}</div> : null;
 }
 
+/**
+ * Describe the flags required by this support statement.
+ * LCD platform metadata has no browser preference-page URL (pref_url),
+ * so this note only needs the statement's versions and flag configuration.
+ */
 function FlagsNote({
   supportItem,
-  browser,
 }: {
   supportItem: LCD.SimpleSupportStatement;
-  browser: LCD.PlatformStatement;
 }) {
   const hasAddedVersion = typeof supportItem.version_added === 'string';
   const hasRemovedVersion = typeof supportItem.version_removed === 'string';
@@ -348,9 +365,6 @@ function FlagsNote({
         );
       })}
       .
-      {browser.pref_url &&
-        flags.some((flag) => flag.type === 'preference') &&
-        ` To change preferences in ${browser.name}, visit ${browser.pref_url}.`}
     </>
   );
 }
@@ -364,7 +378,11 @@ function getNotes(
       .slice()
       .reverse()
       .flatMap((item, i) => {
-        const supportNotes = [
+        type SupportNote = {
+          iconName: keyof typeof LEGEND_LABELS;
+          label: React.ReactNode;
+        };
+        const noteItems: (SupportNote | SupportNote[] | null)[] = [
           item.version_removed &&
           !asList(support).some(
             (otherItem) => otherItem.version_added === item.version_removed,
@@ -400,7 +418,7 @@ function getNotes(
           item.flags
             ? {
                 iconName: 'disabled',
-                label: <FlagsNote browser={browser} supportItem={item} />,
+                label: <FlagsNote supportItem={item} />,
               }
             : null,
           item.notes
@@ -442,9 +460,8 @@ function getNotes(
                   label: 'No support',
                 }
               : null,
-        ]
-          .flat()
-          .filter(isTruthy);
+        ];
+        const supportNotes = noteItems.flat().filter(isTruthy);
 
         const hasNotes = supportNotes.length > 0;
         return (
@@ -576,10 +593,7 @@ export const FeatureRow = React.memo(
     let titleNode: string | React.ReactNode;
 
     if (compat.mdn_url && depth > 0) {
-      const href = compat.mdn_url.replace(
-        `/${DEFAULT_LOCALE}/docs`,
-        `/${locale}/docs`,
-      );
+      const href = localizeMdnUrl(compat.mdn_url, locale);
       titleNode = (
         <a href={href} className="bc-table-row-header">
           {title}

@@ -1,6 +1,6 @@
 // Re-export types for easier access
-export * from './types/types.d.ts';
-import platforms from './platforms/platforms.json' assert { type: 'json' };
+export type * from './types/types.js';
+import platforms from './platforms/platforms.json' with { type: 'json' };
 
 import type {
   CompatStatement,
@@ -79,6 +79,7 @@ export function isPlatformStatement(obj: unknown): obj is PlatformStatement {
     'name' in obj &&
     typeof obj.name === 'string' &&
     'type' in obj &&
+    typeof obj.type === 'string' &&
     isPlatformType(obj.type) &&
     'releases' in obj &&
     typeof obj.releases === 'object'
@@ -97,6 +98,7 @@ export function isReleaseStatement(obj: unknown): obj is ReleaseStatement {
     (!('release_date' in obj) || typeof obj.release_date === 'string') &&
     (!('release_notes' in obj) || typeof obj.release_notes === 'string') &&
     'status' in obj &&
+    typeof obj.status === 'string' &&
     isPlatformStatus(obj.status)
   );
 }

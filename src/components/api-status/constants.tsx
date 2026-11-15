@@ -3,7 +3,7 @@ import { PlatformIcon } from '../platform/PlatformIcon';
 
 export interface PlatformConfig {
   label: string;
-  icon: React.FC<{ className?: string; style?: React.CSSProperties }>;
+  icon: ReturnType<typeof makeIcon>;
   colors: {
     bg: string;
     border: string;
@@ -13,10 +13,14 @@ export interface PlatformConfig {
   };
 }
 
-const makeIcon = (
-  platformName: string,
-): React.FC<{ className?: string; style?: React.CSSProperties }> => {
-  return ({ className, style }) => (
+const makeIcon = (platformName: string) => {
+  return ({
+    className,
+    style,
+  }: {
+    className?: string;
+    style?: React.CSSProperties;
+  }) => (
     <PlatformIcon
       platformName={platformName}
       className={className}

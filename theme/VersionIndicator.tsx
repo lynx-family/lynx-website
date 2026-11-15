@@ -1,10 +1,10 @@
 import {
   removeTrailingSlash,
   useLocation,
-  useI18n,
   useLang,
   withBase,
 } from '@rspress/core/runtime';
+import { useI18n } from '@/hooks/use-i18n';
 import { useState, useEffect } from 'react';
 import {
   HoverCard,

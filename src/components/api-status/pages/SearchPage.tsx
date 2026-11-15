@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { useLang } from '@rspress/core/runtime';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Select,
   SelectContent,
@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../ui/select';
-import { APIItem } from '../APIStatusDashboard';
+import { APIItem } from '../APIItem';
 import type { APIStats, DisplayPlatformName, FeatureInfo } from '../types';
 import { CATEGORY_DISPLAY_NAMES } from '../types';
 
@@ -45,7 +45,7 @@ const i18n = {
   },
 };
 
-const SearchIcon: React.FC<{ className?: string }> = ({ className }) => (
+const SearchIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
     viewBox="0 0 24 24"
@@ -65,10 +65,7 @@ interface SearchPageProps {
   selectedPlatforms: DisplayPlatformName[];
 }
 
-export const SearchPage: React.FC<SearchPageProps> = ({
-  stats,
-  selectedPlatforms,
-}) => {
+export const SearchPage = ({ stats, selectedPlatforms }: SearchPageProps) => {
   const lang = useLang();
   const t = lang === 'zh' ? i18n.zh : i18n.en;
 

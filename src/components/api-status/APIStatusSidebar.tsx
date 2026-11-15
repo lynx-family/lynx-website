@@ -22,7 +22,7 @@ import './APIStatusSidebar.scss';
 // Stroke icons used for the page nav rail and footer. Kept lightweight —
 // matching the 1.75px stroke vocabulary the rest of the docs sidebar uses.
 
-const SearchIcon: React.FC<{ className?: string }> = ({ className }) => (
+const SearchIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
     viewBox="0 0 24 24"
@@ -37,7 +37,7 @@ const SearchIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const TrendingUpIcon: React.FC<{ className?: string }> = ({ className }) => (
+const TrendingUpIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
     viewBox="0 0 24 24"
@@ -52,7 +52,7 @@ const TrendingUpIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const LayersIcon: React.FC<{ className?: string }> = ({ className }) => (
+const LayersIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
     viewBox="0 0 24 24"
@@ -67,7 +67,7 @@ const LayersIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => (
+const SparklesIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
     viewBox="0 0 24 24"
@@ -81,7 +81,7 @@ const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const ChevronDownIcon: React.FC<{ className?: string }> = ({ className }) => (
+const ChevronDownIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
     viewBox="0 0 24 24"
@@ -95,7 +95,7 @@ const ChevronDownIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const HelpCircleIcon: React.FC<{ className?: string }> = ({ className }) => (
+const HelpCircleIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
     viewBox="0 0 24 24"
@@ -111,7 +111,7 @@ const HelpCircleIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const EyeIcon: React.FC<{ className?: string }> = ({ className }) => (
+const EyeIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
     viewBox="0 0 24 24"
@@ -132,7 +132,7 @@ export type PageType = 'search' | 'coverage' | 'categories' | 'recent';
 interface PageConfig {
   id: PageType;
   label: { en: string; zh: string };
-  icon: React.FC<{ className?: string }>;
+  icon: typeof SearchIcon;
 }
 
 const PAGES: PageConfig[] = [
@@ -159,11 +159,15 @@ const PAGES: PageConfig[] = [
 ];
 
 // ─── Platform icon (bg-mask via PLATFORM_CONFIG icon component) ──────────
-const PlatformIcon: React.FC<{
+const PlatformIcon = ({
+  platform,
+  className,
+  style,
+}: {
   platform: string;
   className?: string;
   style?: React.CSSProperties;
-}> = ({ platform, className, style }) => {
+}) => {
   const Icon = PLATFORM_CONFIG[platform]?.icon;
   return Icon ? <Icon className={className} style={style} /> : null;
 };
@@ -187,7 +191,7 @@ interface APIStatusSidebarProps {
   onPageChange: (page: PageType) => void;
 }
 
-export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
+export const APIStatusSidebar = ({
   stats,
   selectedPlatforms,
   onPlatformsChange,
@@ -195,7 +199,7 @@ export const APIStatusSidebar: React.FC<APIStatusSidebarProps> = ({
   onShowClayDetailsChange,
   activePage,
   onPageChange,
-}) => {
+}: APIStatusSidebarProps) => {
   const { state } = useSidebar();
   const lang = useLang();
   const isCollapsed = state === 'collapsed';

@@ -13,6 +13,9 @@
  */
 import React from 'react';
 
+type ErrorBoundaryProps = { children?: React.ReactNode };
+type ErrorBoundaryState = { error: Error | null };
+
 /**
  * The error boundary for BrowserCompatibilityTable.
  *
@@ -21,13 +24,13 @@ import React from 'react';
  * to replace that crashed component
  */
 export class BrowserCompatibilityErrorBoundary extends React.Component<
-  any,
-  any
+  ErrorBoundaryProps,
+  ErrorBoundaryState
 > {
-  state = {
+  state: ErrorBoundaryState = {
     error: null,
   };
-  componentDidCatch(error, _errorInfo) {
+  componentDidCatch(error: Error, _errorInfo: React.ErrorInfo) {
     this.setState({
       error,
     });
