@@ -1,0 +1,108 @@
+# 内存监控配置
+
+`memory_monitor_config` 从 **Lynx 4.4** 开始提供，是宿主提供的进程级 Lynx 内存监控配置，用于控制进程采样、UI 内存采集、页面定时事件投递、全局观测触发和脚本引擎内存更新。Lynx 4.5 新增高内存回调阈值。
+
+上报数据解读、开启方式和事件概要见[内存监控事件上报](./memory-monitor-reporting.mdx)。
+
+## Lynx 4.3 旧配置
+
+Lynx 4.3 使用独立的外部配置/Trail key，不使用 `memory_monitor_config`。如需开启监控以使用 Android/iOS 的旧版全局内存查询，应在创建第一个页面或 VM 前通过宿主配置服务提供字符串值：
+
+```json
+{
+  "enable_memory_monitor": "true",
+  "memory_change_threshold_mb": "1"
+}
+```
+
+| 配置项                       | 默认值    | 说明                                                 |
+| ---------------------------- | --------- | ---------------------------------------------------- |
+| `enable_memory_monitor`      | `"false"` | 开启旧版内存监控。                                   |
+| `memory_change_threshold_mb` | `"0"`     | 支持内存监控的脚本引擎的内存变化更新阈值，单位 MiB。 |
+
+Android 在注册的 `ILynxTrailService.stringValueForTrailKey(String key)` 中返回这些字符串；iOS 在注册的 `LynxServiceTrailProtocol` 实现中通过 `stringValueForTrailKey:` 返回。它们是独立配置 key，不能放进 `memory_monitor_config` 字符串。Lynx 4.4 及以上版本使用下文的统一配置。
+
+## 设置宿主配置
+
+以下配置适用于 Lynx 4.4 及以上版本。
+
+宿主需通过外部配置/Trail 接入提供该配置，并在首次读取内存监控配置前完成，通常应早于第一个 Lynx 页面或 VM 的创建。配置和采样结果在每个进程中只初始化一次，之后更新配置不会重新配置正在运行的监控，也不会重建已有 VM。
+
+| 平台      | 配置入口                                                                                                                                  |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Android   | 在宿主注册的 `ILynxTrailService.stringValueForTrailKey(String key)` 中，为 `memory_monitor_config` 返回配置字符串。                       |
+| iOS       | 在宿主注册的 `LynxServiceTrailProtocol` 实现中，通过 `stringValueForTrailKey:` 为 `memory_monitor_config` 返回配置字符串。                |
+| HarmonyOS | 在传给 `LynxTrailHub.getInstance().setTrailMap(...)` 的宿主 Trail 配置 map 中包含 `memory_monitor_config`，该接口同时将配置复制到原生层。 |
+
+例如，宿主配置提供方可以返回：
+
+```json
+{
+  "memory_monitor_config": "global_sample_rate,1,lynx_ui_sample_rate,1"
+}
+```
+
+配置值为逗号分隔的键值字符串：
+
+```text
+key,value,key,value
+```
+
+配置名需精确匹配，前后不要添加空格。未提供的配置项保留默认值；未知配置名和无法解析的值会被忽略。
+
+## 配置字段
+
+采样率为 `0` 到 `1` 之间的概率，其余配置使用非负整数。以 `_mb` 结尾的字段实际使用 MiB，每单位代表 `1024 * 1024` 字节。
+
+| 配置项                       | 默认值 | 说明                                                                                                                                                 |
+| ---------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `global_sample_rate`         | `0`    | 进程被选中启用内存监控的概率。被选中的进程同时启用 Element、主线程 runtime（MTS）、后台线程 runtime（BTS）和 QuickJS slot 监控。`0` 表示不启用监控。 |
+| `lynx_ui_sample_rate`        | `0.1`  | 在进程已被全局采样选中的前提下，启用 UI 内存采集的概率。UI 采样不影响 Element、MTS 和 BTS 的采集。                                                   |
+| `page_scheduled_sample_rate` | `0.1`  | 在全局采样选中的进程中，独立决定是否启用页面定时事件投递的概率，不影响页面计划观测、早期内存摘要、全局上报或内存查询。                               |
+| `time_interval_sec`          | `300`  | 全局内存周期观测间隔，单位秒。`0` 禁用该周期触发方式，不会禁用内存采集或其他观测触发方式。                                                           |
+| `pss_threshold_mb`           | `256`  | 触发全局观测的进程 PSS 高水位步长，单位 MiB。达到新的更高档位时触发观测；PSS 下降不会重置高水位。`0` 禁用该触发方式。                                |
+| `mts_threshold_mb`           | `1`    | 传给支持内存监控的 MTS 脚本引擎的内存缓存更新阈值，单位 MiB。引擎配置中最大为 `255` MiB。                                                            |
+| `bts_threshold_mb`           | `1`    | 传给支持内存监控的 BTS 脚本引擎的内存缓存更新阈值，单位 MiB。引擎配置中最大为 `255` MiB。                                                            |
+| `large_vm_threshold_mb`      | `1024` | Lynx 4.5 新增。一次性 `large_vm` 回调的共享 VM 堆内存阈值，单位 MiB。`0` 禁用该事件类型。                                                            |
+| `large_bts_threshold_mb`     | `512`  | Lynx 4.5 新增。一次性 `large_bts` 回调的页面后台 runtime 内存阈值，单位 MiB。`0` 禁用该事件类型。                                                    |
+| `large_ui_threshold_mb`      | `64`   | Lynx 4.5 新增。一次性 `large_ui` 回调的页面 UI 内存阈值，单位 MiB。`0` 禁用该事件类型。                                                              |
+
+观测和引擎更新配置不会要求立即执行同步页面内存测量。高内存阈值在对应内存数据刷新时检查，不用于设置轮询间隔。
+
+## 采样方式
+
+`global_sample_rate` 按进程选择是否启用监控，不是按页面或每次查询采样。设置为大于 `0`、小于 `1` 的值，只表示进程有机会被选中。
+
+进程被全局选中后，UI 采集和页面定时事件投递会分别进行独立的条件采样。例如，`global_sample_rate,0.1,lynx_ui_sample_rate,0.1` 会使约 `10%` 的进程启用核心内存采集，约 `1%` 的全部进程启用 UI 采集。
+
+仅将 `lynx_ui_sample_rate` 或 `page_scheduled_sample_rate` 设为 `1`，无法为未被全局选中的进程开启采集。如需在指定进程采集全部受支持的内存来源，应将 `global_sample_rate` 和 `lynx_ui_sample_rate` 均设为 `1`；如需完整投递页面定时事件，再将 `page_scheduled_sample_rate` 设为 `1`。
+
+## 配置示例
+
+### 全局内存查询
+
+如查询需要页面级 BTS 归因、UI 内存和已销毁页面残留，应在创建页面或 VM 前启用全局和 UI 采集：
+
+```text
+global_sample_rate,1,lynx_ui_sample_rate,1
+```
+
+查询接口、返回字段和采集语义见[全局 Lynx 内存查询](./global-memory-usage-query.mdx)。页面定时事件采样不影响内存查询。
+
+### 采样监控
+
+以下配置使 `10%` 的进程被全局选中，在全部选中进程中启用 UI 采集，并在其中 `10%` 的进程中启用页面定时事件投递：
+
+```text
+global_sample_rate,0.1,lynx_ui_sample_rate,1,page_scheduled_sample_rate,0.1,time_interval_sec,300,pss_threshold_mb,256,mts_threshold_mb,1,bts_threshold_mb,1
+```
+
+### 高内存回调
+
+以下配置在所有进程中启用全局和 UI 采集，并显式设置默认高内存阈值：
+
+```text
+global_sample_rate,1,lynx_ui_sample_rate,1,large_vm_threshold_mb,1024,large_bts_threshold_mb,512,large_ui_threshold_mb,64
+```
+
+宿主需按[高内存事件](./high-memory-events.mdx)文档单独注册回调。`large_bts` 需要启用全局监控，`large_ui` 还需要启用 UI 采集。即使未启用内存监控，共享 QuickJS VM 仍可通过已有 GC 通知触发 `large_vm`。达到阈值即满足触发条件，内存下降不会重置一次性回调。

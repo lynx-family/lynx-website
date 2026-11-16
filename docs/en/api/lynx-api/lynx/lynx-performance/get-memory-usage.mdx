@@ -1,0 +1,118 @@
+---
+title: getMemoryUsage()
+api: lynx-api/lynx/performance.getMemoryUsage()
+description: Query current-page memory from background JavaScript with monitoring requirements, status codes, and field availability.
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx.performance.getMemoryUsage()
+
+<APISummary />
+
+Starting in Lynx 4.4, background-thread JavaScript can use `lynx.performance.getMemoryUsage(callback)` to asynchronously query the current page instance's memory. The result includes Element memory, main-thread runtime (MTS) memory, the page's background runtime (BTS) component, the whole BTS VM heap, and UI memory.
+
+The API returns a best-effort memory summary. It does not generate heap snapshot files or query other pages or destroyed-page residuals.
+
+## Monitoring Requirements
+
+The host must enable memory monitoring through [`memory_monitor_config`](../../../../guide/performance/monitor-performance/memory-monitor-config.mdx) before creating pages or VMs, and the current process must be selected by `global_sample_rate`. Calling the JavaScript API does not enable monitoring.
+
+To enable core memory collection in the target process, set:
+
+```text
+global_sample_rate,1
+```
+
+To include UI memory, also enable UI collection:
+
+```text
+global_sample_rate,1,lynx_ui_sample_rate,1
+```
+
+A sampling rate below `1` does not guarantee that the process is selected. When monitoring is disabled or the process is not selected by global sampling, the callback returns `MONITORING_DISABLED`; the API does not collect memory from unmonitored pages on demand.
+
+## Syntax
+
+```typescript
+getMemoryUsage(callback: (usage: MemoryUsage) => void): void;
+```
+
+| Parameter  | Type                           | Description                                                                                                           |
+| ---------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `callback` | `(usage: MemoryUsage) => void` | Required callback receiving the current page's memory query result. Check `usage.status` before reading other fields. |
+
+The return value is `void`. Results arrive asynchronously through the callback; the API does not return a `Promise`. Passing an invalid callback throws an exception.
+
+## Example
+
+```typescript
+import type { MemoryUsage } from '@lynx-js/types';
+
+lynx.performance.getMemoryUsage((usage: MemoryUsage): void => {
+  // 0 is MemoryUsageQueryStatus.OK.
+  if (usage.status !== 0) {
+    console.warn(`Memory query unavailable: status=${usage.status}`);
+    return;
+  }
+
+  if (usage.totalBytes > 0) {
+    console.log('Available page memory (MiB):', usage.totalBytes / 1024 / 1024);
+  }
+  if (usage.btsBytes > 0) {
+    console.log('Page BTS memory (MiB):', usage.btsBytes / 1024 / 1024);
+  }
+  if (usage.btsHeapBytes > 0) {
+    console.log('Whole BTS VM heap (MiB):', usage.btsHeapBytes / 1024 / 1024);
+  }
+});
+```
+
+## Query Status
+
+`MemoryUsageQueryStatus` defines these numeric statuses:
+
+| Value | Name                  | Description                                                                                                                                       |
+| ----- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`   | `OK`                  | Monitoring is enabled, the current instance was found, and best-effort collection ran. Does not guarantee that all sources are complete or fresh. |
+| `1`   | `MONITORING_DISABLED` | Memory monitoring is disabled in the current process, including when global sampling did not select it.                                           |
+| `2`   | `INVALID_INSTANCE`    | The target instance's monitoring record was not found, or the instance was destroyed.                                                             |
+
+Read other fields only when `status === 0`. For other statuses, memory and count fields are `0` and `btsShared` is `false`; these defaults must not be consumed as page memory data.
+
+Even with `OK`, unsupported, unavailable, or failed numeric sources can return `0`. Except for `status`, consume numeric fields only when they are greater than `0`; a zero value does not establish measured zero memory.
+
+## Result Fields
+
+The callback receives a `MemoryUsage` object. Memory fields use bytes; count fields use object counts.
+
+| Field          | Type                     | Description                                                                                                                                                                                                                                                                |
+| -------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `status`       | `MemoryUsageQueryStatus` | Query status. Check this first.                                                                                                                                                                                                                                            |
+| `totalBytes`   | `number`                 | Sum of available page-attributed memory: `elementBytes + mtsBytes + btsBytes + uiBytes`. Can be incomplete; `btsHeapBytes` is not added separately.                                                                                                                        |
+| `elementBytes` | `number`                 | Element memory of the current page.                                                                                                                                                                                                                                        |
+| `elementCount` | `number`                 | Number of Elements in the current page.                                                                                                                                                                                                                                    |
+| `mtsBytes`     | `number`                 | The current page's MTS heap memory. Available only for a QuickJS MTS runtime.                                                                                                                                                                                              |
+| `btsBytes`     | `number`                 | BTS memory attributed to the current page. Uses the available whole heap for a standalone VM; shared-VM attribution requires QuickJS and a valid page slot.                                                                                                                |
+| `btsHeapBytes` | `number`                 | Whole heap of the page's BTS VM. For a shared VM, includes other pages and VM-wide memory, rather than only this page's BTS component. Can be available while `btsBytes` is unavailable. JSC heap collection is unsupported; unavailable or failed collection returns `0`. |
+| `uiBytes`      | `number`                 | The current page's UI memory. Available only when global sampling selects the process and UI memory sampling is enabled.                                                                                                                                                   |
+| `btsShared`    | `boolean`                | Whether the current page uses a shared BTS VM. Valid only with `OK`; `true` does not guarantee that the page's BTS component is available.                                                                                                                                 |
+
+Shared QuickJS VM slots `0`, `1`, and `2` are reserved. A VM can assign independent attribution slots to at most `253` pages over its lifetime. Later pages using the shared overflow slot cannot report page-specific BTS components. This is not a limit on concurrently live pages.
+
+## Collection Semantics
+
+- The API is exposed only to background-thread JavaScript. The callback returns asynchronously to the calling JS thread.
+- A query aggregates existing page memory records and attempts to refresh the available whole BTS VM heap. Fields can come from different times and do not guarantee a complete, immediate measurement.
+- A query does not trigger GC or release memory. Use it for on-demand diagnostics rather than frequent polling.
+- If the page or JS runtime is destroyed before callback delivery, the callback may not run. Do not rely on the API to return a result after destruction.
+
+## Diagnose Memory Usage
+
+Check `status` first, then compare available fields. When `btsShared` is `true`, interpret `btsBytes` and `btsHeapBytes` separately: do not attribute the whole shared VM heap to the current page or add it again to `totalBytes`. Keep monitoring and UI sampling settings consistent across comparisons.
+
+Use the host-side [global memory query](../../../../guide/performance/monitor-performance/global-memory-usage-query.mdx) to inspect other instances in the current process or destroyed-page residuals. To analyze JavaScript reference chains, see [Heap Snapshot Collection](../../../../guide/performance/monitor-performance/heap-snapshot.mdx).
+
+## Compatibility
+
+<APITable />

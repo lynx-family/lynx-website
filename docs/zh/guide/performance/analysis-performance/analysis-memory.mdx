@@ -13,19 +13,89 @@ import { PlatformTabs } from '@lynx';
 
 ## 使用 Trace 深入分析
 
-Trace 从 3.4 版本支持了 Memory Track，用来展示 Lynx 页面内存占用随时间的变化趋势，每个 Memory Track 代表一个 Lynx 页面的内存变化。
+### 基础页面 Memory Track（Lynx 3.4 及以上）
+
+Trace 从 Lynx 3.4 开始支持 Memory Track，用于展示页面内存占用随时间的变化趋势，每个 Memory Track 代表一个 Lynx 页面的内存变化。
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/memory-track-latest.png"
-  alt="Memory Track"
+  alt="基础页面 Memory Track"
   className="full_image"
 />
 
-点击 Memory Track 曲线，可以看到 Lynx 页面总的内存占用大小以及Element，后台脚本引擎，主线程脚本引擎，图片等占用的内存大小。
+点击 Memory Track 曲线，可以查看页面总内存，以及 Element、后台脚本引擎、主线程脚本引擎、图片等可用分类的内存占用。
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/memory-track-details.png"
-  alt="Memory Track Detail"
+  alt="基础页面 Memory Track 详情"
+  className="full_image"
+/>
+
+### 增强内存分析
+
+下文以 Lynx 4.5 展示完整流程。内存数据是否可用取决于 SDK，而图中的轨道、图表和采集入口还需要支持这些功能的 DevTool 版本；仅满足 SDK 版本要求不能保证出现该 UI。使用旧版 SDK 或 DevTool 时，可通过上文的基础页面 Memory Track 分析可用数据。
+
+堆快照采集需要 Lynx 4.5 及以上版本，当前仅支持 QuickJS。采集范围和接口见[堆快照采集](../monitor-performance/heap-snapshot.mdx)。
+
+#### 记录内存与采集快照
+
+在 Lynx Trace 面板中开启内存数据采集。对于活跃页面，点击右侧的相机按钮可采集不同类型的快照，仅支持 QuickJS 引擎。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-trace-panel.png"
+  alt="Lynx Trace 面板中的内存采集与快照入口"
+  className="full_image"
+/>
+
+#### 查看内存轨道
+
+内存轨道（Track）涵盖页面实例、后台脚本引擎（BTS）VM 和进程物理内存（PSS），用于观察各类内存随时间的变化。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-trace-memory-track.png"
+  alt="页面实例、BTS VM 和进程内存轨道"
+  className="full_image"
+/>
+
+点击 BTS VM 内存轨道，可查看该时刻的内存分布，包括共享该 VM 的各页面占用、已销毁页面的残留，以及公共脚本占用。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-memory-trace-click-vm.png"
+  alt="指定时刻的 BTS VM 内存分布"
+  className="full_image"
+/>
+
+选中 BTS VM 内存轨道，或在轨道上选择时间范围，可查看该时段的内存占用面积图，定位占用量或残留量较高的页面。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-memory-trace-select-vm.png"
+  alt="指定时间范围内的 BTS VM 内存占用面积图"
+  className="full_image"
+/>
+
+点击 PSS 内存轨道，可查看该时刻 Lynx 各 VM 和各页面的内存占用。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-memory-trace-click-pss-track.png"
+  alt="指定 PSS 观测时刻的 Lynx VM 和页面内存占用"
+  className="full_image"
+/>
+
+#### 查看快照详情
+
+单击轨道上的 Snapshot 图标，可查看不同时刻采集的快照序列，连续分析内存变化。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-memory-trace-click-snapshot.png"
+  alt="不同时刻采集的快照序列"
+  className="full_image"
+/>
+
+双击轨道上的 Snapshot 图标，可打开快照详情，分析 JavaScript 对象的存活情况和引用关系。
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-memory-trace-view-snapshot.png"
+  alt="JavaScript 对象及引用关系的快照详情"
   className="full_image"
 />
 

@@ -1,0 +1,213 @@
+---
+description: Lynx 4.5 的 MTS、页面 BTS 分量、BTS 整体 VM 和已销毁页面残留堆快照采集。
+---
+
+# 堆快照采集
+
+从 Lynx 4.5 开始，Android、iOS 和 HarmonyOS 可以通过 `LynxView.takeHeapSnapshot` 采集主线程 runtime（MTS）、页面后台 runtime（BTS）分量或 BTS 整体 VM 的堆快照，也可以通过静态接口 `LynxView.takeBtsResidualHeapSnapshot` 采集已销毁页面的 BTS 残留。
+
+快照保存为 JSON 文件，用于分析 JavaScript 对象及其引用链。建议使用 `.heapsnapshot` 扩展名；快照不包含 Element tree 或原生 UI/View 对象图。
+
+## 快照类型
+
+`takeHeapSnapshot` 通过 `type` 选择采集范围：
+
+| `type`     | 采集范围                         | 说明                                                                                                           |
+| ---------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `mts`      | 当前页面主 MTS VM 的堆。         | 需要主线程 runtime 可用，且引擎支持 QuickJS 堆快照。                                                           |
+| `bts_page` | 当前页面在后台 VM 中的归因分量。 | 共享 QuickJS VM 按页面跟踪 slot 采集；独立 VM 则采集整个 VM。共享 VM 需要已启用 slot 跟踪且页面具有有效 slot。 |
+| `bts_vm`   | 当前页面所用后台 VM 的整体堆。   | 对于共享 VM，包含其他页面、公共分配及残留对象，不等同于当前页面的内存分量。                                    |
+
+这些接口当前需要 QuickJS 快照能力。V8、JSVM、JSC 等其他引擎不能通过这些接口采集快照。
+
+## 采集前准备
+
+采集存活页面时，应在页面完成 runtime 初始化后调用，并保持页面存活。MTS 不可用时不能采集 `mts`，BTS 不可用时不能采集 `bts_page` 或 `bts_vm`。
+
+共享 VM 的 `bts_page` 和已销毁页面残留需要在创建页面或 VM 前启用内存监控，让页面获得可归因的跟踪 slot。通过宿主的 [`memory_monitor_config`](./memory-monitor-config.mdx) 配置入口设置：
+
+```text
+global_sample_rate,1
+```
+
+进程必须被全局采样选中；采样率小于 `1` 时并不能保证可用。已有 VM 不会因晚设置配置而补建 slot 跟踪。UI 采样率不影响 JavaScript 堆快照。
+
+`mts`、`bts_vm` 和独立 VM 的 `bts_page` 不依赖页面 slot 跟踪，无需为这些模式单独开启内存监控。
+
+## 采集存活页面
+
+以下示例假设 `lynxView` 为已加载页面；Android 的 `context` 为宿主 `Context`，HarmonyOS 的 `context` 为宿主 `UIAbilityContext`。示例采集 `bts_page`，可将 `type` 替换为 `mts` 或 `bts_vm`。
+
+| 参数         | 说明                                                                                                                                    |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `outputFile` | 输出文件。Android 使用 `java.io.File`；iOS 使用 `NSString` 路径；HarmonyOS 使用 `string` 路径。使用可写的绝对路径，并保证父目录已存在。 |
+| `callback`   | 通过错误字符串回调结果。成功时没有错误；失败时返回原因，具体平台约定见下表。                                                            |
+| `type`       | 采集范围，支持 `mts`、`bts_page`、`bts_vm`，区分大小写。HarmonyOS 将其声明为这三个字符串字面量的联合类型。                              |
+
+### Android
+
+```java
+import android.util.Log;
+import com.lynx.tasm.LynxView;
+import java.io.File;
+
+File outputFile = new File(context.getCacheDir(), "page-bts.heapsnapshot");
+lynxView.takeHeapSnapshot(
+    outputFile,
+    error -> {
+      if (error != null) {
+        Log.e("HeapSnapshot", error);
+      }
+    },
+    "bts_page");
+```
+
+接口签名为 `void takeHeapSnapshot(File outputFile, LynxConsumer<String> callback, String type)`。
+
+### iOS
+
+```objective-c
+NSString *outputFile =
+    [NSTemporaryDirectory() stringByAppendingPathComponent:@"page-bts.heapsnapshot"];
+[lynxView takeHeapSnapshot:outputFile
+                 callback:^(NSString * _Nullable error) {
+                   if (error != nil) {
+                     NSLog(@"Heap snapshot failed: %@", error);
+                   }
+                 }
+                     type:@"bts_page"];
+```
+
+接口为 `- (void)takeHeapSnapshot:(nonnull NSString *)outputFile callback:(void (^ _Nullable)(NSString * _Nullable error))callback type:(nonnull NSString *)type`。
+
+### HarmonyOS
+
+```typescript
+import { LynxView } from '@lynx/lynx';
+
+const outputFile: string = `${context.cacheDir}/page-bts.heapsnapshot`;
+lynxView.takeHeapSnapshot(
+  outputFile,
+  (error?: string): void => {
+    if (error !== undefined) {
+      console.error(`Heap snapshot failed: ${error}`);
+    }
+  },
+  'bts_page',
+);
+```
+
+接口返回 `void`。三个平台均异步采集，不直接返回快照内容。
+
+### 回调约定
+
+存活页面和已销毁页面残留接口使用相同的回调约定：
+
+| 平台      | 成功值      | 回调是否可省略    | 回调线程                             |
+| --------- | ----------- | ----------------- | ------------------------------------ |
+| Android   | `null`      | 可以传入 `null`。 | 后台线程；操作 View 前切回 UI 线程。 |
+| iOS       | `nil`       | 可以传入 `nil`。  | 后台线程；操作 View 前切回主线程。   |
+| HarmonyOS | `undefined` | 必须传入回调。    | 返回到发起调用的 ArkTS 线程。        |
+
+Android 和 iOS 支持从任意线程发起调用；iOS 会将存活 View 的访问转移到主线程。采集任务在所属 runtime 线程执行，文件写入由后台 IO 任务完成。
+
+## 采集已销毁页面残留
+
+页面销毁后，使用静态 `takeBtsResidualHeapSnapshot`，不再调用原 View 的存活页面接口。该接口不需要 `type`，只采集目标已销毁页面在共享 QuickJS VM 中的残留分量。
+
+| 参数         | 说明                                                                                                                       |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `outputFile` | 与存活页面接口相同的文件参数。                                                                                             |
+| `callback`   | 与存活页面接口相同的错误字符串回调。                                                                                       |
+| `instanceId` | 目标已销毁页面的实例 ID。Android 为 `int`，iOS 为 `int32_t`，HarmonyOS 为 `number`。必须是已销毁页面的 LynxShell 实例 ID。 |
+
+采集需要同时满足：
+
+- 当前进程已启用内存监控。
+- 页面在销毁前被跟踪，销毁记录仍可用，且具有有效的页面 slot；`unknown`、`common`、`overflow` 等保留 slot 不适用。
+- 页面所用共享 QuickJS VM 仍存活，并可执行采集任务。
+
+应在页面销毁前保存实例 ID，或从[全局内存查询](./global-memory-usage-query.mdx)的 `destroyedInstances[].instanceId`、[高内存事件](./high-memory-events.mdx)的页面或 slot `instance_id` 获取。不要使用页面 URL、page key、runtime ID 或 group ID 代替实例 ID。
+
+以下示例假设宿主已保存目标 ID 为 `savedInstanceId`，且目标页面已经销毁。
+
+### Android
+
+```java
+File outputFile = new File(context.getCacheDir(), "residual-bts.heapsnapshot");
+LynxView.takeBtsResidualHeapSnapshot(
+    outputFile,
+    error -> {
+      if (error != null) {
+        Log.e("HeapSnapshot", error);
+      }
+    },
+    savedInstanceId);
+```
+
+接口签名为 `static void takeBtsResidualHeapSnapshot(File outputFile, LynxConsumer<String> callback, int instanceId)`。
+
+### iOS
+
+```objective-c
+NSString *outputFile =
+    [NSTemporaryDirectory() stringByAppendingPathComponent:@"residual-bts.heapsnapshot"];
+[LynxView takeBtsResidualHeapSnapshot:outputFile
+                           callback:^(NSString * _Nullable error) {
+                             if (error != nil) {
+                               NSLog(@"Residual snapshot failed: %@", error);
+                             }
+                           }
+                         instanceId:savedInstanceId];
+```
+
+接口为 `+ (void)takeBtsResidualHeapSnapshot:(nonnull NSString *)outputFile callback:(void (^ _Nullable)(NSString * _Nullable error))callback instanceId:(int32_t)instanceId`。
+
+### HarmonyOS
+
+```typescript
+const outputFile: string = `${context.cacheDir}/residual-bts.heapsnapshot`;
+LynxView.takeBtsResidualHeapSnapshot(
+  outputFile,
+  (error?: string): void => {
+    if (error !== undefined) {
+      console.error(`Residual snapshot failed: ${error}`);
+    }
+  },
+  savedInstanceId,
+);
+```
+
+接口为静态方法，返回 `void`。如果 GC 后目标 slot 已无残留，采集仍可能成功并输出空对象图；空图不等同于接口失败。
+
+## 采集与文件语义
+
+- 快照采集会触发目标 VM 的 GC，并清理引擎持有的 console 消息。它可能影响内存水位和运行耗时，适合按需诊断，不适合高频轮询。全局内存查询本身不会触发 GC。
+- 采集会输出运行时诊断摘要，并在可用时记录对象源码位置。源码信息缺失不代表快照失败。
+- 快照先在内存中生成，再异步写入文件。只有完整写入成功后，回调才返回无错误。
+- SDK 不创建父目录。输出文件已存在时，其内容会被覆盖；采集阶段失败不会改写原文件，写入阶段失败可能留下部分内容。
+- 发起请求后，页面或 runtime 的销毁可能导致任务无法执行。以回调结果判断是否获得可用文件；失败时不要直接分析旧文件。
+
+## 错误处理
+
+失败时，回调返回错误字符串。常见错误如下：
+
+| 错误                                                            | 说明                                                               |
+| --------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `Invalid type`                                                  | `type` 不是受支持的采集范围。                                      |
+| `Native library unavailable`                                    | Android 原生库尚未加载，无法执行残留采集。                         |
+| `View destroyed`、`LynxView destroyed`、`LynxView unavailable`  | 存活页面接口的 View 已销毁或不可用；具体文案因平台或检查阶段而异。 |
+| `MTS unavailable`、`BTS unavailable`                            | 对应页面 runtime 尚未可用或已不可用。                              |
+| `QuickJS required`                                              | 当前 runtime 不支持所需的 QuickJS 堆快照。                         |
+| `Slot unavailable`                                              | 共享 VM 中没有可用于页面分量采集的有效 slot。                      |
+| `Monitor disabled`                                              | 残留接口需要启用内存监控。                                         |
+| `No residual snapshot`                                          | 目标仍存活、没有可用销毁记录、未被跟踪，或没有有效的残留 slot。    |
+| `BTS VM destroyed`、`VM unavailable/busy`、`No QuickJS context` | 目标 VM 或上下文无法用于采集。                                     |
+| `Capture failed`、`Write failed`                                | 快照生成失败，或输出文件写入失败。                                 |
+| `Cancelled`                                                     | 已投递的采集任务未能执行，例如所属 runtime 被销毁。                |
+
+## 排查建议
+
+先通过[全局内存查询](./global-memory-usage-query.mdx)或[高内存事件](./high-memory-events.mdx)定位实例和 runtime 类型。MTS 偏高时使用 `mts`；页面 BTS 分量偏高时使用 `bts_page`；需要查看共享对象、其他页面或 VM 整体保活关系时使用 `bts_vm`。
+
+退出页面并等待正常清理后，如果销毁记录仍显示 BTS 残留，可以按该实例 ID 采集残留快照，分析 GC 后对象的引用链。比较多次快照时，应保持采集范围和监控配置一致。残留字节数或某次快照中仍有对象本身不能直接证明泄漏，需要结合对象生命周期和保活路径判断。

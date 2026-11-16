@@ -1,0 +1,188 @@
+# High Memory Events
+
+Starting in Lynx 4.5, a host app can register a process-wide callback to receive high-memory events for shared background VMs, page background runtimes, and page UI memory. Use these events to identify large VMs or page instances and decide whether to collect further diagnostics.
+
+The SDK delivers a dictionary to the host. The host is responsible for uploading analytics or taking action; the callback does not release memory.
+
+## Register A Callback
+
+Register early during app initialization. Callbacks are retained globally and delivered asynchronously on the main/UI thread. Keep callback work short and move expensive processing or uploads off that thread.
+
+### Android
+
+```java
+import com.lynx.tasm.LynxEnv;
+
+LynxEnv.setHighMemoryCallback(event -> {
+  // event is a Map<String, Object>.
+  // Inspect event.get("type"), event.get("key"), and event.get("bytes").
+});
+
+// Clear all registered high-memory callbacks when needed.
+LynxEnv.setHighMemoryCallback(null);
+```
+
+The callback interface is `LynxEnv.HighMemoryCallback`, with the method `onHighMemoryEvent(Map<String, Object> event)`.
+
+### iOS
+
+```objective-c
+[LynxEnv setHighMemoryCallback:^(NSDictionary<NSString *, id> *event) {
+  NSString *type = event[@"type"];
+  NSString *key = event[@"key"];
+  int64_t bytes = [event[@"bytes"] longLongValue];
+  // Process the event on the main thread.
+}];
+
+// Clear all registered high-memory callbacks when needed.
+[LynxEnv setHighMemoryCallback:nil];
+```
+
+### HarmonyOS
+
+```typescript
+import { LynxEnv, LynxHighMemoryEvent } from '@lynx/lynx';
+
+LynxEnv.setHighMemoryCallback((event: LynxHighMemoryEvent): void => {
+  const type: string = event.type;
+  const key: string = event.key;
+  const bytes: number = event.bytes;
+  // Process the event on the UI thread.
+});
+
+// Clear all registered high-memory callbacks when needed.
+LynxEnv.setHighMemoryCallback(undefined);
+```
+
+HarmonyOS exposes numeric fields as `number`, `slots` as `Array<LynxHighMemorySlot>`, and `counts` as `Array<string | number>`.
+
+### Native Embedders
+
+The C API accepts a callback and an opaque user-data pointer:
+
+```c
+typedef void (*lynx_env_high_memory_callback)(
+    void* user_data, const struct lynx_value* event);
+
+void lynx_env_set_high_memory_callback(
+    lynx_env_high_memory_callback callback, void* user_data);
+```
+
+Register and clear callbacks on the UI thread. Passing a null callback clears all registrations. The C++ entry point is `LynxEnv::GetInstance().SetHighMemoryCallback(callback, user_data)`.
+
+The C callback receives a borrowed value that is valid until the callback returns. To keep the event for later processing, retain it with `lynx_value_add_reference(nullptr, *event, nullptr)` in C++, or use an owning `pub::LynxValue`.
+
+## Configure Sampling And Thresholds
+
+See [Memory Monitor Configuration](./memory-monitor-config.mdx) for host configuration, initialization timing, sampling rates, defaults, and a high-memory callback configuration example. Set `large_vm_threshold_mb`, `large_bts_threshold_mb`, and `large_ui_threshold_mb` through `memory_monitor_config`.
+
+The thresholds use MiB, and `0` disables the corresponding event type. An event is eligible when the measured bytes are greater than or equal to the configured threshold.
+
+`large_bts` and `large_ui` require enabled memory monitoring; `large_ui` also requires UI collection. Shared QuickJS VMs can still emit `large_vm` from existing GC notifications when memory monitoring is disabled.
+
+## Event Fields
+
+Each callback receives one event dictionary. Fields that do not apply to its event type are omitted.
+
+| Field              | Type   | Description                                                                                                                                                                                     |
+| ------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`             | string | Added in Lynx 4.5. One of `large_vm`, `large_bts`, or `large_ui`.                                                                                                                               |
+| `key`              | string | VM name for `large_vm`; the memory monitor's `page_key` for page events. Shared QuickJS VMs use `monitoring_group_label` when non-empty, otherwise `group_id`. A VM name is not a unique VM ID. |
+| `bytes`            | number | Memory measured for the event, in bytes. VM heap for `large_vm`, page background runtime memory for `large_bts`, or page UI memory for `large_ui`.                                              |
+| `instance_id`      | number | Added in Lynx 4.5. Lynx instance ID for `large_bts` and `large_ui`; distinguishes instances with the same page key.                                                                             |
+| `vm_type`          | string | Present on `large_vm` and `large_bts`. Runtime type: `quickjs`, `v8`, `jsvm`, `jsc`, or `unknown`.                                                                                              |
+| `total_page_count` | number | Present on monitored VM events. Lifetime count of accepted page-to-VM bindings, including pages without attribution slots. It is not the number of currently live pages.                        |
+| `slots`            | array  | QuickJS VM attribution records when slot data is available. Each item is an object described below; the array is sorted by bytes in descending order, then by native slot index.                |
+| `counts`           | array  | Present on `large_ui`. A flat array alternating category names and object counts, such as `["lynxTasmElement", 12000]`. These are counts, not memory sizes; category order is unspecified.      |
+
+### Shared VM Event
+
+`large_vm` reports the heap size of a shared background VM. For shared QuickJS, `slots` helps identify the pages and shared allocations contributing to that heap:
+
+```json
+{
+  "type": "large_vm",
+  "key": "feed_group",
+  "bytes": 1207959552,
+  "vm_type": "quickjs",
+  "total_page_count": 8,
+  "slots": [
+    {
+      "key": "feed_page",
+      "bytes": 603979776,
+      "instance_id": 204
+    },
+    {
+      "key": "common",
+      "bytes": 268435456
+    },
+    {
+      "key": "feed_page",
+      "bytes": 134217728,
+      "instance_id": 199
+    },
+    {
+      "key": "unknown",
+      "bytes": 67108864
+    }
+  ]
+}
+```
+
+| Slot Field    | Type   | Description                                                                                                                                                                                         |
+| ------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`         | string | Page key for a bound page slot. Reserved slots `0`, `1`, and `2` use `unknown`, `common`, and `overflow`. An occupied but unbound slot has an empty key.                                            |
+| `bytes`       | number | Bytes attributed to the slot. Occupied slots can have zero bytes. Slot values are a breakdown and must not be added to the event's `bytes`.                                                         |
+| `instance_id` | number | Added in Lynx 4.5. Present for bound page slots, including retained records for exited pages. Omitted for reserved or unbound slots. Entries with the same page key remain separate by instance ID. |
+
+Shared QuickJS VM checks run from existing GC notifications. V8 and JSVM checks run after a successful heap refresh while monitoring is enabled. Standalone VMs do not emit `large_vm`, and JSC heap collection is unsupported. The callback does not introduce additional GC or allocation notifications.
+
+### Page Background Runtime Event
+
+`large_bts` reports background runtime memory attributed to a live page. For a shared QuickJS VM, this is the page's slot component; for a standalone VM, it is that page's VM heap size.
+
+```json
+{
+  "type": "large_bts",
+  "key": "feed_page",
+  "bytes": 603979776,
+  "instance_id": 204,
+  "vm_type": "quickjs"
+}
+```
+
+The example identifies instance `204` with `576` MiB of background runtime memory. Use `instance_id` with `key` to distinguish concurrent or reloaded instances of the same page.
+
+### Page UI Event
+
+`large_ui` reports a live page's UI memory. Its `bytes` excludes Element tree and runtime memory.
+
+```json
+{
+  "type": "large_ui",
+  "key": "feed_page",
+  "bytes": 83886080,
+  "instance_id": 204,
+  "counts": ["lynxTasmElement", 12000]
+}
+```
+
+The example reports `80` MiB of UI memory. `counts` contains cached category counts and can include non-UI categories, such as scripting engines or `lynxTasmElement`. It is diagnostic context, not a byte breakdown of `bytes`.
+
+## Delivery And Lifetime
+
+- Each non-null callback registration appends a listener. Passing `null`, `nil`, or `undefined` clears all listeners. Listeners run in registration order; avoid capturing page objects in these globally retained callbacks.
+- Each VM emits `large_vm` at most once. Each page emits `large_bts` and `large_ui` at most once each. Dropping below the threshold or reloading a page does not reset these flags.
+- A threshold event consumes its one-shot flag even when no listener is registered. Registering later does not replay past events.
+- The listener list is copied when the UI delivery task starts. Adding or clearing listeners inside a callback affects later deliveries.
+- Page checks run after memory refresh and shared-VM attribution, and skip exited pages. Refreshes driven by memory producer updates use a `60`-second interval, or `16` ms while tracing; other refreshes can reset that interval. No additional polling timer is introduced, so the callback is not an immediate notification of every threshold crossing.
+
+## Diagnose High Memory
+
+For `large_vm`, inspect `slots` and compare instance IDs with the host's page lifecycle records. A slot can refer to an exited page that still has attributed memory; this is a reason to investigate retention, not proof of a leak. Use `total_page_count` only as lifetime context.
+
+For page events, correlate `key` and `instance_id` with page load, reload, and destruction records. Use `vm_type` to choose suitable runtime diagnostics, and inspect UI object counts when `large_ui` fires.
+
+Use the [global Lynx memory query](./global-memory-usage-query.mdx) to obtain a current process-wide inventory. In Lynx 4.5, it also works without monitoring, but page BTS attribution, UI memory, and destroyed-page residuals require monitoring; check `memoryMonitoringEnabled` before interpreting those fields. High-memory events identify threshold cases; a global query or heap snapshot supplies the additional evidence needed for diagnosis.
+
+For QuickJS runtime retention, see [Heap Snapshot Collection](./heap-snapshot.mdx). Use `bts_page` for a live page's component or `bts_vm` for the whole background VM. For a destroyed page identified by a slot's `instance_id`, use the static `takeBtsResidualHeapSnapshot` API while its shared VM is still alive.

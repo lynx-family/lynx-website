@@ -1,0 +1,108 @@
+# Memory Monitor Configuration
+
+Available from **Lynx 4.4**, `memory_monitor_config` is a process-wide host setting for Lynx memory monitoring. It controls process sampling, UI memory collection, scheduled page-event delivery, global observation triggers, and scripting-engine memory updates. Lynx 4.5 adds high-memory callback thresholds.
+
+See [Memory Monitor Event Reporting](./memory-monitor-reporting.mdx) for interpreting reported data, enablement, and the event overview.
+
+## Legacy Settings For Lynx 4.3
+
+Lynx 4.3 uses separate external configuration/Trail keys rather than `memory_monitor_config`. To enable monitoring for the legacy Android/iOS global memory query, provide string values through the host configuration service before creating the first page or VM:
+
+```json
+{
+  "enable_memory_monitor": "true",
+  "memory_change_threshold_mb": "1"
+}
+```
+
+| Setting                      | Default   | Description                                                             |
+| ---------------------------- | --------- | ----------------------------------------------------------------------- |
+| `enable_memory_monitor`      | `"false"` | Enables legacy memory monitoring.                                       |
+| `memory_change_threshold_mb` | `"0"`     | Memory-change threshold for supported scripting-engine updates, in MiB. |
+
+On Android, return these strings from the registered `ILynxTrailService.stringValueForTrailKey(String key)`. On iOS, return them from the registered `LynxServiceTrailProtocol` implementation of `stringValueForTrailKey:`. These are separate keys, not entries within a `memory_monitor_config` string. For Lynx 4.4 and later, use the unified configuration below.
+
+## Set The Host Configuration
+
+The following configuration applies to Lynx 4.4 and later.
+
+Provide the setting through the host's external configuration/Trail integration before memory monitor settings are first read, usually before creating the first Lynx page or VM. Settings and sampling decisions are initialized once per process. Updating the configuration later does not reconfigure the running monitor or rebuild existing VMs.
+
+| Platform  | Configuration Entry                                                                                                                                                        |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Android   | Return the string value for `memory_monitor_config` from the host's registered `ILynxTrailService.stringValueForTrailKey(String key)`.                                     |
+| iOS       | Return the string value for `memory_monitor_config` from the host's registered `LynxServiceTrailProtocol` implementation of `stringValueForTrailKey:`.                     |
+| HarmonyOS | Include `memory_monitor_config` in the host's Trail configuration map passed to `LynxTrailHub.getInstance().setTrailMap(...)`; this also copies the values to native code. |
+
+For example, the host configuration provider can supply:
+
+```json
+{
+  "memory_monitor_config": "global_sample_rate,1,lynx_ui_sample_rate,1"
+}
+```
+
+The value is a string of comma-separated keys and values:
+
+```text
+key,value,key,value
+```
+
+Use exact key names without surrounding spaces. Omitted settings keep their defaults. Unknown keys and values that cannot be parsed are ignored.
+
+## Configuration Fields
+
+Sampling rates are probabilities from `0` to `1`. Other settings use non-negative integers. Fields ending in `_mb` use MiB: one unit is `1024 * 1024` bytes.
+
+| Setting                      | Default | Description                                                                                                                                                                                                                |
+| ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `global_sample_rate`         | `0`     | Probability of selecting the process for memory monitoring. A selected process enables Element, main-thread runtime (MTS), background-thread runtime (BTS), and QuickJS slot monitoring together. `0` disables monitoring. |
+| `lynx_ui_sample_rate`        | `0.1`   | Probability of enabling UI memory collection, conditional on global process selection. UI selection does not change Element, MTS, or BTS collection.                                                                       |
+| `page_scheduled_sample_rate` | `0.1`   | Independent probability of enabling scheduled page-event delivery, conditional on global selection. It does not change planned page observations, early memory summaries, global reporting, or memory queries.             |
+| `time_interval_sec`          | `300`   | Interval for periodic global memory observations, in seconds. `0` disables this periodic trigger; it does not disable memory collection or other observation triggers.                                                     |
+| `pss_threshold_mb`           | `256`   | Process PSS high-water step for triggering global observations, in MiB. A newly reached higher step triggers an observation; falling PSS does not reset the high water. `0` disables this trigger.                         |
+| `mts_threshold_mb`           | `1`     | Threshold supplied to supported MTS scripting engines for memory cache updates, in MiB. The engine configuration caps it at `255` MiB.                                                                                     |
+| `bts_threshold_mb`           | `1`     | Threshold supplied to supported BTS scripting engines for memory cache updates, in MiB. The engine configuration caps it at `255` MiB.                                                                                     |
+| `large_vm_threshold_mb`      | `1024`  | Added in Lynx 4.5. Shared VM heap threshold for the one-shot `large_vm` callback, in MiB. `0` disables this event type.                                                                                                    |
+| `large_bts_threshold_mb`     | `512`   | Added in Lynx 4.5. Page background runtime threshold for the one-shot `large_bts` callback, in MiB. `0` disables this event type.                                                                                          |
+| `large_ui_threshold_mb`      | `64`    | Added in Lynx 4.5. Page UI memory threshold for the one-shot `large_ui` callback, in MiB. `0` disables this event type.                                                                                                    |
+
+The observation and engine-update settings do not request an immediate synchronous page measurement. High-memory thresholds are checked when the corresponding memory data is refreshed, rather than setting a polling interval.
+
+## How Sampling Works
+
+`global_sample_rate` selects processes for monitoring, not individual pages or individual queries. A positive rate below `1` only gives a process a chance of being selected.
+
+After global selection, UI collection and scheduled page-event delivery each make an independent conditional draw. For example, `global_sample_rate,0.1,lynx_ui_sample_rate,0.1` selects about `10%` of processes for core memory collection and about `1%` of all processes for UI collection.
+
+Setting `lynx_ui_sample_rate` or `page_scheduled_sample_rate` to `1` does not enable collection in a process that was not selected globally. To collect all supported memory sources in a process, set both `global_sample_rate` and `lynx_ui_sample_rate` to `1`. Set `page_scheduled_sample_rate` to `1` as well when complete scheduled page-event delivery is required.
+
+## Configuration Examples
+
+### Global Memory Queries
+
+For queries that require page-level BTS attribution, UI memory, and destroyed-page residuals, enable global and UI collection before creating pages or VMs:
+
+```text
+global_sample_rate,1,lynx_ui_sample_rate,1
+```
+
+See the [global Lynx memory query](./global-memory-usage-query.mdx) for the query API, result fields, and collection semantics. Scheduled page-event sampling does not affect memory queries.
+
+### Sampled Monitoring
+
+This configuration samples `10%` of processes globally, enables UI collection in all selected processes, and enables scheduled page-event delivery in `10%` of selected processes:
+
+```text
+global_sample_rate,0.1,lynx_ui_sample_rate,1,page_scheduled_sample_rate,0.1,time_interval_sec,300,pss_threshold_mb,256,mts_threshold_mb,1,bts_threshold_mb,1
+```
+
+### High Memory Callbacks
+
+This configuration enables global and UI collection in every process and explicitly sets the default high-memory thresholds:
+
+```text
+global_sample_rate,1,lynx_ui_sample_rate,1,large_vm_threshold_mb,1024,large_bts_threshold_mb,512,large_ui_threshold_mb,64
+```
+
+Register the host callback separately as described in [High Memory Events](./high-memory-events.mdx). `large_bts` requires global monitoring, and `large_ui` also requires UI collection. Shared QuickJS VMs can emit `large_vm` from existing GC notifications even when memory monitoring is disabled. The thresholds are inclusive; lowering memory usage does not reset a one-shot callback.
