@@ -207,8 +207,8 @@ export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
   // Check all inputs and generated destinations before replacing any section.
   for (const { from, to, siteFiles } of copies) {
     if (!existsSync(from)) throw new Error(`Missing package content: ${from}`);
-    if (siteFiles) requireIgnored(website, join(to, '_meta.json'));
-    else requireIgnored(website, to + sep);
+    // The skills section is committed; shared assets and AI navigation remain generated.
+    if (!siteFiles) requireIgnored(website, to + sep);
   }
   for (const { path } of navigation) requireIgnored(website, path);
   for (const { from, to, siteFiles } of copies) {
