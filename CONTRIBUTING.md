@@ -213,14 +213,21 @@ The agent-lynx and Agent Skills guides, conversation components, and interactive
 maintained in
 [skills/packages/skills-docs](https://github.com/lynx-community/skills/tree/main/packages/skills-docs).
 `pnpm run sync:skills-docs` mounts `@lynx-js/skills-docs` during
-`prepare`. Its generated pages (`docs/{en,zh}/ai/agent-lynx` and
-`docs/{en,zh}/ai/skills`), shared modules
-(`docs/_ai`), public assets (`docs/public/ai/agent-lynx`), and AI
-navigation (`docs/{en,zh}/ai/_meta.json`) are ignored. Change other AI navigation
-in `_meta.template.json`; the `agent-lynx` and `skills` slots expand from the
-package's localized navigation. The website owns the AI landing page, overall
-section order, AGENTS.md guide, and MCP guides. Edit packaged content in skills
-and update this single dependency when it is released.
+`prepare`. The skills pages under `docs/{en,zh}/ai/skills` are committed and
+updated by synchronization. The agent-lynx pages, shared modules
+(`docs/_ai`), public assets (`docs/public/ai/agent-lynx`), and top-level AI
+navigation (`docs/{en,zh}/ai/_meta.json`) remain generated and ignored. Change
+other AI navigation in `_meta.template.json`; the `agent-lynx` and `skills`
+slots expand from the package's localized navigation. The website owns the AI
+landing page, overall section order, AGENTS.md guide, and MCP guides. Edit
+packaged content in skills and update this single dependency when it is
+released; commit the synchronized skills output with the dependency change.
+
+Site-owned pages can stay under the same route with their navigation
+declarations in `_meta.site.json`, using `before` or `after` anchors.
+`sync:skills-docs` preserves those tracked files, merges the declarations, and
+lets a same-named site page replace the package page immediately. A2UI and
+OpenUI use this path.
 
 For joint development, run the sync watcher alongside the website dev server:
 
