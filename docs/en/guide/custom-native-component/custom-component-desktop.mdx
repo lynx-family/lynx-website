@@ -132,6 +132,10 @@ The Native UI rendering backend attaches a platform control and updates its layo
 
 :::tip Covering native views or child windows
 Platform views or child windows attached by the Native UI backend are placed above Clay's main rendering surface, so regular Lynx `z-index` cannot reliably cover them. Keep the platform control inside the renderer host returned for its `lynx_view_t`, and place overlapping Lynx content inside a [`<cover-view>`](/api/elements/built-in/cover-view). If the UI requires arbitrary clipping, transforms, or interleaving with regular Lynx content, use the Texture backend instead.
+
+Ordinary element backgrounds also hide the control. Clay promotes a `background-color` to its own layer and the platform control composites below all of them, so a background on **any** element whose box overlaps the control covers it — including the application root, which is an ordinary element and not the render tree's root. Attachment, layout and content all stay correct while the region renders blank, which makes this read as a compositing failure rather than a paint order.
+
+Give the host window the background instead, and keep element backgrounds on nodes that do not overlap the control. The window is the only surface below both Lynx content and the platform control.
 :::
 
 <Tabs groupId="custom-component-desktop-native-ui-platform">
