@@ -91,6 +91,7 @@ test('policy checks raw spellings, owners, targets, types, settings and portable
       boundary: 'documentation',
     },
   ];
+  contracts.documentationScope = { roots: ['prepared'] };
   const extension: ConsumerAliasExtension = {
     id: 'local',
     specifier: '@local',
@@ -136,6 +137,7 @@ test('policy checks raw spellings, owners, targets, types, settings and portable
     '@theme/entry.scss': 'theme/entry.scss',
     '../runtime': 'local/child.ts',
     '../document': 'content/page.mdx',
+    '../scope-document': 'prepared/page.mdx',
     '../version': 'docs/public/version.json',
   };
   for (const file of Object.values(paths))
@@ -212,6 +214,25 @@ test('policy checks raw spellings, owners, targets, types, settings and portable
     ),
   );
   assert.ok((await rules(record('@/shadow'))).includes('target-policy'));
+  const producer = {
+    importer: 'content/producer.mdx',
+    owner: 'consumer:tools-docs' as const,
+    role: 'generated' as const,
+    boundary: 'documentation' as const,
+  };
+  assert.deepEqual(await rules(record('@theme/entry.scss', producer)), []);
+  for (const specifier of ['@local/child', '@/private'])
+    assert.ok(
+      (await rules(record(specifier, producer))).includes('importer-owner'),
+    );
+  const producerViolations = await checkImportPolicy(
+    cwd,
+    contracts,
+    [record('@lynx/entry/index.tsx', producer)],
+    runtime,
+  );
+  assert.ok(producerViolations.length);
+  assert.ok(producerViolations.every((violation) => !violation.baselinable));
   assert.deepEqual(
     await rules(
       record('@/types', { bindings: [{ name: 'Shape', typeOnly: true }] }),
@@ -315,6 +336,8 @@ test('policy checks raw spellings, owners, targets, types, settings and portable
     ),
   );
   assert.ok((await rules(record('../document'))).includes('relative-boundary'));
+  for (const specifier of ['../../prepared/page.mdx?raw', '../scope-document'])
+    assert.deepEqual(await rules(record(specifier)), ['relative-boundary']);
   assert.ok((await rules(record('../version'))).includes('version-data'));
   assert.ok(
     !(
@@ -361,6 +384,26 @@ test('policy checks raw spellings, owners, targets, types, settings and portable
       ).map((entry) => entry.rule),
       ['cross-owner-private'],
     );
+  // Generator namespace roots can be bare even for subpaths-only imports.
+  for (const environment of runtime.environments)
+    environment.aliases['@local'] = path.join(cwd, 'local');
+  const namespace = record('@local', {
+    ...consumer,
+    kind: 'configuration',
+    importer: 'components.json',
+  });
+  assert.deepEqual(await rules(namespace), []);
+  assert.ok(
+    (await rules({ ...namespace, kind: 'import' })).includes('alias-shape'),
+  );
+  assert.ok(
+    (await rules({ ...namespace, owner: 'lynx-website' })).includes(
+      'importer-owner',
+    ),
+  );
+  for (const environment of runtime.environments)
+    environment.aliases['@local'] = path.join(cwd, 'other');
+  assert.ok((await rules(namespace)).includes('target-policy'));
   contracts.resolverOverrides = [
     {
       id: 'override',

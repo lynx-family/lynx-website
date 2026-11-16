@@ -11,11 +11,11 @@ import {
   type ActiveContracts,
 } from './check-registry.js';
 import {
+  aliasAllowsImporter,
   canonical,
   classifySource,
   discoverCorpus,
   matchingAlias,
-  readProducerManifest,
   resolvedResource,
   resourcePath,
   type ImportRecord,
@@ -60,10 +60,7 @@ function keyErrors(
       (typescript ? key.endsWith('/*') : !key.endsWith('$'))
     )
       errors.push(`exact alias '${key}' must use exact matching`);
-    if (
-      alias!.kind === 'subpaths-only' &&
-      (typescript ? !key.endsWith('/*') : key.endsWith('$'))
-    )
+    if (alias!.kind === 'subpaths-only' && !typescript && key.endsWith('$'))
       errors.push(`subpaths-only alias '${key}' has a bare-only binding`);
     if (
       !alias!.allowMultipleResolverRoots &&
@@ -83,7 +80,7 @@ function importErrors(
   importerOwner?: ImportRecord['owner'],
 ): string[] {
   const errors: string[] = [];
-  if (importerOwner && !alias.allowedImporters.includes(importerOwner))
+  if (importerOwner && !aliasAllowsImporter(alias, importerOwner))
     errors.push(`importer owner '${importerOwner}' is not allowed`);
   if (bare && alias.kind === 'subpaths-only')
     errors.push('unsupported bare import');
@@ -94,7 +91,7 @@ function importErrors(
 
 export function targetErrors(
   alias: AliasContract,
-  bare: boolean,
+  bare: boolean | 'namespace',
   area: SourceArea | undefined,
 ): string[] {
   const errors: string[] = [];
@@ -102,13 +99,21 @@ export function targetErrors(
   const sources = alias.implementationSources;
   if (
     !sources.requiredAreas.includes(area.id) &&
-    !sources.additionalOwners.includes(area.owner)
+    !sources.additionalOwners.some((owner) => owner === area.owner)
   )
     errors.push(`target source area '${area.id}' is not permitted`);
-  const owners = bare ? alias.bareTargetOwners : alias.subpaths?.targetOwners;
-  if (!owners?.includes(area.owner))
+  const owners =
+    bare === 'namespace'
+      ? [
+          ...(alias.bareTargetOwners ?? []),
+          ...(alias.subpaths?.targetOwners ?? []),
+        ]
+      : bare
+        ? alias.bareTargetOwners
+        : alias.subpaths?.targetOwners;
+  if (!owners?.some((owner) => owner === area.owner))
     errors.push(
-      `target owner '${area.owner}' is not allowed for ${bare ? 'bare' : 'subpath'} imports`,
+      `target owner '${area.owner}' is not allowed for ${bare === 'namespace' ? 'namespace settings' : bare ? 'bare imports' : 'subpath imports'}`,
     );
   if (alias.visibility === 'owner-private' && area.owner !== alias.owner)
     errors.push(`private target must belong to '${alias.owner}'`);
@@ -691,24 +696,25 @@ export async function checkResolution(
 
 /** Run Gate 2 from an OSS or consumer repository root and close all compilers. */
 export async function runResolutionCli(
-  args = process.argv.slice(2),
+  args: readonly string[] = process.argv.slice(2),
   cwd = process.cwd(),
+  defaults?: Parameters<typeof loadContracts>[2],
 ): Promise<number> {
   let runtime: Runtime | undefined;
   try {
     const options = parseArguments(args);
     if (options.help) {
       console.log(
-        'Usage: node --import tsx scripts/alias-contracts/check-resolution.ts [--source-map <module>] [--resolver-overrides <module>] [--alias-extensions <module>]',
+        'Usage: node --import tsx scripts/alias-contracts/check-resolution.ts --source-map <module> [--resolver-overrides <module>] [--alias-extensions <module>] [--documentation-corpus <module>]',
       );
       return 0;
     }
-    const contracts = await loadContracts(options, cwd);
-    // Only the OSS entry point owns preparation of this producer's documents.
-    // A consumer source map defines its corpus without transitive-dependency
-    // lookup or assumptions about an installed lynx-doc package's layout.
-    const manifest = readProducerManifest(cwd, !!options.sourceMap);
-    const corpus = discoverCorpus(cwd, contracts, manifest);
+    if (!options.sourceMap && !defaults)
+      throw new Error(
+        'Use oss.ts resolution for OSS checks, or provide --source-map.',
+      );
+    const contracts = await loadContracts(options, cwd, defaults);
+    const corpus = discoverCorpus(cwd, contracts);
     runtime = await createRuntime(cwd);
     const { errors, probes } = await checkResolution(
       cwd,
@@ -723,7 +729,7 @@ export async function runResolutionCli(
       return 1;
     }
     console.log(
-      `Alias resolution passed (${corpus.length} imports, ${probes} probes; ${runtime.environments.map((environment) => environment.name).join(', ')}).`,
+      `Alias resolution passed (${corpus.length} imports, ${probes} probes${contracts.documentationCorpus ? `, ${contracts.documentationCorpus.files.length} prepared files` : ''}; ${runtime.environments.map((environment) => environment.name).join(', ')}).`,
     );
     return 0;
   } catch (error) {
