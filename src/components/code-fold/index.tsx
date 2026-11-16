@@ -29,16 +29,20 @@ interface IProp {
  * @param props The component props
  * @returns A React component
  */
-export const CodeFold = ({
+export const CodeFold = (props: IProp) => {
+  if (import.meta.env.SSG_MD) {
+    return <>{props.children}</>;
+  }
+  return <CodeFoldView {...props} />;
+};
+
+const CodeFoldView = ({
   img,
   children,
   height: setHeight,
   imageFrameStyle,
   toggle = false,
 }: IProp) => {
-  if (import.meta.env.SSG_MD) {
-    return <>{children}</>;
-  }
   const dark = useDark();
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);

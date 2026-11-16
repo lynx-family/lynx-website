@@ -106,6 +106,25 @@ such as `[--icon-size:20px]` is valid in scanned source, but document MDX is not
 part of the hosts' normal content globs. Documentation must not rely on a new
 utility class being emitted.
 
+## Checks
+
+Run both gates for changes under `src/` or `theme/`:
+
+```bash
+pnpm run typecheck
+pnpm run lint:react
+```
+
+`typecheck` uses the root `tsconfig.json` and checks the complete site program,
+including `src`, `theme`, `docs`, and `rspress.config.ts`. It reads the
+generated compatibility data produced by `pnpm install`; run `pnpm run prepare`
+when that data is stale.
+
+`lint:react` enforces Hooks correctness and the React authoring rules in this
+guide for `src` and `theme`. Type correctness belongs to `typecheck`, and this
+command does not replace the documentation import, asset URL, or formatting
+checks.
+
 ## Change Discipline
 
 - Separate rendering-boundary fixes, entry-contract migrations, and unrelated

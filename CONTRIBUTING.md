@@ -51,9 +51,21 @@ Before opening a pull request, run the relevant checks for your change:
 ### General
 
 ```bash
+pnpm run typecheck
+pnpm run lint:react
 pnpm run format:check
 pnpm run build
 ```
+
+`typecheck` checks the complete root TypeScript program with `tsconfig.json`.
+It covers `src`, `theme`, `docs`, and `rspress.config.ts`, and needs the
+generated compatibility data that `pnpm install` produces through `prepare`.
+Plain TypeScript does not check MDX prose; the documentation checks below keep
+their own contracts.
+
+`lint:react` covers Hooks correctness and the React authoring rules in the
+[theme and component guide](./src/README.md) for `src` and `theme`. It does not
+lint documentation, synchronized content, or generated data.
 
 ### Documentation Imports
 

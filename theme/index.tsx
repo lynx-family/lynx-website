@@ -63,6 +63,10 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   if (import.meta.env.SSG_MD) {
     return <BaseHomeLayout {...props} />;
   }
+  return <MainHomeLayoutView {...props} />;
+}
+
+function MainHomeLayoutView(props: Parameters<typeof BaseHomeLayout>[0]) {
   const { pathname } = useLocation();
   const isZh = pathname.startsWith('/zh/');
   const { page } = usePageData();
@@ -144,7 +148,7 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       setDelta(200);
       setText(isZh ? `${zhWords[0]}${zhSuffix}` : `${enWords[0]}${enSuffix}`);
     }
-  }, [isZh, page]); // Watch both language and path changes
+  }, [isZh, routePath]); // Watch both language and path changes
 
   useEffect(() => {
     const isHomePage = routePath === '/';
@@ -155,7 +159,7 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 
     const ticker = setInterval(updateText, delta);
     return () => clearInterval(ticker);
-  }, [updateText, delta, page]);
+  }, [updateText, delta, routePath]);
 
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();

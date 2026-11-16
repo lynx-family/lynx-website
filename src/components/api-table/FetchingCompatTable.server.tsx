@@ -241,7 +241,7 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
     }
 
     return parts.join('');
-  }, [compatData, platformData, accessor, query, module, locale]);
+  }, [compatData, platformData, accessor, query, locale]);
 
   return <>{markdownContent}</>;
 }

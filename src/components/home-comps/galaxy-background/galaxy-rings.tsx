@@ -73,12 +73,10 @@ export const GalaxyRings = (props: GalaxyRingsProps) => {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const workerRef = useRef<Worker | null>(null);
-  const getCanvasSize = () =>
-    Math.max(1, Math.floor(sizePx ?? window.innerHeight));
 
   useEffect(() => {
     const canvas = canvasRef.current!;
-    const size = getCanvasSize();
+    const size = Math.max(1, Math.floor(sizePx ?? window.innerHeight));
     canvas.style.width = `${size}px`;
     canvas.style.height = `${size}px`;
 
@@ -134,6 +132,10 @@ export const GalaxyRings = (props: GalaxyRingsProps) => {
       workerRef.current = null;
       worker.terminate();
     };
+    // The worker is initialized once with the mount-time configuration, and
+    // the canvas can only be transferred to an offscreen context once. Later
+    // prop changes are intentionally not replayed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -141,7 +143,7 @@ export const GalaxyRings = (props: GalaxyRingsProps) => {
     const worker = workerRef.current;
     if (!canvas || !worker) return;
 
-    const size = getCanvasSize();
+    const size = Math.max(1, Math.floor(sizePx ?? window.innerHeight));
     canvas.style.width = `${size}px`;
     canvas.style.height = `${size}px`;
     worker.postMessage({

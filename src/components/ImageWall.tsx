@@ -186,10 +186,6 @@ export const ImageWall = ({
     setOpen(true);
   };
 
-  const close = () => {
-    setOpen(false);
-  };
-
   const prev = () => {
     if (!canNavigate || activeIndex === null) return;
     setActiveIndex((activeIndex - 1 + shownImages.length) % shownImages.length);
@@ -205,23 +201,22 @@ export const ImageWall = ({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        close();
+        setOpen(false);
         return;
       }
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        prev();
-        return;
-      }
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        next();
-        return;
-      }
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      if (!canNavigate) return;
+      e.preventDefault();
+      const step = e.key === 'ArrowLeft' ? -1 : 1;
+      setActiveIndex((index) =>
+        index === null
+          ? null
+          : (index + step + shownImages.length) % shownImages.length,
+      );
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, activeIndex, canNavigate, shownImages.length]);
+  }, [open, canNavigate, shownImages.length]);
 
   return (
     <Dialog.Root
