@@ -1,0 +1,41 @@
+# lynx_value_get_element
+
+## 介绍
+
+从 array 类型的 lynx_value 中读取指定 index 的值
+
+## 语法
+
+```c
+lynx_api_status lynx_value_get_element(lynx_api_env env,
+                                       lynx_value object,
+                                       uint32_t index,
+                                       lynx_value* result)
+```
+
+### 参数
+
+| Key           | Description                                                  |
+|:--------------|:-------------------------------------------------------------|
+| [in] env      | lynx_value 的运行环境，一般情况下是 nullptr |
+| [in] object   | 被查询的 lynx_value                                     |
+| [in] index    | 位置索引                               |
+| [out] result  | 对应索引的值                                         |
+
+### 返回值
+
+Returns `lynx_api_ok` if the API succeeded. Returns `lynx_api_array_expected` if the types do not match.
+
+## 示例
+
+读取的结果在使用完后要用 `lynx_value_remove_reference` 释放内存
+
+```c
+lynx_value ret;
+lynx_api_status status = lynx_value_get_element(env, array_value, 0, &ret);
+if (status != lynx_api_ok) {
+  // handle error.
+}
+// do something
+lynx_value_remove_reference(env, ret, NULL);
+```
