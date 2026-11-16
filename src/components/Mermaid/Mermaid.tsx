@@ -11,20 +11,24 @@ interface Props {
   config?: MermaidConfig;
 }
 
-export default function Mermaid({
+export default function Mermaid(props: PropsWithChildren<Props>) {
+  if (import.meta.env.SSG_MD) {
+    return (
+      <>
+        {`**${props.title}**`} {'\n'}
+        {props.children}
+      </>
+    );
+  }
+  return <MermaidRenderer {...props} />;
+}
+
+function MermaidRenderer({
   style,
   children,
   title,
   config,
 }: PropsWithChildren<Props>) {
-  if (import.meta.env.SSG_MD) {
-    return (
-      <>
-        {`**${title}**`} {'\n'}
-        {children}
-      </>
-    );
-  }
   const id = useId();
   const [svg, setSvg] = useState('');
   const [renderError, setRenderError] = useState(false);

@@ -128,6 +128,10 @@ export function APISummary(props: APISummaryProps) {
     // TODO: support SSG-MD
     return <>{'APISummary'}</>;
   }
+  return <APISummaryView {...props} />;
+}
+
+function APISummaryView(props: APISummaryProps) {
   const { page } = usePageData();
   const frontmatter = page.frontmatter;
 
@@ -144,6 +148,10 @@ export function APISummary(props: APISummaryProps) {
     return null;
   }
 
+  return <APISummaryContent query={query} />;
+}
+
+function APISummaryContent({ query }: { query: string }) {
   const compatHash = `#compat-table-${query.replace(/[\/.]/g, '-')}`;
   const lcdBaseUrl = useLCDBaseUrl();
   const { module, accessor } = React.useMemo(() => parseQuery(query), [query]);

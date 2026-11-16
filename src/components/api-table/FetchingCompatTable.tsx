@@ -201,6 +201,10 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
   if (import.meta.env.SSG_MD) {
     return <FetchingCompatTableMarkdown query={query} />;
   }
+  return <FetchingCompatTableView query={query} />;
+}
+
+function FetchingCompatTableView({ query }: FetchingCompatTableProps) {
   const locale = useLang();
   const isServer = useIsServer();
   const lcdBaseUrl = useLCDBaseUrl();

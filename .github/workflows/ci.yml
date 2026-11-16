@@ -105,6 +105,17 @@ jobs:
             exit 1
           fi
 
+      # Installation runs prepare, so generated compatibility data and docs are
+      # present. Typecheck the complete root TypeScript program; do not narrow
+      # the config or ignore diagnostics.
+      - name: Website Typecheck
+        run: pnpm run typecheck
+
+      # Hooks correctness and the documented React authoring rules only. Type
+      # correctness is covered by the typecheck step above.
+      - name: Website React Lint
+        run: pnpm run lint:react
+
       - name: API Compatibility Component Check
         run: |
           node --test scripts/ci/check-api-summary.test.mjs

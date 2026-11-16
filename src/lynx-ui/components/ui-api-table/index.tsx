@@ -2,7 +2,7 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import React from 'react';
+import React, { useId } from 'react';
 import { useLang } from '@rspress/core/runtime';
 import type * as LCD from '@lynx-js/lynx-compat-data';
 import { PlatformBadge } from '@/components/api-badge';
@@ -72,11 +72,15 @@ function PlatformIndicators({ record }: { record: Record<string, unknown> }) {
   );
 }
 
-const UIApiTable = ({ source, title }: UIApiTableProps) => {
+const UIApiTable = (props: UIApiTableProps) => {
   if (import.meta.env.SSG_MD) return null;
 
+  return <UIApiTableContent {...props} />;
+};
+
+const UIApiTableContent = ({ source, title }: UIApiTableProps) => {
   const isZh = useLang() === 'zh';
-  const titleId = React.useId();
+  const titleId = useId();
 
   const table = (
     <div

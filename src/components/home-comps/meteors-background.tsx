@@ -126,13 +126,17 @@ class Meteor {
   }
 }
 
-const MeteorsBackground = ({
-  gridSize = 30,
-  meteorCount = 20,
-}: GridBackgroundProps) => {
+const MeteorsBackground = (props: GridBackgroundProps) => {
   if (import.meta.env.SSG_MD) {
     return null;
   }
+  return <MeteorsBackgroundCanvas {...props} />;
+};
+
+const MeteorsBackgroundCanvas = ({
+  gridSize = 30,
+  meteorCount = 20,
+}: GridBackgroundProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

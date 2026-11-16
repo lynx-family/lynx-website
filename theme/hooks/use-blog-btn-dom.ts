@@ -141,7 +141,7 @@ const useBlogBtnDom = (src: string) => {
       badgeElement.removeEventListener('click', handleInteraction);
       badgeElement.removeEventListener('touchstart', handleInteraction);
     };
-  }, [configKey, displayText, handleInteraction]);
+  }, [configKey, displayText, handleInteraction, page.pageType]);
 };
 
 export { useBlogBtnDom };

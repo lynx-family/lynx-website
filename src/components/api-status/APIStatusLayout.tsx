@@ -62,6 +62,10 @@ export const APIStatusLayout = () => {
     // TODO: support SSG-MD
     return <>{'APIStatusLayout'}</>;
   }
+  return <APIStatusLayoutView />;
+};
+
+const APIStatusLayoutView = () => {
   // Shared state for platform selection
   const [selectedPlatforms, setSelectedPlatforms] = useState<
     DisplayPlatformName[]
