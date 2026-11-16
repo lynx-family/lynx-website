@@ -291,14 +291,14 @@ test('invalid navigation slots and duplicate sections fail before modifying eith
 test('site-owned pages merge into the generated section navigation', (t) => {
   const { website } = fixture(t);
   for (const locale of ['en', 'zh']) {
-    const dir = join(website, `docs-own/${locale}/ai/skills`);
-    write(join(dir, '_meta.json'), [
+    const dir = join(website, `docs/${locale}/ai/skills`);
+    write(join(dir, '_meta.site.json'), [
       { name: 'lynx-a2ui.mdx', before: 'lynx-devtool.mdx' },
       { name: 'lynx-openui.mdx', after: 'lynx-a2ui.mdx' },
     ]);
     write(
       join(dir, 'lynx-a2ui.mdx'),
-      '---\nsourceEditUrl: "https://github.com/lynx-family/lynx-website/blob/main/docs-own/en/ai/skills/lynx-a2ui.mdx"\n---\n# lynx-a2ui\n',
+      '---\nsourceEditUrl: "https://github.com/lynx-family/lynx-website/blob/main/docs/en/ai/skills/lynx-a2ui.mdx"\n---\n# lynx-a2ui\n',
     );
     write(join(dir, 'lynx-openui.mdx'), '# lynx-openui\n');
   }
@@ -336,14 +336,14 @@ test('site-owned pages merge into the generated section navigation', (t) => {
         'sourceEditUrl: "https://github.com/lynx-family/lynx-website/',
       ),
     );
-    assert.ok(page.includes('/lynx-website/blob/main/docs-own/'));
+    assert.ok(page.includes('/lynx-website/blob/main/docs/'));
   }
 });
 
 test('site-owned pages replace same-named package pages', (t) => {
   const { website } = fixture(t);
-  const dir = join(website, 'docs-own/en/ai/skills');
-  write(join(dir, '_meta.json'), [{ name: 'lynx-devtool.mdx' }]);
+  const dir = join(website, 'docs/en/ai/skills');
+  write(join(dir, '_meta.site.json'), [{ name: 'lynx-devtool.mdx' }]);
   write(join(dir, 'lynx-devtool.mdx'), '# site-owned duplicate\n');
   syncSkillsDocs({ website });
   assert.ok(

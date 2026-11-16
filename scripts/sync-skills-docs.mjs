@@ -6,7 +6,6 @@ import { execFileSync } from 'node:child_process';
 import {
   cpSync,
   existsSync,
-  mkdirSync,
   readFileSync,
   readdirSync,
   rmSync,
@@ -24,7 +23,7 @@ const SECTIONS = new Map([
   ['skills', 'ai/skills'],
 ]);
 const LYNXJS_LINK = /(\]\(|^\[[^\]]+\]:\s*)https:\/\/lynxjs\.org(\/[^)\s]*)/gm;
-const SITE_DOCS = 'docs-own';
+const SITE_META = '_meta.site.json';
 
 /** Merge site-owned entries into package navigation; site-owned pages win. */
 function mergeSiteEntries(entries, additions, siteDir) {
@@ -70,7 +69,7 @@ function mergeSiteEntries(entries, additions, siteDir) {
 }
 
 function readSiteEntries(siteDir) {
-  const metaFile = join(siteDir, '_meta.json');
+  const metaFile = join(siteDir, SITE_META);
   return existsSync(metaFile) ? JSON.parse(readFileSync(metaFile, 'utf8')) : [];
 }
 
@@ -142,16 +141,15 @@ export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
         throw new Error(`Unsupported locale: ${locale}`);
       const from = within(source, content);
       const to = within(docs, `${locale}/${section.route}`);
-      const siteDir = join(website, SITE_DOCS, locale, section.route);
       const items = JSON.parse(readFileSync(join(from, '_meta.json'), 'utf8'));
       for (const item of items) {
         if (item.type !== 'file' || !existsSync(within(from, item.name))) {
           throw new Error(`Missing sidebar page: ${locale}/${item.name}`);
         }
       }
-      const siteEntries = readSiteEntries(siteDir);
-      const sitePages = siteEntries;
-      const mergedItems = mergeSiteEntries(items, siteEntries, siteDir);
+      const siteEntries = readSiteEntries(to);
+      const siteFiles = new Set(siteEntries.map((item) => item.name));
+      const mergedItems = mergeSiteEntries(items, siteEntries, to);
       if (!localized.has(locale)) localized.set(locale, new Map());
       localized.get(locale).set(section.id, [
         { type: 'section-header', label: section.label },
@@ -165,8 +163,7 @@ export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
         to,
         locale,
         section,
-        siteDir,
-        sitePages,
+        siteFiles,
         items: mergedItems,
       });
     }
@@ -208,27 +205,40 @@ export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
     });
   }
   // Check all inputs and generated destinations before replacing any section.
-  for (const { from, to } of copies) {
+  for (const { from, to, siteFiles } of copies) {
     if (!existsSync(from)) throw new Error(`Missing package content: ${from}`);
-    requireIgnored(website, to + sep);
+    if (siteFiles) requireIgnored(website, join(to, '_meta.json'));
+    else requireIgnored(website, to + sep);
   }
   for (const { path } of navigation) requireIgnored(website, path);
-  for (const { from, to } of copies) {
-    rmSync(to, { recursive: true, force: true });
-    cpSync(from, to, { recursive: true });
-  }
-  for (const { to, siteDir, sitePages } of copies) {
-    if (!sitePages?.length) continue;
-    for (const page of sitePages) {
-      const source = within(siteDir, page.name);
-      const target = within(to, page.name);
-      mkdirSync(dirname(target), { recursive: true });
-      cpSync(source, target);
+  for (const { from, to, siteFiles } of copies) {
+    if (siteFiles) {
+      if (existsSync(to)) {
+        const keep = new Set([...siteFiles, SITE_META]);
+        for (const name of readdirSync(to, { recursive: true })) {
+          const relativeName = name.split(sep).join('/');
+          if (
+            keep.has(relativeName) ||
+            [...siteFiles].some((file) => file.startsWith(relativeName + '/'))
+          ) {
+            continue;
+          }
+          rmSync(join(to, name), { recursive: true, force: true });
+        }
+      }
+      cpSync(from, to, {
+        recursive: true,
+        filter: (source) =>
+          !siteFiles.has(relative(from, source).split(sep).join('/')),
+      });
+    } else {
+      rmSync(to, { recursive: true, force: true });
+      cpSync(from, to, { recursive: true });
     }
   }
-  for (const { to, locale, section, sitePages, items } of copies) {
+  for (const { to, locale, section, siteFiles, items } of copies) {
     if (!locale) continue;
-    const siteNames = new Set((sitePages ?? []).map((page) => page.name));
+    const siteNames = siteFiles ?? new Set();
     for (const name of readdirSync(to, { recursive: true })) {
       if (!/\.mdx?$/.test(name)) continue;
       const file = join(to, name);

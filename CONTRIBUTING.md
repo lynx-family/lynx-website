@@ -222,12 +222,12 @@ package's localized navigation. The website owns the AI landing page, overall
 section order, AGENTS.md guide, and MCP guides. Edit packaged content in skills
 and update this single dependency when it is released.
 
-Site-owned pages that must stay under an existing generated route live in
-`docs-own/{en,zh}/<route>`. `sync:skills-docs` copies them after the package
-content and merges their local `_meta.json` entries using `before` or `after`
-anchors. A site-owned page with the same name replaces the package page
-immediately, so the website can own it before the package drops it. A2UI and
-OpenUI use this path.
+Site-owned pages can stay under an existing generated route as tracked
+exceptions in `docs/{en,zh}/<route>`. Add their navigation declarations to the
+same directory's `_meta.site.json`, using `before` or `after` anchors.
+`sync:skills-docs` preserves those tracked files, merges the declarations, and
+lets a same-named site page replace the package page immediately. A2UI and
+OpenUI use this path; the package-generated files remain ignored.
 
 For joint development, run the sync watcher alongside the website dev server:
 
