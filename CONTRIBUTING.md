@@ -228,11 +228,26 @@ landing page, overall section order, AGENTS.md guide, and MCP guides. Edit
 packaged content in skills and update this single dependency when it is
 released; commit the synchronized skills output with the dependency change.
 
-Site-owned pages can stay under the same route with their navigation
-declarations in `_meta.site.json`, using `before` or `after` anchors.
-`sync:skills-docs` preserves those tracked files, merges the declarations, and
-lets a same-named site page replace the package page immediately. A2UI and
-OpenUI use this path.
+The complete agent-lynx chapter, including nested navigation, belongs to the
+package and is replaced on synchronization. The Skills section is the disjoint
+union of package-owned guides and website-owned pages. A Marketplace npm
+registration does not make the registered Skill's guide package-owned.
+
+Website-owned pages stay at their normal routes and declare ownership and
+placement in `_meta.site.json`, using `before` or `after` anchors. `sidebar: false`
+keeps a declared page routable without a sidebar entry. API docs, UI, A2UI,
+OpenUI and the external trace guides use this path. A duplicate file or route
+owner fails before synchronization writes anything; transfer a page by removing
+it from the producer and declaring its website ownership in the same rollout.
+
+Both websites use the package's `website` export. It leaves authored source
+unchanged, cleans retired package files using its generated
+`docs/.skills-docs.json` inventory, and exposes package/website source URLs for
+the documentation provenance adapter. That ignored inventory is generated
+metadata, not an additional authoring root. The initial migration recognizes
+existing package-generated `sourceEditUrl` fields. Unclassified files fail
+instead of being deleted. CI checks both committed Skills directories after
+prepare.
 
 For joint development, run the sync watcher alongside the website dev server:
 
