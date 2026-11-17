@@ -25,7 +25,9 @@ import {
   normalizeGeneratedRoute,
   removeBrokenLanguageAlternates,
 } from './scripts/build/generated-html.mts';
+import { pluginPageSdkSince } from './scripts/build/page-sdk-since';
 import versionJson from './docs/public/version.json';
+import sdkRelease from './src/versioning/lynx-sdk-release.json';
 import { SITE_BASE } from './shared-route-config';
 import { visit } from 'unist-util-visit';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
@@ -170,6 +172,10 @@ export default defineConfig({
     ],
   },
   plugins: [
+    pluginPageSdkSince(path.join(__dirname, 'docs'), {
+      ...sdkRelease,
+      baseline: '3.2',
+    }),
     pluginClientRedirects({
       redirects: [
         // Preserve locale/version prefixes for the former root-package page.

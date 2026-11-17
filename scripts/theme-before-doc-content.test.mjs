@@ -45,6 +45,7 @@ async function loadLayout() {
       './OgHead': { default: empty },
       './api-reference': { isGeneratedApiPage: () => false },
       './api-subsites': { subsiteOf: () => 'guide' },
+      './versioning/PageSdkSince': { default: empty },
     },
   );
   return { Layout, BeforeDocContent, getReceivedProps: () => receivedProps };
