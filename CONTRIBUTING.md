@@ -188,6 +188,11 @@ the current source revision and generation tooling. Run the relevant generator
 after changing either input, and commit all resulting additions, modifications,
 and deletions. CI consistency checks must cover the complete output set.
 
+The Validate job installs dependencies, which runs `pnpm run prepare`, and then
+fails on any tracked or untracked change in the working tree. Because the check
+inspects the result of the actual generation lifecycle instead of a path list,
+a new committed output is covered without changing the workflow.
+
 For example, `pnpm run prepare` fetches the revision in `lynx-ui.version`,
 copies its package documentation into `sharedDocs/packageDocs/`, and generates
 `sharedDocs/lynx-ui-intros.ts` from package introductions. After changing that

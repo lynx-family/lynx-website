@@ -92,16 +92,13 @@ jobs:
 
       - name: Generated Documentation Consistency Check
         run: |
-          # Installation runs prepare. Keep this list aligned with every
-          # committed documentation output generated during that lifecycle.
-          generated_documentation_outputs=(
-            "sharedDocs/packageDocs"
-            "sharedDocs/lynx-ui-intros.ts"
-          )
-          changes="$(git status --porcelain=v1 --untracked-files=all -- "${generated_documentation_outputs[@]}")"
+          # Installation runs prepare. Check the whole working tree instead of
+          # a path list so every committed generated output is covered,
+          # including outputs added by future generators.
+          changes="$(git status --porcelain=v1 --untracked-files=all)"
           if [ -n "$changes" ]; then
             printf '%s\n' "$changes"
-            echo "::error::Generated documentation is out of date. Run pnpm run prepare and commit all changes reported above."
+            echo "::error::Generated files are out of date. Run pnpm run prepare and commit all changes reported above."
             exit 1
           fi
 
@@ -310,7 +307,8 @@ jobs:
   # Keep authoring contracts that require installed dependencies separate from
   # portable import rules. API reference checks here may read the installed
   # Lynx Stack manifest or invoke pnpm pack, but installation still skips the
-  # root prepare lifecycle.
+  # root prepare lifecycle. Generated API synchronization is covered by the
+  # whole-tree check in validate, which runs prepare.
   example-authoring:
     name: Example Authoring
     runs-on: ubuntu-latest
@@ -335,11 +333,6 @@ jobs:
           node --test scripts/ci/check-api-package-subsites.test.mjs
           # Validate the sync script from the complete packed lynx-doc artifact.
           node --test scripts/sync-lynx-stack-docs.test.mjs
-
-      - name: API Reference Sync and Overlay Check
-        run: |
-          pnpm sync:lynx-stack-docs
-          git diff --exit-code -- docs/en/api docs/zh/api
 
       - name: Go Component Contract Check
         run: |
