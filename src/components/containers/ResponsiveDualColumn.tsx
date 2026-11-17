@@ -11,11 +11,11 @@ interface FlexItemProps {
   children: React.ReactNode;
 }
 
-export const FlexItem = ({ minWidth, children }: FlexItemProps) => {
+const FlexItem = ({ minWidth, children }: FlexItemProps) => {
   return <div style={{ minWidth: `${minWidth}px`, flex: 1 }}>{children}</div>;
 };
 
-export const ResponsiveDualColumn = ({
+const ResponsiveDualColumn = ({
   partition,
   children,
 }: ResponsiveDualColumnProps) => {
@@ -41,3 +41,6 @@ export const ResponsiveDualColumn = ({
     </div>
   );
 };
+
+export { FlexItem, ResponsiveDualColumn };
+export type { FlexItemProps, ResponsiveDualColumnProps };

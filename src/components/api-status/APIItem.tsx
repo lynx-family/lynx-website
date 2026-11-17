@@ -1,6 +1,6 @@
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
-import APITable from '../api-table/APITable';
+import { APITable } from '../api-table/APITable';
 import {
   Drawer,
   DrawerContent,

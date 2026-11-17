@@ -7,7 +7,7 @@ import { BorderBeam } from '@/components/home-comps/border-beam';
 import { getLangPrefix } from '@route-config';
 import './TutorialTabs.scss';
 
-export interface TutorialTabItem {
+interface TutorialTabItem {
   slug: string;
   /** Resolved href (already locale-prefixed by the caller). */
   href: string;
@@ -21,11 +21,7 @@ interface TutorialTabsProps {
   className?: string;
 }
 
-export const TutorialTabs = ({
-  tabs,
-  active,
-  className,
-}: TutorialTabsProps) => {
+const TutorialTabs = ({ tabs, active, className }: TutorialTabsProps) => {
   // On narrow viewports the track scrolls horizontally (see SCSS). If the
   // active tab lives past the right edge — e.g. user lands on /product-detail
   // on a phone — center it into view so the selected state is visible on
@@ -90,10 +86,7 @@ interface LearnTutorialTabsProps {
 }
 
 /** Convenience wrapper that resolves labels via i18n and prefixes locale. */
-export const LearnTutorialTabs = ({
-  active,
-  className,
-}: LearnTutorialTabsProps) => {
+const LearnTutorialTabs = ({ active, className }: LearnTutorialTabsProps) => {
   const t = useI18n();
   const lang = useLang();
   const langPrefix = getLangPrefix(lang);
@@ -104,3 +97,6 @@ export const LearnTutorialTabs = ({
   }));
   return <TutorialTabs tabs={tabs} active={active} className={className} />;
 };
+
+export { TutorialTabs, LearnTutorialTabs };
+export type { TutorialTabItem, TutorialTabsProps, LearnTutorialTabsProps };

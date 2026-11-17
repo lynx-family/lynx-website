@@ -8,11 +8,43 @@ import { fileURLToPath } from 'node:url';
 
 import {
   createExampleMetadataResolver,
+  createGoImportResolver,
   findGoComponentViolations,
 } from './check-go-components.mjs';
 
 const docPath = 'docs/en/guide/example.mdx';
 const cdn = 'https://lf-lynx.tiktok-cdns.com';
+
+function createLegacyGoImportResolver(t) {
+  const root = mkdtempSync(path.join(tmpdir(), 'go-import-test-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+
+  const directory = path.join(root, 'src', 'components', 'go');
+  mkdirSync(directory, { recursive: true });
+  // Exercise legacy exports independently of the production Go entry.
+  writeFileSync(
+    path.join(directory, 'Go.tsx'),
+    'export function Go() { return null; }\nexport default Go;\n',
+  );
+  writeFileSync(
+    path.join(root, 'tsconfig.json'),
+    JSON.stringify({
+      compilerOptions: {
+        module: 'ESNext',
+        moduleResolution: 'bundler',
+        jsx: 'preserve',
+        noEmit: true,
+        allowImportingTsExtensions: true,
+        paths: {
+          '@/*': ['./src/*'],
+          '@lynx/*': ['./src/components/*'],
+        },
+      },
+      include: ['src'],
+    }),
+  );
+  return createGoImportResolver(root);
+}
 
 function withGoImports(lines) {
   return [
@@ -355,7 +387,19 @@ test('follows named and namespace Go imports', () => {
   );
 });
 
-test('follows direct Go module imports with and without extensions', () => {
+test('resolves the named-only Go public entries', () => {
+  const resolveGoImport = createGoImportResolver();
+  for (const source of ['@lynx', '@lynx/go', '@lynx/go/Go']) {
+    assert.deepEqual(
+      resolveGoImport(source, docPath),
+      { named: true, default: false },
+      source,
+    );
+  }
+});
+
+test('follows direct Go module imports with and without extensions', (t) => {
+  const resolveGoImport = createLegacyGoImportResolver(t);
   const violations = findGoComponentViolations(
     docPath,
     [
@@ -368,6 +412,7 @@ test('follows direct Go module imports with and without extensions', () => {
       '<GoModule.Go {...props} />',
       '<GoModule.default defaultEntryFile="dist/namespace-default.lynx.bundle" />',
     ].join('\n'),
+    { resolveGoImport },
   );
   assert.deepEqual(
     violations.map(({ line, component, prop }) => ({
@@ -384,7 +429,8 @@ test('follows direct Go module imports with and without extensions', () => {
   );
 });
 
-test('resolves legacy Go aliases through the TypeScript resolver', () => {
+test('resolves legacy Go aliases through the TypeScript resolver', (t) => {
+  const resolveGoImport = createLegacyGoImportResolver(t);
   const violations = findGoComponentViolations(
     docPath,
     [
@@ -402,6 +448,7 @@ test('resolves legacy Go aliases through the TypeScript resolver', () => {
       '<DefaultGoWithoutExtension img="/default-no-ext.png" />',
       '<GoModuleWithExtension.Go {...props} />',
     ].join('\n'),
+    { resolveGoImport },
   );
   assert.deepEqual(
     violations.map(({ component, prop }) => ({ component, prop })),

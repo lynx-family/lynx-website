@@ -15,7 +15,7 @@ import type * as LCD from '@lynx-js/lynx-compat-data';
 import { useLocation, withBase } from '@rspress/core/runtime';
 import { useI18n } from '../../../hooks/use-i18n';
 import { useReducer } from 'react';
-import EditThis from '../../EditThis';
+import { EditThis } from '../../EditThis';
 import { BrowserInfoContext } from './browser-info';
 import { BrowserCompatibilityErrorBoundary } from './error-boundary';
 import { FeatureRow } from './feature-row';

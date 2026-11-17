@@ -1,6 +1,11 @@
 import { Badge } from '@rspress/core/theme';
 import styles from './VersionBadge.module.scss';
 
+interface VersionBadgeProps {
+  children?: React.ReactNode;
+  v?: number;
+}
+
 /**
  * VersionBadge component displays a badge with a Lynx icon and version information.
  *
@@ -18,13 +23,7 @@ import styles from './VersionBadge.module.scss';
  * // Using children
  * <VersionBadge>2.5.1</VersionBadge>
  */
-export function VersionBadge({
-  children,
-  v,
-}: {
-  children?: React.ReactNode;
-  v?: number;
-}) {
+function VersionBadge({ children, v }: VersionBadgeProps) {
   const content = children || v;
 
   return (
@@ -34,3 +33,6 @@ export function VersionBadge({
     </Badge>
   );
 }
+
+export { VersionBadge };
+export type { VersionBadgeProps };

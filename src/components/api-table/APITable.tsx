@@ -1,5 +1,5 @@
 import { usePageData } from '@rspress/core/runtime';
-import Callout from '../Callout';
+import { Callout } from '../Callout';
 import { FetchingCompatTable } from './FetchingCompatTable';
 
 interface APITableProps {
@@ -14,7 +14,7 @@ interface APITableProps {
  * This wrapper is intended to integrate with the Lynx docs to automatically
  * get the query from frontmatter.
  */
-export default function APITable(props: APITableProps) {
+function APITable(props: APITableProps) {
   const { page } = usePageData();
   const frontmatter = page.frontmatter;
 
@@ -44,3 +44,6 @@ export default function APITable(props: APITableProps) {
     </div>
   );
 }
+
+export { APITable };
+export type { APITableProps };

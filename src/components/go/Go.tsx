@@ -5,7 +5,7 @@ import { Go as GoBase, GoConfigProvider } from '@lynx-js/go-web';
 import type { GoProps } from '@lynx-js/go-web';
 import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
 import { ExamplePreviewSSG as SSGComponent } from '@lynx-js/go-web/ssg';
-import Callout from '../Callout';
+import { Callout } from '../Callout';
 
 const ErrorComponent = ({
   example,
@@ -63,7 +63,7 @@ const baseConfig = {
   SSGComponent,
 };
 
-export function Go(props: GoProps) {
+function Go(props: GoProps) {
   const config = useMemo(
     () => ({
       ...baseConfig,
@@ -102,5 +102,5 @@ export function Go(props: GoProps) {
   );
 }
 
+export { Go };
 export type { GoProps };
-export default Go;

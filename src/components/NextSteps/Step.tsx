@@ -3,7 +3,13 @@ import { Link } from '@rspress/core/theme';
 import styles from './Step.module.scss';
 import { getLangPrefix } from '@route-config';
 
-const Step = (props: { href: string; title: string; description: string }) => {
+interface StepProps {
+  href: string;
+  title: string;
+  description: string;
+}
+
+const Step = (props: StepProps) => {
   return (
     <Link className={styles.step} href={useUrl(props.href)}>
       <p className={styles.title}>
@@ -28,11 +34,12 @@ const Step = (props: { href: string; title: string; description: string }) => {
   );
 };
 
-export default Step;
-
 function useUrl(url: string) {
   const lang = useLang();
   const langPrefix = getLangPrefix(lang);
 
   return withBase(`${langPrefix}${url}`);
 }
+
+export { Step };
+export type { StepProps };

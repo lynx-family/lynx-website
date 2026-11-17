@@ -20,4 +20,5 @@ const BrowserContainer = ({ children }: BrowserContainerProps) => {
   );
 };
 
-export default BrowserContainer;
+export { BrowserContainer };
+export type { BrowserContainerProps };

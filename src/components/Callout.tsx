@@ -5,38 +5,38 @@ import {
 
 type CalloutPropsWithoutType = Omit<CalloutProps, 'type'>;
 
-export function Note(props: CalloutPropsWithoutType) {
+function Note(props: CalloutPropsWithoutType) {
   return <CalloutBase {...props} type="note" title={props.title ?? 'NOTE'} />;
 }
 
-export function Warning(props: CalloutPropsWithoutType) {
+function Warning(props: CalloutPropsWithoutType) {
   return (
     <CalloutBase {...props} type="warning" title={props.title ?? 'WARNING'} />
   );
 }
 
-export function Danger(props: CalloutPropsWithoutType) {
+function Danger(props: CalloutPropsWithoutType) {
   return (
     <CalloutBase {...props} type="danger" title={props.title ?? 'DANGER'} />
   );
 }
 
-export function Tip(props: CalloutPropsWithoutType) {
+function Tip(props: CalloutPropsWithoutType) {
   return <CalloutBase {...props} type="tip" title={props.title ?? 'TIP'} />;
 }
 
-export function Info(props: CalloutPropsWithoutType) {
+function Info(props: CalloutPropsWithoutType) {
   return <CalloutBase {...props} type="info" title={props.title ?? 'INFO'} />;
 }
 
-export function Details(props: CalloutPropsWithoutType) {
+function Details(props: CalloutPropsWithoutType) {
   return <CalloutBase {...props} type="details" />;
 }
 
 // For backwards compatibility
 type CalloutType = 'note' | 'warning' | 'danger' | 'tip' | 'info' | 'details';
 
-export default function Callout({
+function Callout({
   type,
   ...props
 }: CalloutProps & {
@@ -62,3 +62,5 @@ export default function Callout({
     />
   );
 }
+
+export { Callout, Danger, Details, Info, Note, Tip, Warning };

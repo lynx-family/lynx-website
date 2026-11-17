@@ -12,7 +12,7 @@ interface PropertyDefinitionProps {
   className?: string;
 }
 
-export const PropertyDefinition = ({
+const PropertyDefinition = ({
   initialValue,
   appliesTo,
   inherited,
@@ -70,3 +70,6 @@ export const PropertyDefinition = ({
     </div>
   );
 };
+
+export { PropertyDefinition };
+export type { PropertyDefinitionProps };

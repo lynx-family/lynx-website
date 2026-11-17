@@ -8,7 +8,7 @@ type VersionTableProps = {
   type: 'developing' | 'release_candidate' | 'latest' | 'previous';
 };
 
-export function VersionTable({ type }: VersionTableProps) {
+function VersionTable({ type }: VersionTableProps) {
   const t = useI18n();
   const versionList = versionData.versions.filter((item) => item.type === type);
   if (versionList.length === 0) {
@@ -116,3 +116,6 @@ export function VersionTable({ type }: VersionTableProps) {
     </div>
   );
 }
+
+export { VersionTable };
+export type { VersionTableProps };

@@ -32,6 +32,11 @@ export {
   WebOnly,
 } from './PlatformBadge';
 export { APIBadge, PlatformBadge, StatusBadge, VersionBadge, RuntimeBadge };
+export type { APIBadgeProps } from './APIBadge';
+export type { PlatformBadgeProps } from './PlatformBadge';
+export type { StatusBadgeProps } from './StatusBadge';
+export type { VersionBadgeProps } from './VersionBadge';
+export type { RuntimeBadgeProps } from './RuntimeBadge';
 
 // Status Badges shorthand
 export { Deprecated, Experimental, Required } from './StatusBadge';

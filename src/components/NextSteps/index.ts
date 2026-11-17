@@ -1,2 +1,7 @@
-export { default as Step } from './Step';
-export { default as Root } from './NextSteps';
+import { NextSteps as Root, type NextStepsProps } from './NextSteps';
+import { Step, type StepProps } from './Step';
+
+const NextSteps = { Root, Step } as const;
+
+export { NextSteps };
+export type { NextStepsProps, StepProps };

@@ -10,7 +10,7 @@ import { Link } from '@rspress/core/theme';
  * <MTS />
  *
  */
-export function MTS() {
+function MTS() {
   return (
     <Link href="/guide/spec.html#scripting-mts">
       <Badge text={'MTS Only'} />
@@ -24,7 +24,7 @@ export function MTS() {
  * @example
  * <BTS />
  */
-export function BTS() {
+function BTS() {
   return (
     <Link href="/guide/spec.html#scripting-bts">
       <Badge text={'BTS Only'} />
@@ -45,7 +45,7 @@ type RuntimeBadgeProps = {
  * <RuntimeBadgeProps type="mts" />
  * <RuntimeBadgeProps type="bts" />
  */
-export function RuntimeBadge({ type }: RuntimeBadgeProps) {
+function RuntimeBadge({ type }: RuntimeBadgeProps) {
   switch (type) {
     case 'mts':
       return <MTS />;
@@ -53,3 +53,6 @@ export function RuntimeBadge({ type }: RuntimeBadgeProps) {
       return <BTS />;
   }
 }
+
+export { MTS, BTS, RuntimeBadge };
+export type { RuntimeBadgeProps };

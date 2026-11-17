@@ -11,7 +11,7 @@ import { useDark } from '@rspress/core/runtime';
 /**
  * Props for the CodeFold component
  */
-interface IProp {
+interface CodeFoldProps {
   /** Optional URL of the example image */
   img?: string;
   /** Optional number for code-area\image-area height */
@@ -29,7 +29,7 @@ interface IProp {
  * @param props The component props
  * @returns A React component
  */
-export const CodeFold = (props: IProp) => {
+const CodeFold = (props: CodeFoldProps) => {
   if (import.meta.env.SSG_MD) {
     return <>{props.children}</>;
   }
@@ -42,7 +42,7 @@ const CodeFoldView = ({
   height: setHeight,
   imageFrameStyle,
   toggle = false,
-}: IProp) => {
+}: CodeFoldProps) => {
   const dark = useDark();
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -177,3 +177,6 @@ const CodeFoldView = ({
     </div>
   );
 };
+
+export { CodeFold };
+export type { CodeFoldProps };

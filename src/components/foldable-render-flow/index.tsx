@@ -29,11 +29,11 @@ const labels = {
   },
 };
 
-export function FoldableRenderFlow({
-  locale = 'en',
-}: {
+interface FoldableRenderFlowProps {
   locale?: 'en' | 'zh';
-}) {
+}
+
+function FoldableRenderFlow({ locale = 'en' }: FoldableRenderFlowProps) {
   const copy = labels[locale];
 
   return (
@@ -96,3 +96,6 @@ export function FoldableRenderFlow({
     </figure>
   );
 }
+
+export { FoldableRenderFlow };
+export type { FoldableRenderFlowProps };

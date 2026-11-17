@@ -1,2 +1,2 @@
-export * from './APISummary';
-export { default } from './APISummary';
+export { APISummary } from './APISummary';
+export type { APISummaryProps } from './APISummary';

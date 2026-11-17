@@ -8,7 +8,6 @@
 import type * as LCD from '@lynx-js/lynx-compat-data';
 import { PlatformBadge } from './PlatformBadge';
 import { StatusBadge } from './StatusBadge';
-export * as Platform from './PlatformBadge';
 
 /**
  * Gets a nested value from an object using a slash-separated path.
@@ -22,7 +21,7 @@ function getNestedValue(obj: any, query: string): any {
   }, obj);
 }
 
-type CompatibilityBadgeProps = {
+type APIBadgeProps = {
   query?: string;
   data: LCD.Identifier;
   showStatus?: boolean;
@@ -73,13 +72,13 @@ function getPlatformBadges(
  * A smarter version of badge can access data without @param data
  * @returns
  */
-export function APIBadge({
+function APIBadge({
   query = undefined,
   data,
   showPlatform = true,
   showVersion = true,
   showStatus = true,
-}: CompatibilityBadgeProps) {
+}: APIBadgeProps) {
   if (!data || !Object.keys(data).length) {
     throw new Error('CompatibilityBadge component called with empty data');
   }
@@ -103,3 +102,7 @@ export function APIBadge({
     </span>
   );
 }
+
+export { APIBadge };
+export * as Platform from './PlatformBadge';
+export type { APIBadgeProps };

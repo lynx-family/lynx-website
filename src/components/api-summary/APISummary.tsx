@@ -123,7 +123,7 @@ const SUMMARY_PLATFORMS: LCD.PlatformName[] = [
   'clay_windows',
 ];
 
-export function APISummary(props: APISummaryProps) {
+function APISummary(props: APISummaryProps) {
   if (import.meta.env.SSG_MD) {
     // TODO: support SSG-MD
     return <>{'APISummary'}</>;
@@ -361,4 +361,5 @@ function APISummaryContent({ query }: { query: string }) {
   );
 }
 
-export default APISummary;
+export { APISummary };
+export type { APISummaryProps };

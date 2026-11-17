@@ -22,7 +22,11 @@ function formatUrlWithBase(url: string): string {
   return isAbsoluteUrl(url) ? withBase(url) : url;
 }
 
-const HtmlViewer = ({ path }: { path: string }) => {
+interface HtmlViewerProps {
+  path: string;
+}
+
+const HtmlViewer = ({ path }: HtmlViewerProps) => {
   const location = useLocation();
   const formattedPath = formatUrlWithBase(path);
   const iframeSrc = `${formattedPath}?ts=${Date.now()}${location.hash}`;
@@ -75,3 +79,4 @@ const HtmlViewer = ({ path }: { path: string }) => {
 };
 
 export { HtmlViewer };
+export type { HtmlViewerProps };
