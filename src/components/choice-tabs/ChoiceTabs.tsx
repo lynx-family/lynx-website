@@ -41,11 +41,7 @@ interface ChoiceTabsProps {
 
 const ChoiceTab = (_props: ChoiceTabProps) => null;
 
-export const ChoiceTabs = ({
-  active,
-  children,
-  className,
-}: ChoiceTabsProps) => {
+const ChoiceTabs = ({ active, children, className }: ChoiceTabsProps) => {
   const tabs = React.Children.toArray(children).reduce<
     React.ReactElement<ChoiceTabProps>[]
   >((acc, child) => {
@@ -149,3 +145,6 @@ export const ChoiceTabs = ({
 };
 
 ChoiceTabs.Tab = ChoiceTab;
+
+export { ChoiceTabs };
+export type { ChoiceTabProps, ChoiceTabsProps };

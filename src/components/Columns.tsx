@@ -1,11 +1,11 @@
 import { Children } from 'react';
 import type { PropsWithChildren } from 'react';
 
-interface Props {
+type ColumnsProps = PropsWithChildren<{
   titles?: string[];
-}
+}>;
 
-export function Columns({ children, titles = [] }: PropsWithChildren<Props>) {
+function Columns({ children, titles = [] }: ColumnsProps) {
   return (
     <div
       style={{
@@ -26,7 +26,7 @@ interface ColumnProps {
   title?: string;
 }
 
-export function Column({ title, children }: PropsWithChildren<ColumnProps>) {
+function Column({ title, children }: PropsWithChildren<ColumnProps>) {
   return (
     <div style={{ width: '20rem', flex: 'auto', margin: 'auto' }}>
       {title && <div className="font-bold text-center">{title}</div>}
@@ -34,3 +34,6 @@ export function Column({ title, children }: PropsWithChildren<ColumnProps>) {
     </div>
   );
 }
+
+export { Columns, Column };
+export type { ColumnsProps };

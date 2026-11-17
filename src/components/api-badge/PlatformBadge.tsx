@@ -106,7 +106,7 @@ type PlatformBadgeProps = {
  * // Render a badge for iOS with version
  * <PlatformBadge platform="ios" version="14.0" />
  */
-export function PlatformBadge({
+function PlatformBadge({
   platform,
   version,
   type = 'info',
@@ -201,7 +201,7 @@ for (const platform of platformNames) {
 
 // Although we can dynamically generate components, we have to explicitly list all exports
 // for static analysis tools and better IDE support.
-export const {
+const {
   /**
    * Renders a badge indicating Android-only support
    * @example
@@ -347,3 +347,32 @@ export const {
    */
   NoClay,
 } = generatedComponents;
+
+export {
+  PlatformBadge,
+  AndroidOnly,
+  NoAndroid,
+  IOSOnly,
+  NoIOS,
+  HarmonyOnly,
+  NoHarmony,
+  MacOSOnly,
+  NoMacOS,
+  WindowsOnly,
+  NoWindows,
+  ClayAndroidOnly,
+  NoClayAndroid,
+  ClayIOSOnly,
+  NoClayIOS,
+  ClayHarmonyOSOnly,
+  NoClayHarmonyOS,
+  ClayMacOSOnly,
+  NoClayMacOS,
+  ClayWindowsOnly,
+  NoClayWindows,
+  WebOnly,
+  NoWeb,
+  ClayOnly,
+  NoClay,
+};
+export type { PlatformBadgeProps };

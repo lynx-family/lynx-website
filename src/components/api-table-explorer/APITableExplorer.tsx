@@ -1,8 +1,8 @@
 import { useLang } from '@rspress/core/runtime';
 import { CodeBlockRuntime } from '@theme';
 import React, { useState } from 'react';
-import APISummary from '../api-summary/APISummary';
-import APITable from '../api-table/APITable';
+import { APISummary } from '../api-summary/APISummary';
+import { APITable } from '../api-table/APITable';
 import { Button } from '../ui/button';
 import {
   Card,
@@ -253,4 +253,4 @@ const APITableExplorer = () => {
   );
 };
 
-export default APITableExplorer;
+export { APITableExplorer };

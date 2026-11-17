@@ -94,7 +94,11 @@ function BlogCard({
   );
 }
 
-export function BlogList({ limit }: { limit?: number }) {
+interface BlogListProps {
+  limit?: number;
+}
+
+function BlogList({ limit }: BlogListProps) {
   const blogPages = useBlogPages();
   const lang = useLang() as 'en' | 'zh';
   const isMobile = useIfMobile();
@@ -159,3 +163,6 @@ export function BlogList({ limit }: { limit?: number }) {
     </div>
   );
 }
+
+export { BlogList };
+export type { BlogListProps };

@@ -5,13 +5,13 @@ import type { MermaidConfig } from 'mermaid';
 import { useCallback, useEffect, useId, useState } from 'react';
 import { useDark } from '@rspress/core/runtime';
 
-interface Props {
+type MermaidProps = PropsWithChildren<{
   style?: CSSProperties;
   title?: string;
   config?: MermaidConfig;
-}
+}>;
 
-export default function Mermaid(props: PropsWithChildren<Props>) {
+function Mermaid(props: MermaidProps) {
   if (import.meta.env.SSG_MD) {
     return (
       <>
@@ -23,12 +23,7 @@ export default function Mermaid(props: PropsWithChildren<Props>) {
   return <MermaidRenderer {...props} />;
 }
 
-function MermaidRenderer({
-  style,
-  children,
-  title,
-  config,
-}: PropsWithChildren<Props>) {
+function MermaidRenderer({ style, children, title, config }: MermaidProps) {
   const id = useId();
   const [svg, setSvg] = useState('');
   const [renderError, setRenderError] = useState(false);
@@ -75,3 +70,6 @@ function MermaidRenderer({
     </>
   );
 }
+
+export { Mermaid };
+export type { MermaidProps };

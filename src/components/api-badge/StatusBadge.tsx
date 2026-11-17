@@ -9,7 +9,7 @@ import { Badge, Tag } from '@rspress/core/theme';
  * @example
  * <Deprecated />
  */
-export function Deprecated() {
+function Deprecated() {
   return <Tag tag="deprecated" />;
 }
 
@@ -22,7 +22,7 @@ export function Deprecated() {
  * @example
  * <Experimental />
  */
-export function Experimental() {
+function Experimental() {
   return <Tag tag="experimental" />;
 }
 
@@ -32,7 +32,7 @@ export function Experimental() {
  * @example
  * <Required />
  */
-export function Required() {
+function Required() {
   return <Badge text={'Required'} type="info" />;
 }
 
@@ -50,7 +50,7 @@ type StatusBadgeProps = {
  * <StatusBadge status="experimental" />
  * <StatusBadge status="required" />
  */
-export function StatusBadge({ status }: StatusBadgeProps) {
+function StatusBadge({ status }: StatusBadgeProps) {
   switch (status) {
     case 'deprecated':
       return <Deprecated />;
@@ -60,3 +60,6 @@ export function StatusBadge({ status }: StatusBadgeProps) {
       return <Required />;
   }
 }
+
+export { Deprecated, Experimental, Required, StatusBadge };
+export type { StatusBadgeProps };

@@ -202,7 +202,7 @@ let renderCountForTocUpdate = 0;
  * </PlatformTabs>
  * ```
  */
-export const PlatformTabs = ({
+const PlatformTabs = ({
   defaultPlatform = 'ios',
   children,
   className,
@@ -334,3 +334,6 @@ export const PlatformTabs = ({
 };
 
 PlatformTabs.Tab = PlatformTab;
+
+export { PlatformTabs };
+export type { PlatformTabProps, PlatformTabsProps };

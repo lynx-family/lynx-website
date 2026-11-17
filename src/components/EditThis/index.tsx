@@ -1,7 +1,7 @@
 import { usePage } from '@rspress/core/runtime';
 import { useI18n } from '../../hooks/use-i18n';
 
-interface Props {
+interface EditThisProps {
   /**
    * Repository-relative source path. When omitted, the current Rspress
    * `pagePath` is used under `docs/` and is expected to retain its `.md` or
@@ -22,7 +22,7 @@ interface Props {
  * External sources expose only their canonical source URL because they cannot
  * be opened through this repository's Cloud IDE integration.
  */
-export default function EditThis({ path, sourceUrl }: Props) {
+function EditThis({ path, sourceUrl }: EditThisProps) {
   const { page } = usePage();
   const t = useI18n();
 
@@ -65,3 +65,6 @@ export default function EditThis({ path, sourceUrl }: Props) {
     </div>
   );
 }
+
+export { EditThis };
+export type { EditThisProps };

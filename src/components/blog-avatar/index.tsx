@@ -243,15 +243,13 @@ const CompactAvatar = ({ entries }: { entries: Entry[] }) => {
   );
 };
 
-const BlogAvatar = ({
-  list,
-  className,
-  compact,
-}: {
+interface BlogAvatarProps {
   list: string[];
   className?: string;
   compact?: boolean;
-}) => {
+}
+
+const BlogAvatar = ({ list, className, compact }: BlogAvatarProps) => {
   const lang = useLang();
 
   const entries = useMemo<Entry[]>(() => {
@@ -331,3 +329,4 @@ const BlogAvatar = ({
 };
 
 export { BlogAvatar };
+export type { BlogAvatarProps };
