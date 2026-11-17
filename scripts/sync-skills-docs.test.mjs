@@ -34,14 +34,7 @@ test('the website sync consumes a content-only package and preserves authored so
   for (const locale of ['en', 'zh']) {
     const ai = join(website, 'docs', locale, 'ai');
     mkdirSync(join(ai, 'skills'), { recursive: true });
-    writeFileSync(
-      join(ai, '_meta.template.json'),
-      JSON.stringify([{ external: 'agent-lynx' }, { external: 'skills' }]),
-    );
-    writeFileSync(
-      join(ai, 'skills/_meta.site.json'),
-      JSON.stringify([{ name: 'website.mdx', sidebar: false }]),
-    );
+    writeFileSync(join(ai, '_meta.js'), 'module.exports = meta => meta;');
     writeFileSync(join(ai, 'skills/website.mdx'), '# Website source');
   }
   const result = syncSkillsDocs({ website });

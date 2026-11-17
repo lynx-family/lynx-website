@@ -222,8 +222,8 @@ maintained in
 updated by synchronization. The agent-lynx pages, shared modules
 (`docs/_ai`), public assets (`docs/public/ai/agent-lynx`), and top-level AI
 navigation (`docs/{en,zh}/ai/_meta.json`) remain generated and ignored. Change
-other AI navigation in `_meta.template.json`; the `agent-lynx` and `skills`
-slots expand from the package's localized navigation. The website owns the AI
+other AI navigation in `docs/{en,zh}/ai/_meta.js`; its function receives the
+package section navigation and returns the complete sidebar. The website owns the AI
 landing page, overall section order, AGENTS.md guide, and MCP guides. Edit
 packaged content in skills and update this single dependency when it is
 released; commit the synchronized skills output with the dependency change.
@@ -233,12 +233,14 @@ package and is replaced on synchronization. The Skills section is the disjoint
 union of package-owned guides and website-owned pages. A Marketplace npm
 registration does not make the registered Skill's guide package-owned.
 
-Website-owned pages stay at their normal routes and declare ownership and
-placement in `_meta.site.json`, using `before` or `after` anchors. `sidebar: false`
-keeps a declared page routable without a sidebar entry. API docs, UI, A2UI,
-OpenUI and the external trace guides use this path. A duplicate file or route
-owner fails before synchronization writes anything; transfer a page by removing
-it from the producer and declaring its website ownership in the same rollout.
+Website-owned pages stay at their normal routes. `skills/_meta.js` receives
+the package's Skills navigation; return the desired order with website entries
+inserted. Plain `_meta.json` can supply a complete list instead. A page omitted
+from navigation remains routable; navigation does not select which files are
+published. API docs, UI, A2UI, OpenUI and the external trace guides are website
+sources. A duplicate file or route owner fails before synchronization writes
+anything. Transfer a page by removing it from the producer and setting its
+website `sourceEditUrl` in the same rollout.
 
 Both websites use this repository's `scripts/skills-docs.mjs`. The public entry
 point is `scripts/sync-skills-docs.mjs`; the internal website imports
@@ -247,10 +249,10 @@ package with the selected public input. The shared script leaves authored source
 unchanged, cleans retired package files using its generated
 `docs/.skills-docs.json` inventory, and exposes package/website source URLs for
 the documentation provenance adapter. That ignored inventory is generated
-metadata, not an additional authoring root. The initial migration recognizes
-existing package-generated `sourceEditUrl` fields. Unclassified files fail
-instead of being deleted. CI checks both committed Skills directories after
-prepare.
+metadata, not an additional authoring root. Existing package-generated
+`sourceEditUrl` fields also identify package output. Other files are preserved
+as website sources, including pages absent from navigation and supporting
+resources. CI checks committed generated output after prepare.
 
 For joint development, run the sync watcher alongside the website dev server:
 

@@ -13,6 +13,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
 
@@ -21,8 +22,8 @@ const ROUTES = new Map([
   ['agent-lynx', 'ai/agent-lynx'],
   ['skills', 'ai/skills'],
 ]);
-const SITE_META = '_meta.site.json';
 const INVENTORY = '.skills-docs.json';
+const require = createRequire(import.meta.url);
 const json = (file) => JSON.parse(readFileSync(file, 'utf8'));
 const writeJson = (file, value) =>
   writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
@@ -63,47 +64,31 @@ function validateNavigation(
 ) {
   const names = new Set();
   for (const item of entries) {
-    const target = within(directory, item.name);
-    if (names.has(item.name) || !existsSync(target)) {
-      throw new Error(`Missing or duplicate sidebar page: ${item.name}`);
+    if (['divider', 'section-header', 'custom-link'].includes(item.type))
+      continue;
+    const name = typeof item === 'string' ? item : item.name;
+    const base = within(directory, name);
+    const target = [base, `${base}.md`, `${base}.mdx`].find(existsSync);
+    if (names.has(name) || !target) {
+      throw new Error(`Missing or duplicate sidebar page: ${name}`);
     }
-    names.add(item.name);
-    if (item.type === 'dir' && statSync(target).isDirectory()) {
+    names.add(name);
+    if (statSync(target).isDirectory()) {
       validateNavigation(target);
-    } else if (item.type !== 'file' || !statSync(target).isFile()) {
-      throw new Error(`Invalid sidebar page: ${item.name}`);
     }
   }
   return entries;
 }
 
-function mergeSiteNavigation(packageEntries, siteEntries) {
-  const result = [...packageEntries];
-  const pending = siteEntries.filter((entry) => entry.sidebar !== false);
-  while (pending.length) {
-    const index = pending.findIndex(
-      ({ before, after }) =>
-        (!before && !after) ||
-        result.some((entry) => entry.name === (before ?? after)),
-    );
-    if (index === -1) {
-      throw new Error('Missing or cyclic website sidebar anchor');
-    }
-    const [{ before, after, sidebar: _sidebar, ...entry }] = pending.splice(
-      index,
-      1,
-    );
-    if (before && after) {
-      throw new Error(`Conflicting website sidebar anchors: ${entry.name}`);
-    }
-    const anchor = before ?? after;
-    if (!anchor) result.push({ type: 'file', ...entry });
-    else {
-      const at = result.findIndex((candidate) => candidate.name === anchor);
-      result.splice(at + (after ? 1 : 0), 0, { type: 'file', ...entry });
-    }
+function websiteNavigation(directory, base, generated = false) {
+  const script = join(directory, '_meta.js');
+  if (existsSync(script)) {
+    delete require.cache[require.resolve(script)];
+    const transform = require(script);
+    return (transform.default ?? transform)(base);
   }
-  return result;
+  const file = join(directory, '_meta.json');
+  return !generated && existsSync(file) ? json(file) : base;
 }
 
 function editUrl(text) {
@@ -125,7 +110,7 @@ function withEditUrl(text, url) {
 
 /**
  * Mount a complete producer tree. agent-lynx is replaced as a unit; Skills is
- * the disjoint union of producer files and declared website files. The inventory
+ * the disjoint union of producer files and website files. The inventory
  * is an output ledger for cleanup and provenance adapters, not an authoring root.
  */
 export function mountSkillsDocs({
@@ -171,11 +156,6 @@ export function mountSkillsDocs({
       throw new Error(`Duplicate package page route: ${to}`);
     }
     for (const name of names) {
-      if (name === SITE_META) {
-        throw new Error(
-          'Website ownership cannot be declared in a docs package',
-        );
-      }
       const relative = `${to}/${name}`;
       planned.set(relative, readFileSync(join(from, name)));
       packageFiles[relative] = provenance[relative] ?? null;
@@ -185,76 +165,48 @@ export function mountSkillsDocs({
     const [, locale, id] = section;
     const entries = validateNavigation(from);
     const target = within(docs, to);
-    const meta = join(target, SITE_META);
     if (id === 'agent-lynx') {
-      if (existsSync(meta)) {
-        throw new Error(
-          'agent-lynx is package-owned; website overrides are unsupported',
-        );
-      }
       navigation.set(`${locale}/${id}`, entries);
       continue;
     }
-    const siteEntries = existsSync(meta) ? json(meta) : [];
-    const siteNames = new Set();
     const routes = new Set(
       names.filter((name) => /\.mdx?$/.test(name)).map(pageRoute),
     );
-    for (const item of siteEntries) {
-      const source = within(target, item.name);
-      if (
-        (item.type && item.type !== 'file') ||
-        !/\.mdx?$/.test(item.name) ||
-        siteNames.has(item.name)
-      ) {
-        throw new Error(
-          `Invalid or duplicate website-owned page: ${item.name}`,
-        );
-      }
-      if (item.sidebar !== undefined && typeof item.sidebar !== 'boolean') {
-        throw new Error(`Invalid sidebar visibility: ${item.name}`);
-      }
-      if (item.before && item.after) {
-        throw new Error(`Conflicting website sidebar anchors: ${item.name}`);
-      }
-      if (routes.has(pageRoute(item.name))) {
-        throw new Error(
-          `Duplicate documentation ownership: ${to}/${item.name}`,
-        );
-      }
-      routes.add(pageRoute(item.name));
-      siteNames.add(item.name);
-      const content = readFileSync(source);
-      planned.set(`${to}/${item.name}`, content);
-      websiteFiles[`${to}/${item.name}`] = editUrl(content.toString()) ?? null;
-    }
     for (const name of files(target)) {
+      if (name === '_meta.js' || name === '_meta.json') continue;
       const relative = `${to}/${name}`;
       const oldUrl = /\.mdx?$/.test(name)
         ? editUrl(readFileSync(join(target, name), 'utf8'))
         : undefined;
-      const wasPackageOwned =
-        Object.hasOwn(previous.packageFiles ?? {}, relative) ||
-        (oldUrl &&
-          legacyEditBases.some((base) => oldUrl.startsWith(base + '/')));
-      if (names.includes(name) && /\.mdx?$/.test(name) && !wasPackageOwned) {
-        throw new Error(`Undeclared ownership collision: ${relative}`);
+      // An explicit website edit URL also permits a transfer from old package output.
+      const wasPackageOwned = oldUrl
+        ? legacyEditBases.some((base) => oldUrl.startsWith(base + '/'))
+        : Object.hasOwn(previous.packageFiles ?? {}, relative);
+      if (wasPackageOwned) {
+        if (!names.includes(name)) removals.add(relative);
+        continue;
       }
       if (
-        name === SITE_META ||
-        name === '_meta.json' ||
         names.includes(name) ||
-        siteNames.has(name)
-      )
-        continue;
-      if (wasPackageOwned) removals.add(relative);
-      else {
-        throw new Error(
-          `Undeclared website Skills file: ${relative}; declare its owner before synchronizing`,
-        );
+        (/\.mdx?$/.test(name) && routes.has(pageRoute(name)))
+      ) {
+        throw new Error(`Duplicate documentation ownership: ${relative}`);
       }
+      if (/\.mdx?$/.test(name)) routes.add(pageRoute(name));
+      planned.set(relative, readFileSync(join(target, name)));
+      websiteFiles[relative] = oldUrl ?? null;
     }
-    const merged = mergeSiteNavigation(entries, siteEntries);
+    const metaFile = `${to}/_meta.json`;
+    const generated = Object.hasOwn(previous.packageFiles ?? {}, metaFile);
+    const authoredJson =
+      !existsSync(join(target, '_meta.js')) &&
+      !generated &&
+      existsSync(join(target, '_meta.json'));
+    const merged = websiteNavigation(target, entries, generated);
+    if (authoredJson) {
+      delete packageFiles[metaFile];
+      websiteFiles[metaFile] = null;
+    }
     planned.set(
       `${to}/_meta.json`,
       Buffer.from(`${JSON.stringify(merged, null, 2)}\n`),
@@ -268,35 +220,53 @@ export function mountSkillsDocs({
     }
   }
   for (const locale of LOCALES) {
-    const template = json(join(docs, locale, 'ai/_meta.template.json'));
+    const base = [];
     for (const id of ROUTES.keys()) {
-      if (
-        !navigation.has(`${locale}/${id}`) ||
-        template.filter((entry) => entry.external === id).length !== 1
-      ) {
-        throw new Error(`Missing ${locale} content or duplicate slot: ${id}`);
+      if (!navigation.has(`${locale}/${id}`)) {
+        throw new Error(`Missing ${locale} content: ${id}`);
       }
-    }
-    const entries = template.flatMap((entry) => {
-      if (!entry.external) return [entry];
-      if (!ROUTES.has(entry.external)) {
-        throw new Error(`Unknown documentation slot: ${entry.external}`);
-      }
-      return [
+      base.push(
         {
           type: 'section-header',
-          label: entry.external === 'skills' ? 'Skills' : 'agent-lynx',
+          label: id === 'skills' ? 'Skills' : 'agent-lynx',
         },
-        ...navigation.get(`${locale}/${entry.external}`).map((page) => ({
-          ...page,
-          name: `${entry.external}/${page.name}`,
-        })),
-      ];
-    });
+        ...navigation.get(`${locale}/${id}`).map((page) => {
+          if (typeof page === 'string') return `${id}/${page}`;
+          return page.name ? { ...page, name: `${id}/${page.name}` } : page;
+        }),
+      );
+    }
+    const entries = websiteNavigation(join(docs, locale, 'ai'), base);
     planned.set(
       `${locale}/ai/_meta.json`,
       Buffer.from(`${JSON.stringify(entries, null, 2)}\n`),
     );
+  }
+  // Metadata controls visibility only. Validate against all final files, including hidden pages.
+  for (const [file, content] of planned) {
+    if (!/^(en|zh)\/ai\/(?:skills\/)?_meta.json$/.test(file)) continue;
+    const directory = dirname(file);
+    const seen = new Set();
+    for (const item of JSON.parse(content)) {
+      if (['divider', 'section-header', 'custom-link'].includes(item.type))
+        continue;
+      const name = typeof item === 'string' ? item : item.name;
+      within(docs, `${directory}/${name}`);
+      const route = pageRoute(name);
+      if (seen.has(route)) throw new Error(`Duplicate sidebar page: ${name}`);
+      seen.add(route);
+      const found = ['', '.md', '.mdx', '/_meta.json'].some((suffix) => {
+        const path = `${directory}/${name}${suffix}`;
+        if (planned.has(path)) return true;
+        if (
+          removals.has(path) ||
+          [...managedRoots].some((root) => path.startsWith(root + '/'))
+        )
+          return false;
+        return existsSync(within(docs, path));
+      });
+      if (!found) throw new Error(`Missing sidebar page: ${name}`);
+    }
   }
   // Resolve links against the final tree, not a stale page about to be removed.
   const localExists = (url) => {
