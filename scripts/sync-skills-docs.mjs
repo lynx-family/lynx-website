@@ -6,6 +6,7 @@ import { watch } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { syncWebsite } from './skills-docs.mjs';
 
 const WEBSITE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -17,7 +18,6 @@ export function syncSkillsDocs({ website = WEBSITE, source } = {}) {
       process.env.SKILLS_DOCS_SOURCE ??
       dirname(require.resolve('@lynx-js/skills-docs/manifest.json')),
   );
-  const { syncWebsite } = require(join(source, 'website.mjs'));
   const inventory = syncWebsite({ website, source });
   return { source, sections: ['ai/agent-lynx', 'ai/skills'], ...inventory };
 }

@@ -22,11 +22,14 @@ const source =
   process.env.SKILLS_DOCS_SOURCE ??
   dirname(require.resolve('@lynx-js/skills-docs/manifest.json'));
 
-test('the website adapter consumes the installed ownership contract and preserves authored sources', (t) => {
+test('the website sync consumes a content-only package and preserves authored sources', (t) => {
   const website = mkdtempSync(join(tmpdir(), 'website-skills-'));
   t.after(() => rmSync(website, { recursive: true, force: true }));
   const pkg = join(website, 'node_modules/@lynx-js/skills-docs');
-  cpSync(source, pkg, { recursive: true });
+  mkdirSync(pkg, { recursive: true });
+  for (const entry of ['content', 'public', 'manifest.json', 'package.json']) {
+    cpSync(join(source, entry), join(pkg, entry), { recursive: true });
+  }
   writeFileSync(join(website, 'package.json'), '{}');
   for (const locale of ['en', 'zh']) {
     const ai = join(website, 'docs', locale, 'ai');
@@ -41,7 +44,7 @@ test('the website adapter consumes the installed ownership contract and preserve
     );
     writeFileSync(join(ai, 'skills/website.mdx'), '# Website source');
   }
-  const result = syncSkillsDocs({ website, source: pkg });
+  const result = syncSkillsDocs({ website });
   for (const locale of ['en', 'zh']) {
     const ai = join(website, 'docs', locale, 'ai');
     assert.equal(

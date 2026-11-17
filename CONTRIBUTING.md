@@ -240,7 +240,10 @@ OpenUI and the external trace guides use this path. A duplicate file or route
 owner fails before synchronization writes anything; transfer a page by removing
 it from the producer and declaring its website ownership in the same rollout.
 
-Both websites use the package's `website` export. It leaves authored source
+Both websites use this repository's `scripts/skills-docs.mjs`. The public entry
+point is `scripts/sync-skills-docs.mjs`; the internal website imports
+`mountSkillsDocs` from its installed OSS website after composing the internal
+package with the selected public input. The shared script leaves authored source
 unchanged, cleans retired package files using its generated
 `docs/.skills-docs.json` inventory, and exposes package/website source URLs for
 the documentation provenance adapter. That ignored inventory is generated
