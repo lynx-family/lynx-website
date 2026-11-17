@@ -307,7 +307,8 @@ jobs:
   # Keep authoring contracts that require installed dependencies separate from
   # portable import rules. API reference checks here may read the installed
   # Lynx Stack manifest or invoke pnpm pack, but installation still skips the
-  # root prepare lifecycle.
+  # root prepare lifecycle. Generated API synchronization is covered by the
+  # whole-tree check in validate, which runs prepare.
   example-authoring:
     name: Example Authoring
     runs-on: ubuntu-latest
@@ -332,11 +333,6 @@ jobs:
           node --test scripts/ci/check-api-package-subsites.test.mjs
           # Validate the sync script from the complete packed lynx-doc artifact.
           node --test scripts/sync-lynx-stack-docs.test.mjs
-
-      - name: API Reference Sync and Overlay Check
-        run: |
-          pnpm sync:lynx-stack-docs
-          git diff --exit-code -- docs/en/api docs/zh/api
 
       - name: Go Component Contract Check
         run: |
