@@ -1,0 +1,213 @@
+---
+description: Collect MTS, page BTS, whole BTS VM, and destroyed-page heap snapshots in Lynx 4.5.
+---
+
+# Heap Snapshot Collection
+
+Starting in Lynx 4.5, Android, iOS, and HarmonyOS can use `LynxView.takeHeapSnapshot` to capture a main-thread runtime (MTS), a page's background runtime (BTS) component, or a whole BTS VM. The static `LynxView.takeBtsResidualHeapSnapshot` API captures BTS residuals of a destroyed page.
+
+Snapshots are saved as JSON files for analyzing JavaScript objects and reference chains. Use the `.heapsnapshot` extension for convenience; snapshots do not include Element tree or native UI/View object graphs.
+
+## Snapshot Types
+
+The `type` parameter of `takeHeapSnapshot` selects the scope:
+
+| `type`     | Scope                                                              | Description                                                                                                                                              |
+| ---------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mts`      | The heap of the current page's main MTS VM.                        | Requires an available main-thread runtime with QuickJS heap snapshot support.                                                                            |
+| `bts_page` | The component attributed to the current page in its background VM. | Uses the page's tracking slot in a shared QuickJS VM; captures the whole VM for a standalone VM. Shared VMs require slot tracking and a valid page slot. |
+| `bts_vm`   | The whole heap of the background VM used by the current page.      | For a shared VM, includes other pages, shared allocations, and residual objects; it is not the current page's component.                                 |
+
+These APIs currently require QuickJS snapshot support. Other engines, including V8, JSVM, and JSC, cannot produce snapshots through these APIs.
+
+## Prepare For Collection
+
+For live pages, call after runtime initialization and keep the page alive. An unavailable MTS prevents `mts` collection; an unavailable BTS prevents `bts_page` or `bts_vm` collection.
+
+For `bts_page` in a shared VM and destroyed-page residuals, enable memory monitoring before creating pages or VMs so each page can receive an attribution slot. Set the following through the host's [`memory_monitor_config`](./memory-monitor-config.mdx) configuration entry:
+
+```text
+global_sample_rate,1
+```
+
+The process must be selected by global sampling; a rate below `1` does not guarantee availability. Setting the configuration late does not retrofit slot tracking into existing VMs. UI sampling does not affect JavaScript heap snapshots.
+
+`mts`, `bts_vm`, and `bts_page` for a standalone VM do not depend on page slot tracking and do not require enabling memory monitoring for collection.
+
+## Capture A Live Page
+
+The examples assume `lynxView` is a loaded page, Android `context` is the host `Context`, and HarmonyOS `context` is the host `UIAbilityContext`. They capture `bts_page`; replace `type` with `mts` or `bts_vm` for the other scopes.
+
+| Parameter    | Description                                                                                                                                                                       |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `outputFile` | Output file. Android accepts a `java.io.File`; iOS accepts an `NSString` path; HarmonyOS accepts a `string` path. Use a writable absolute path with an existing parent directory. |
+| `callback`   | Reports an error string. Success has no error; failure provides a reason. Platform conventions are listed below.                                                                  |
+| `type`       | Snapshot scope. Accepts the case-sensitive values `mts`, `bts_page`, and `bts_vm`. HarmonyOS declares a union of these three string literals.                                     |
+
+### Android
+
+```java
+import android.util.Log;
+import com.lynx.tasm.LynxView;
+import java.io.File;
+
+File outputFile = new File(context.getCacheDir(), "page-bts.heapsnapshot");
+lynxView.takeHeapSnapshot(
+    outputFile,
+    error -> {
+      if (error != null) {
+        Log.e("HeapSnapshot", error);
+      }
+    },
+    "bts_page");
+```
+
+The signature is `void takeHeapSnapshot(File outputFile, LynxConsumer<String> callback, String type)`.
+
+### iOS
+
+```objective-c
+NSString *outputFile =
+    [NSTemporaryDirectory() stringByAppendingPathComponent:@"page-bts.heapsnapshot"];
+[lynxView takeHeapSnapshot:outputFile
+                 callback:^(NSString * _Nullable error) {
+                   if (error != nil) {
+                     NSLog(@"Heap snapshot failed: %@", error);
+                   }
+                 }
+                     type:@"bts_page"];
+```
+
+The API is `- (void)takeHeapSnapshot:(nonnull NSString *)outputFile callback:(void (^ _Nullable)(NSString * _Nullable error))callback type:(nonnull NSString *)type`.
+
+### HarmonyOS
+
+```typescript
+import { LynxView } from '@lynx/lynx';
+
+const outputFile: string = `${context.cacheDir}/page-bts.heapsnapshot`;
+lynxView.takeHeapSnapshot(
+  outputFile,
+  (error?: string): void => {
+    if (error !== undefined) {
+      console.error(`Heap snapshot failed: ${error}`);
+    }
+  },
+  'bts_page',
+);
+```
+
+The API returns `void`. Collection is asynchronous on all three platforms and does not return snapshot contents directly.
+
+### Callback Conventions
+
+Live-page and destroyed-page residual APIs share these callback conventions:
+
+| Platform  | Success Value | Optional Callback       | Callback Thread                                                       |
+| --------- | ------------- | ----------------------- | --------------------------------------------------------------------- |
+| Android   | `null`        | May pass `null`.        | Background thread; dispatch to the UI thread before touching Views.   |
+| iOS       | `nil`         | May pass `nil`.         | Background thread; dispatch to the main thread before touching Views. |
+| HarmonyOS | `undefined`   | A callback is required. | Returns to the calling ArkTS thread.                                  |
+
+Android and iOS accept calls from any thread; iOS marshals live View access to the main thread. Capture runs on the owning runtime thread, and file writes run in background IO tasks.
+
+## Capture Destroyed-Page Residuals
+
+After page destruction, use the static `takeBtsResidualHeapSnapshot` API instead of the original View's live-page API. It has no `type` parameter and captures only the target destroyed page's residual component in a shared QuickJS VM.
+
+| Parameter    | Description                                                                                                                                                 |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `outputFile` | Same file parameter as the live-page API.                                                                                                                   |
+| `callback`   | Same error-string callback as the live-page API.                                                                                                            |
+| `instanceId` | Target destroyed-page instance ID. Android uses `int`, iOS uses `int32_t`, and HarmonyOS uses `number`. Must be the destroyed page's LynxShell instance ID. |
+
+All of the following are required:
+
+- Memory monitoring is enabled in the current process.
+- The page was tracked before destruction, its destruction record is still available, and it has a valid page slot. Reserved slots such as `unknown`, `common`, and `overflow` do not qualify.
+- The page's shared QuickJS VM is still alive and can execute the capture task.
+
+Save the instance ID before destruction, or obtain it from `destroyedInstances[].instanceId` in the [global memory query](./global-memory-usage-query.mdx) or a page/slot `instance_id` in [high-memory events](./high-memory-events.mdx). Do not substitute a page URL, page key, runtime ID, or group ID.
+
+The examples assume the host saved the target ID as `savedInstanceId` and the target page has already been destroyed.
+
+### Android
+
+```java
+File outputFile = new File(context.getCacheDir(), "residual-bts.heapsnapshot");
+LynxView.takeBtsResidualHeapSnapshot(
+    outputFile,
+    error -> {
+      if (error != null) {
+        Log.e("HeapSnapshot", error);
+      }
+    },
+    savedInstanceId);
+```
+
+The signature is `static void takeBtsResidualHeapSnapshot(File outputFile, LynxConsumer<String> callback, int instanceId)`.
+
+### iOS
+
+```objective-c
+NSString *outputFile =
+    [NSTemporaryDirectory() stringByAppendingPathComponent:@"residual-bts.heapsnapshot"];
+[LynxView takeBtsResidualHeapSnapshot:outputFile
+                           callback:^(NSString * _Nullable error) {
+                             if (error != nil) {
+                               NSLog(@"Residual snapshot failed: %@", error);
+                             }
+                           }
+                         instanceId:savedInstanceId];
+```
+
+The API is `+ (void)takeBtsResidualHeapSnapshot:(nonnull NSString *)outputFile callback:(void (^ _Nullable)(NSString * _Nullable error))callback instanceId:(int32_t)instanceId`.
+
+### HarmonyOS
+
+```typescript
+const outputFile: string = `${context.cacheDir}/residual-bts.heapsnapshot`;
+LynxView.takeBtsResidualHeapSnapshot(
+  outputFile,
+  (error?: string): void => {
+    if (error !== undefined) {
+      console.error(`Residual snapshot failed: ${error}`);
+    }
+  },
+  savedInstanceId,
+);
+```
+
+The method is static and returns `void`. If the target slot has no residuals after GC, collection can still succeed with an empty object graph; an empty graph is not an API failure.
+
+## Capture And File Semantics
+
+- Capture triggers GC in the target VM and clears console messages retained by the engine. It can affect memory levels and execution time; use it for on-demand diagnostics rather than frequent polling. The global memory query itself does not trigger GC.
+- Capture emits a runtime diagnostic summary and records object source locations when available. Missing source information does not mean collection failed.
+- The snapshot is generated in memory before being written asynchronously. The callback reports success only after the complete file has been written.
+- The SDK does not create parent directories. Existing output contents are replaced. Capture failure leaves the existing file unchanged; write failure may leave partial contents.
+- Page or runtime destruction after a request may prevent the task from running. Use the callback result to decide whether the output is usable; do not analyze an old file after failure.
+
+## Handle Errors
+
+Failures return an error string through the callback. Common errors include:
+
+| Error                                                           | Description                                                                                                    |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `Invalid type`                                                  | `type` is not a supported scope.                                                                               |
+| `Native library unavailable`                                    | The Android native library is not loaded, so residual collection cannot run.                                   |
+| `View destroyed`, `LynxView destroyed`, `LynxView unavailable`  | The live-page API's View is destroyed or unavailable. The wording varies by platform or check stage.           |
+| `MTS unavailable`, `BTS unavailable`                            | The requested page runtime is not yet available or is no longer available.                                     |
+| `QuickJS required`                                              | The runtime does not support the required QuickJS heap snapshot.                                               |
+| `Slot unavailable`                                              | The shared VM has no valid slot for page-component collection.                                                 |
+| `Monitor disabled`                                              | The residual API requires enabled memory monitoring.                                                           |
+| `No residual snapshot`                                          | The target is still live, has no available destruction record, was not tracked, or has no valid residual slot. |
+| `BTS VM destroyed`, `VM unavailable/busy`, `No QuickJS context` | The target VM or context cannot be used for capture.                                                           |
+| `Capture failed`, `Write failed`                                | Snapshot generation failed, or writing the output file failed.                                                 |
+| `Cancelled`                                                     | A dispatched capture task could not run, for example because its runtime was destroyed.                        |
+
+## Diagnose Memory Retention
+
+First locate the instance and runtime type with the [global memory query](./global-memory-usage-query.mdx) or [high-memory events](./high-memory-events.mdx). Use `mts` for high MTS memory, `bts_page` for a large page BTS component, and `bts_vm` to inspect shared objects, other pages, or retention across the whole VM.
+
+After exiting the page and allowing normal cleanup, capture residuals by instance ID if the destruction record still shows BTS residual memory. Inspect reference chains of objects that survive GC. Keep the scope and monitoring configuration consistent when comparing snapshots. Residual bytes or objects present in a single snapshot do not prove a leak; assess their expected lifetime and retention paths.

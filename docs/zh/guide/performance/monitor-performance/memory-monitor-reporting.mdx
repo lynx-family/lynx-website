@@ -1,0 +1,70 @@
+# 内存监控事件上报
+
+从 **Lynx 4.4** 开始，内存监控提供协同的页面级和进程级事件上报体系，用于识别高内存页面、并发页面实例、大型共享 VM，以及页面退出后持续贡献的内存。
+
+本文描述 Lynx 4.5 的上报口径，并在下文说明早期版本差异。
+
+## 版本支持
+
+| SDK 版本 | 上报行为                                                                                                                                                                                                    |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lynx 4.3 | 使用旧版 `lynxsdk_performance_entry_memory` 分类上报和独立监控配置，不提供下表中的 v2 页面事件和全局事件族。                                                                                                |
+| Lynx 4.4 | 引入 `lynxsdk_performance_entry_memory_v2` 和下表中的全部全局事件族，使用统一的 `memory_monitor_config`。已提供页面早期均值/观测峰值及完整 10 分钟存活观测窗。                                              |
+| Lynx 4.5 | 扩展全局事件字段，新增 VM 名称桶、与 VM 关联的抽样页面 key，以及 module factory/script cache 的创建和复用诊断，包括跨 App 复用。残留持久化改为测量 full GC 观测之间的区间，并在 VM 销毁时计入最后一段区间。 |
+
+事件名相同不代表各版本 payload 相同。尤其是 Lynx 4.4 的残留持久化使用抽样残留观测，不应直接与 Lynx 4.5 按区间测量的持久化数据混合统计。请使用产生数据的 SDK 版本对应的事件字段参考。
+
+## 上报数据解读
+
+- **在相同观测窗内比较早期内存。** 每个符合条件的页面实例最多贡献一份摘要，包含首次加载完成后前 20 秒内的总内存、后台线程 runtime（BTS）和主线程 runtime（MTS）；如提前退出，则统计到退出时。应与其他实例的同类摘要比较均值和观测峰值。观测峰值不是连续测量得到的最大值。
+- **使用正确的存活率分母。** 页面存活采用完整 10 分钟观测窗，只在有完整机会达到该时长的页面中计算存活率。
+- **区分页面归因和共享堆。** 全局统计按实际 VM 身份将共享堆计入一次。页面归因字节数与 VM 整体堆的范围不同，相加可能重复计数。分析持久化时，应同时考察平均内存与随时间累积的内存贡献。
+- **考虑采样和字段可用性。** 进程采样决定事件覆盖范围，抽样实体明细有对应权重。聚合时应遵循这些权重和事件有效条件。引擎支持与 UI 采集配置会影响可用内存分量。
+- **按观测时间分析。** 事件通过 SDK 统计服务异步交给宿主，应使用事件的观测时间戳和观测窗对齐数据，而不是监控平台收到事件的时间。
+- **区分 SDK 记账和进程 PSS。** 两者范围不同。SDK 记账字节数可用于归因 Lynx 内存，但不能解释所有进程 PSS 变化。页面退出后的残留，即使经后续 full GC 确认，也不能单独证明永久泄漏。
+
+## 开启上报
+
+适用于 Lynx 4.4 及以上版本：
+
+宿主通过外部配置/Trail 接入提供 [`memory_monitor_config`](./memory-monitor-config.mdx)，并在首次读取配置前完成，通常应早于第一个页面或 VM 的创建。`global_sample_rate` 默认为 `0`，此时不启用该事件上报体系。配置和进程采样结果在每个进程中只初始化一次。
+
+如需在排查时为所有进程启用 UI 采集和页面定时事件投递，可使用：
+
+```json
+{
+  "memory_monitor_config": "global_sample_rate,1,lynx_ui_sample_rate,1,page_scheduled_sample_rate,1"
+}
+```
+
+线上监控应根据覆盖率和事件预算选择采样率。进程被全局选中后，UI 采集和页面定时事件投递分别进行独立的条件采样。`page_scheduled_sample_rate` 只控制页面定时事件投递，不会关闭计划观测、早期摘要或全局事件。
+
+事件通过 SDK 统计服务交给宿主，宿主需接入该服务并转发至自己的监控平台。各平台配置入口、默认值和采样示例见[内存监控配置](./memory-monitor-config.mdx)。
+
+## 事件概要
+
+下表全部事件族均从 Lynx 4.4 开始提供。用途说明采用 Lynx 4.5 的口径，具体字段请查阅版本对应的参考文档。
+
+| 事件                                                         | 用途                                                                                          |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `lynxsdk_performance_entry_memory_v2`                        | 页面固定时点观测，以及每个符合条件实例的一份早期内存摘要，用于比较页面内存均值和观测峰值。    |
+| `lynxsdk_memory_process`                                     | 进程 PSS 与 Lynx 记账内存，用于评估 Lynx 对进程内存的贡献。                                   |
+| `lynxsdk_memory_page`                                        | 抽样活跃页面内存，以及同一页面标识的并发实例合计内存。                                        |
+| `lynxsdk_memory_page_residency`                              | 完整 10 分钟观测窗后的页面存活情况，用于识别长驻页面。                                        |
+| `lynxsdk_memory_vm_stat`, `lynxsdk_memory_vm_quickjs`        | 共享 VM 堆内存、生命周期与复用情况，以及 QuickJS 内存归因、残留、页面 slot 和首次 slot 溢出。 |
+| `lynxsdk_memory_page_residual`, `lynxsdk_memory_persistence` | 抽样观察页面退出后经 full GC 确认的共享 QuickJS 残留，以及 VM 堆和残留内存随时间累积的贡献。  |
+| `lynxsdk_memory_mts_pool`                                    | bundle 局部 MTS 池的堆内存和 runtime 数量。                                                   |
+
+各事件的触发方式和数据有效条件不同，并非每次观测都会产生全部事件；可用内存分量也取决于引擎和采集配置。
+
+## 详细文档
+
+事件字段、生成条件、采样权重、聚合公式和查询示例，请阅读源码仓库中的 `docs`：
+
+- [文档索引](https://github.com/lynx-family/lynx/blob/develop/core/services/performance/memory_monitor/docs/README.md)
+- [全局事件上报设计](https://github.com/lynx-family/lynx/blob/develop/core/services/performance/memory_monitor/docs/memory_monitor_reporting_design.md)
+- [页面事件上报设计](https://github.com/lynx-family/lynx/blob/develop/core/services/performance/memory_monitor/docs/page_memory_monitor_reporting_design.md)
+- [事件字段参考](https://github.com/lynx-family/lynx/blob/develop/core/services/performance/memory_monitor/docs/memory_monitor_property_registration.md)
+- [监控数据查询指南](https://github.com/lynx-family/lynx/blob/develop/core/services/performance/memory_monitor/docs/memory_monitor_query_guide.md)
+
+内网和开源的源码文档可能有差异，请以对应源码仓库及所使用的 SDK 版本为准。

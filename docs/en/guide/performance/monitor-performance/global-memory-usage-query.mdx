@@ -4,15 +4,33 @@ Use the global Lynx memory query when you need a current, one-shot snapshot of L
 
 This API is designed for active diagnostics: memory pressure handling, quick high-memory triage, and deciding whether a deeper heap investigation is needed. It is not a high-frequency monitor and does not release memory by itself.
 
+## Monitoring And Data Availability
+
+The Android and iOS APIs are available from **Lynx 4.3**. HarmonyOS support starts with **Lynx 4.5**.
+
+| SDK Version        | Query Behavior                                                                                                                                                                                                                                                                                                                                            |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lynx 4.3           | Collects registered, monitored instances asynchronously. Concurrent calls share an in-progress collection, and `timeoutMs` is a collection deadline. Per-instance BTS bytes describe the whole background VM heap. Enable monitoring with the legacy settings in [Memory Monitor Configuration](./memory-monitor-config.mdx#legacy-settings-for-lynx-43). |
+| Lynx 4.4           | Uses an independent native monitor snapshot for each call. Requires enabled monitoring and a process selected by `global_sample_rate`. Per-instance BTS bytes become the component attributed to that page; global BTS heaps are deduplicated by VM identity. `timeoutMs` is retained as metadata.                                                        |
+| Lynx 4.5 and later | Also collects available Element memory, node counts, MTS heaps, and whole BTS VM heaps when monitoring is disabled or the process is not selected. Adds monitoring/error diagnostics, per-instance VM details, destroyed-page residual records, and HarmonyOS support.                                                                                    |
+
+From Lynx 4.4, configure [`memory_monitor_config`](./memory-monitor-config.mdx) before creating pages or VMs. Use `global_sample_rate,1,lynx_ui_sample_rate,1` when page-level BTS attribution and UI memory are required. UI collection remains conditional on `lynx_ui_sample_rate`. In Lynx 4.5, destroyed-page residual diagnostics also require monitoring.
+
 ## What It Measures
 
-The query collects memory from all live Lynx instances in the current process, aggregates Element, UI/View, main-thread runtime, and background-thread runtime memory, and returns a structured result.
+The query reads available Element, UI/View, main-thread runtime (MTS), and background-thread runtime (BTS) memory from live Lynx instances in the current process. Its inventory and BTS attribution depend on the SDK version, as described above.
+
+In Lynx 4.5, it also returns diagnostic records for destroyed pages with tracked BTS residuals. Without monitoring, the result includes available Element and runtime data; UI memory, page-level BTS attribution, and destroyed-page residuals are unavailable.
 
 It differs from passive or periodic memory reporting: passive reporting is useful for dashboards and historical analysis, while this API asks the current process for a fresh snapshot at the moment the caller needs it.
 
 It also differs from heap snapshots. Heap snapshots can prove JavaScript retainer chains. This query gives a fast memory inventory and points to the largest pages, instances, or categories.
 
+To query only the current page from background JavaScript, use [`lynx.performance.getMemoryUsage()`](../../../api/lynx-api/lynx/lynx-performance/get-memory-usage.mdx). That per-page API requires enabled memory monitoring; check its `status` before reading memory fields.
+
 ## Native API
+
+The basic iOS and Android examples below work with **Lynx 4.3 and later**. Check `collectionStatus` before using the totals. On Lynx 4.3, a timeout can leave a partial result.
 
 ### iOS
 
@@ -25,7 +43,7 @@ It also differs from heap snapshots. Heap snapshots can prove JavaScript retaine
     }];
 ```
 
-Use the overload with `timeoutMs` when you need a custom collection timeout:
+Use the overload with `timeoutMs` to provide a timeout value:
 
 ```objective-c
 [[LynxMemoryUsageQuery sharedInstance]
@@ -33,6 +51,13 @@ Use the overload with `timeoutMs` when you need a custom collection timeout:
       // Handle result on the report thread.
     }
                          timeoutMs:5000];
+```
+
+For Lynx 4.5 and later, additionally check monitoring availability inside the callback:
+
+```objective-c
+BOOL memoryMonitoringEnabled = result.memoryMonitoringEnabled;
+// When NO, UI memory and page-attributed BTS memory are unavailable.
 ```
 
 ### Android
@@ -49,7 +74,7 @@ LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
     });
 ```
 
-Use the overload with `timeoutMs` when you need a custom collection timeout:
+Use the overload with `timeoutMs` to provide a timeout value:
 
 ```java
 LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
@@ -59,63 +84,135 @@ LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
     5000);
 ```
 
-When `timeoutMs <= 0`, the platform uses the default timeout of `2000` ms.
+For Lynx 4.5 and later, additionally check monitoring availability inside the callback:
+
+```java
+boolean memoryMonitoringEnabled = result.isMemoryMonitoringEnabled();
+// When false, UI memory and page-attributed BTS memory are unavailable.
+```
+
+### HarmonyOS
+
+Available from Lynx 4.5:
+
+```typescript
+import { LynxMemoryUsageQuery, LynxGlobalMemoryUsageResult } from '@lynx/lynx';
+
+LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
+  (result: LynxGlobalMemoryUsageResult): void => {
+    const lynxBytes: number = result.totalBytes;
+    const appBytes: number = result.appBytes;
+    const status = result.collectionStatus;
+    const ratioToApp: number = result.ratioToApp;
+    const memoryMonitoringEnabled: boolean = result.memoryMonitoringEnabled;
+    // The callback runs in the calling ArkTS environment.
+  },
+);
+```
+
+Pass `timeoutMs` as the second argument when needed:
+
+```typescript
+LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
+  (result: LynxGlobalMemoryUsageResult): void => {
+    // Handle the native snapshot.
+  },
+  5000,
+);
+```
+
+Omitting `timeoutMs` or passing a value `<= 0` uses the default of `2000` ms. On Android and iOS in Lynx 4.3, it limits the collection wait: a deadline can produce `timeout` with the instances collected so far. From Lynx 4.4, the native snapshot retains this value for API compatibility and does not enforce it as a collection deadline. HarmonyOS, introduced in Lynx 4.5, uses the same metadata behavior.
 
 ## Result Fields
 
+The tables use native numeric type names. HarmonyOS exposes numeric fields as `number`. The common fields are available on Android and iOS from Lynx 4.3; additions and behavior changes are marked below. HarmonyOS exposes them from Lynx 4.5.
+
 ### Global Result
 
-| Field                          | Type             | Description                                                                                                                     |
-| ------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `collectionStartMs`            | `long`           | Wall-clock collection start time in milliseconds.                                                                               |
-| `collectionStatus`             | enum             | `completed` when all instances in this request completed, or `timeout` when the timeout was reached first.                      |
-| `collectionDurationMs`         | `long`           | Elapsed collection time in milliseconds.                                                                                        |
-| `collectionTimeoutMs`          | `long`           | Timeout used by this request.                                                                                                   |
-| `expectedInstanceCount`        | `int`            | Number of live Lynx instances identified when the request started.                                                              |
-| `completedInstanceCount`       | `int`            | Number of instances that completed collection and are included in this result.                                                  |
-| `totalBytes`                   | `long`           | Global Lynx-attributed bytes. This counts only Lynx-attributed memory; `appBytes` is app-level context, not part of this value. |
-| `appBytes`                     | `long`           | Current app memory footprint sampled by the platform.                                                                           |
-| `ratioToApp`                   | `double`         | `totalBytes / appBytes`, or `0` when app bytes are unavailable.                                                                 |
-| `elementBytes`                 | `long`           | Aggregated Element tree memory.                                                                                                 |
-| `elementNodeCount`             | `long` / `int32` | Aggregated Element node count.                                                                                                  |
-| `viewBytes`                    | `long`           | Aggregated UI/View memory.                                                                                                      |
-| `mainThreadRuntimeBytes`       | `long`           | Aggregated main-thread runtime memory.                                                                                          |
-| `backgroundThreadRuntimeBytes` | `long`           | Aggregated background-thread runtime memory, with shared background runtime groups deduplicated.                                |
-| `instances`                    | list             | Completed instance list sorted by `totalBytes` descending.                                                                      |
+| Field                          | Type             | Description                                                                                                                                                                                                                                                                                                   |
+| ------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `collectionStartMs`            | `long`           | Wall-clock collection start time in milliseconds.                                                                                                                                                                                                                                                             |
+| `collectionStatus`             | enum             | `completed` on success, or `error` on failure. Lynx 4.3 can return `timeout` with a partial result. From Lynx 4.4, the native snapshot does not produce `timeout`.                                                                                                                                            |
+| `memoryMonitoringEnabled`      | boolean          | Added in Lynx 4.5. Whether monitoring was enabled for the query. On a successful result, `false` means page BTS attribution, UI memory, and destroyed-page residuals are unavailable; supported whole VM heaps are still queried. `true` does not guarantee every source is available.                        |
+| `errorMessage`                 | string           | Added in Lynx 4.5. Empty on success, including queries with monitoring disabled; explains a failed query otherwise.                                                                                                                                                                                           |
+| `collectionDurationMs`         | `long`           | Elapsed collection time in milliseconds.                                                                                                                                                                                                                                                                      |
+| `collectionTimeoutMs`          | `long`           | Collection deadline in Lynx 4.3; retained timeout metadata from Lynx 4.4.                                                                                                                                                                                                                                     |
+| `expectedInstanceCount`        | `int`            | Number of instances selected at query start. Lynx 4.3 selects registered fetchers; Lynx 4.4 selects monitored native instances; Lynx 4.5 also includes unmonitored live instances. Excludes destroyed-instance records.                                                                                       |
+| `completedInstanceCount`       | `int`            | Number of entries in `instances`. May be below `expectedInstanceCount` for a Lynx 4.3 timeout; equals it for a successful native snapshot from Lynx 4.4.                                                                                                                                                      |
+| `totalBytes`                   | `long`           | Global Lynx-attributed bytes; excludes `appBytes`. In Lynx 4.5 with monitoring disabled, this is available Element + MTS + whole active BTS VM heaps, counted once per VM identity; UI memory is unavailable.                                                                                                 |
+| `appBytes`                     | `long`           | Current app memory footprint sampled by the platform.                                                                                                                                                                                                                                                         |
+| `ratioToApp`                   | `double`         | `totalBytes / appBytes`, or `0` when app bytes are unavailable.                                                                                                                                                                                                                                               |
+| `elementBytes`                 | `long`           | Aggregated Element tree memory.                                                                                                                                                                                                                                                                               |
+| `elementNodeCount`             | `long` / `int32` | Aggregated Element node count.                                                                                                                                                                                                                                                                                |
+| `viewBytes`                    | `long`           | Aggregated UI/View memory. In Lynx 4.5, `0` when monitoring is disabled; otherwise availability also depends on UI collection sampling.                                                                                                                                                                       |
+| `mainThreadRuntimeBytes`       | `long`           | Aggregated main-thread runtime memory.                                                                                                                                                                                                                                                                        |
+| `backgroundThreadRuntimeBytes` | `long`           | Global BTS heaps. Lynx 4.3 groups nonempty runtime group IDs and uses the largest reported heap per group; empty or `-1` IDs are counted per instance. From Lynx 4.4, counts each actual native VM heap once. Lynx 4.5 also queries supported VM heaps without monitoring.                                    |
+| `instances`                    | list             | Collected live instances, sorted by `totalBytes` descending. From Lynx 4.4, instance totals use page-attributed BTS bytes.                                                                                                                                                                                    |
+| `destroyedInstances`           | list             | Added in Lynx 4.5. Empty when monitoring is disabled. With monitoring, reuses `LynxInstanceMemoryUsage` for up to five destroyed pages per shared QuickJS VM with residuals of at least `1024` bytes, sorted descending within each VM. Records are not added separately to global totals or instance counts. |
 
 ### Instance Result
 
-| Field                          | Type             | Description                                                                                                                    |
-| ------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `instanceId`                   | `int32`          | LynxShell instance ID.                                                                                                         |
-| `pageId`                       | string           | Page identity when available. Current implementations may use a temporary view-derived identity.                               |
-| `url`                          | string           | Current template URL captured when the instance completes collection.                                                          |
-| `totalBytes`                   | `long`           | Instance-attributed total: Element + View + main runtime + background runtime. Do not sum instance totals as the global total. |
-| `elementBytes`                 | `long`           | Element tree memory for this instance.                                                                                         |
-| `elementNodeCount`             | `long` / `int32` | Element node count for this instance.                                                                                          |
-| `viewBytes`                    | `long`           | UI/View memory for this instance.                                                                                              |
-| `viewDetail`                   | object           | UI memory records keyed by view category, tag, or view key. This is not a nested child LynxView tree.                          |
-| `mainThreadRuntimeBytes`       | `long`           | Main-thread runtime heap snapshot bytes.                                                                                       |
-| `backgroundThreadRuntimeBytes` | `long`           | Background-thread runtime heap snapshot bytes.                                                                                 |
-| `btsRuntimeGroupId`            | string           | Background runtime group ID used for global deduplication.                                                                     |
+| Field                          | Type             | Description                                                                                                                                                                                                                                                                  |
+| ------------------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `instanceId`                   | `int32`          | Instance identifier. From Lynx 4.4, the native LynxShell ID; `-1` means the instance was not fully attached.                                                                                                                                                                 |
+| `pageId`                       | string           | Lynx 4.3 uses a temporary View-derived identifier; from Lynx 4.4, the native memory-monitor page key. Empty when unavailable.                                                                                                                                                |
+| `url`                          | string           | Template URL, captured when each fetch completes in Lynx 4.3 and recorded in the native snapshot from Lynx 4.4. Empty when unavailable.                                                                                                                                      |
+| `totalBytes`                   | `long`           | Element + View + MTS + BTS bytes. Lynx 4.3 includes the whole BTS VM heap for each instance; from Lynx 4.4, uses its page-attributed BTS component. Lynx 4.5 without monitoring includes only available Element + MTS bytes. Do not sum instance totals as the global total. |
+| `elementBytes`                 | `long`           | Element tree memory for this instance.                                                                                                                                                                                                                                       |
+| `elementNodeCount`             | `long` / `int32` | Element node count for this instance.                                                                                                                                                                                                                                        |
+| `viewBytes`                    | `long`           | UI/View memory for this instance. In Lynx 4.5, `0` when monitoring is disabled; this indicates unavailable UI data, not measured zero memory.                                                                                                                                |
+| `viewDetail`                   | object           | UI memory records keyed by view category, tag, or view key. Empty when monitoring is disabled in Lynx 4.5; the current global snapshot bridge may also return an empty object with monitoring enabled.                                                                       |
+| `mainThreadRuntimeBytes`       | `long`           | Main-thread runtime heap bytes. In Lynx 4.5, supported MTS heap data is also read on demand without monitoring; unavailable data is `0`. The query does not trigger GC.                                                                                                      |
+| `backgroundThreadRuntimeBytes` | `long`           | Lynx 4.3: whole heap of the background VM used by the instance; shared instances can each report the same heap. From Lynx 4.4: the VM heap component attributed to this page. In Lynx 4.5, `0` when monitoring is disabled; unavailable page tracking can also produce `0`.  |
+| `btsRuntimeGroupId`            | string           | Background runtime group ID. Lynx 4.3 uses it for global BTS aggregation; from Lynx 4.4, global aggregation uses actual VM identity. This string is not a unique VM identity.                                                                                                |
+| `btsRuntimeType`               | string           | Added in Lynx 4.5. Background runtime engine: `quickjs`, `v8`, `jsvm`, `jsc`, or `unknown`.                                                                                                                                                                                  |
+| `btsRuntimeTotalBytes`         | `long`           | Added in Lynx 4.5. Whole heap of the instance's background VM, also queried without monitoring when supported; `0` when unavailable. Separate from page-attributed `backgroundThreadRuntimeBytes`; do not add it to the instance's `totalBytes`.                             |
+
+### Destroyed Instance Result
+
+Available from Lynx 4.5 only:
+
+| Field                                  | Type    | Description                                                                                                                                                                                   |
+| -------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `instanceId`                           | `int32` | Exited LynxShell instance ID.                                                                                                                                                                 |
+| `pageId`                               | string  | Exited page's native memory-monitor page key.                                                                                                                                                 |
+| `url`                                  | string  | Original host URL, including query and fragment.                                                                                                                                              |
+| `btsRuntimeGroupId`                    | string  | Background runtime group ID for diagnostics.                                                                                                                                                  |
+| `btsRuntimeType`                       | string  | Added in Lynx 4.5. `quickjs` for the currently supported residual records.                                                                                                                    |
+| `btsRuntimeTotalBytes`                 | `long`  | Added in Lynx 4.5. Whole heap of the page's background VM; `0` when unavailable.                                                                                                              |
+| `backgroundThreadRuntimeResidualBytes` | `long`  | Exposed in Lynx 4.5 destroyed-instance records. Latest cached bytes in the page's tracking slot, separate from the whole-VM `btsRuntimeTotalBytes`; not necessarily measured after a full GC. |
+
+For these records, HarmonyOS and DevTool JSON omit `totalBytes`, `elementBytes`, `elementNodeCount`, `viewBytes`, `viewDetail`, `mainThreadRuntimeBytes`, and `backgroundThreadRuntimeBytes`. Android and iOS retain the typed properties with zero or empty values. For live instance objects, the Android/iOS residual property is `0`; HarmonyOS and DevTool JSON omit it.
 
 ## Collection Semantics
 
-- The API is asynchronous. On initialized native runtimes, callbacks run on the Lynx report thread. Dispatch to the main thread before touching platform View objects.
-- Each request fixes its collection scope at the start: only Lynx instances already alive at that point are included. Instances created during the request are not mixed into the current result and appear in a later query.
-- Concurrent calls are coalesced into the query already in progress. They share the same instance scope, timeout, and final result.
-- If no live Lynx instances exist, the callback still receives an asynchronous `completed` result with zero Lynx-attributed bytes.
-- If `collectionStatus` is `timeout`, only completed instance results are included. Treat totals as partial when `completedInstanceCount < expectedInstanceCount`.
-- Background runtime bytes are deduplicated globally by non-empty BTS runtime group ID. The non-shared group ID `-1` is charged per instance.
+- On Android and iOS, callbacks run on the Lynx report thread after native initialization. Dispatch to the main thread before touching platform View objects. On HarmonyOS, the callback returns to the calling ArkTS environment.
+- In Lynx 4.3, concurrent calls join the same in-progress collection. The selected fetchers are fixed at collection start. A timeout completes the request with available partial data.
+- From Lynx 4.4, each call takes an independent native snapshot, and successful results have equal instance counts. The SDK retains `timeoutMs` as metadata.
+- Lynx 4.5 includes unmonitored live instances and can query without enabling monitoring. Missing or destroyed engine actors can leave category values at `0`; completion does not guarantee every source was available.
+- On Android, querying before native library initialization returns an empty completed result in Lynx 4.4 and an error in Lynx 4.5. An empty inventory on an older SDK does not establish that the process has no Lynx memory.
+- With no selected live instances, a completed result has zero Lynx-attributed bytes. In Lynx 4.5 with monitoring enabled, `destroyedInstances` may still contain diagnostics while a tracked shared VM survives; without monitoring, that list is empty.
+- An on-demand query does not enable monitoring, start monitoring timers, or produce periodic monitoring reports.
+- From Lynx 4.4, global BTS memory counts each VM used by live instances once, by native VM identity. Different VMs with the same `btsRuntimeGroupId` remain distinct. Lynx 4.3 uses the group-based aggregation described in the field table.
+- Lynx 4.5 destroyed-instance residuals are not added separately to totals. Residuals in a VM used by live instances are already part of its whole heap.
+- Queries do not trigger GC. In Lynx 4.5, supported VM heaps are refreshed on their owning JS runners; page residuals come from the latest memory-monitor callback.
 
 ## Interpreting The Result
 
-Start with collection quality: `collectionStatus`, `collectionDurationMs`, `expectedInstanceCount`, and `completedInstanceCount`.
+Start with `collectionStatus` on every SDK version. An `error` result is a failed query, not evidence of zero memory. In Lynx 4.3, treat `timeout` as partial data and compare `completedInstanceCount` with `expectedInstanceCount` before using the totals.
+
+In Lynx 4.5 and later, also check `errorMessage` and `memoryMonitoringEnabled`. When monitoring is disabled, UI bytes and page-attributed BTS bytes are unavailable and returned as `0`, and `destroyedInstances` is empty. Available whole BTS VM heaps still contribute to the global total. Older SDKs do not expose these diagnostic fields; verify monitoring in the host configuration.
+
+Check `collectionDurationMs` and both instance counts, then compare `totalBytes`, `appBytes`, and `ratioToApp`. Keep the SDK version and monitoring/UI settings consistent across snapshots. A zero or empty result on Lynx 4.3/4.4 can reflect missing monitoring inventory. Instance BTS totals change meaning at Lynx 4.4, so a reduction across that upgrade alone does not establish a memory improvement.
 
 Then compare category totals:
 
 - High `elementBytes` with high `elementNodeCount` points to Element tree or node-count growth.
 - High `viewBytes` points to platform UI/View weight. Use `viewDetail` to identify dominant view categories.
-- High `mainThreadRuntimeBytes` or `backgroundThreadRuntimeBytes` points to runtime memory. Use heap snapshots when retainer evidence is needed.
+- High global `mainThreadRuntimeBytes` or `backgroundThreadRuntimeBytes` points to runtime memory. On Lynx 4.3, instance BTS bytes describe the whole VM; from Lynx 4.4, they describe page attribution. In Lynx 4.5, compare that page component with `btsRuntimeTotalBytes` and use `btsRuntimeType` to identify the engine. A zero heap value can mean data is unavailable.
 
-For lifecycle confidence, take repeated snapshots: before opening the target page, after reproducing high memory, and after exiting the page. If the exited page remains in `instances[]` and the numbers do not drop, treat it as suspicious lifecycle residue and move to heap snapshot analysis.
+For lifecycle confidence on every version, take repeated queries before opening the target page, after reproducing high memory, and after exiting the page and allowing cleanup. On Lynx 4.3, wait for each callback before the next query so that the observations do not share the same in-progress request. Compare instance membership, category bytes, and whether totals return toward the baseline. A page that remains in `instances[]` is still considered live; disappearance alone does not prove that all related memory was released.
+
+In Lynx 4.5, a page in `destroyedInstances[]` has exited but still has tracked BTS bytes. Inspect `backgroundThreadRuntimeResidualBytes` and whether it persists or grows. These records are clues, not proof of a leak: the list is limited to five qualifying pages per shared QuickJS VM, and the query does not force GC.
+
+For Lynx 4.5 and later, see [Heap Snapshot Collection](./heap-snapshot.mdx) to capture MTS, page BTS components, or whole BTS VMs and inspect JavaScript retainer chains. For an exited page, pass its `instanceId` to `takeBtsResidualHeapSnapshot`.

@@ -11,19 +11,89 @@ Memory analysis helps discover leaks and abnormal usage within Lynx pages and en
 
 ## Deep analysis with Trace
 
-Starting from 3.4, Trace supports Memory Track, which shows Lynx page memory usage trends over time. Each Memory Track represents one Lynx page’s memory changes.
+### Basic Page Memory Track (Lynx 3.4 And Later)
+
+Starting from Lynx 3.4, Trace supports Memory Track, which shows Lynx page memory usage trends over time. Each Memory Track represents one Lynx page's memory changes.
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/memory-track-latest.png"
-  alt="Memory Track"
+  alt="Basic page Memory Track"
   className="full_image"
 />
 
-Click the Memory Track curve to see the page’s total memory usage and the memory used by Element, background scripting engine, main-thread scripting engine, images, etc.
+Click the Memory Track curve to see the page's total memory usage and the memory used by Element, background scripting engine, main-thread scripting engine, images, and other available categories.
 
 <img
   src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/memory-track-details.png"
-  alt="Memory Track Detail"
+  alt="Basic page Memory Track details"
+  className="full_image"
+/>
+
+### Enhanced Memory Analysis
+
+The complete workflow below is illustrated with Lynx 4.5. Memory data availability depends on the SDK, while the tracks, charts, and capture controls shown here also require a DevTool build that supports these features. The SDK version alone does not guarantee this UI. With an older SDK or DevTool, use the basic page Memory Track above for the available data.
+
+Heap snapshot collection requires Lynx 4.5 or later and currently supports QuickJS only. See [Heap Snapshot Collection](../monitor-performance/heap-snapshot.mdx) for supported capture scopes and APIs.
+
+#### Record Memory And Capture Snapshots
+
+Enable memory data collection in the Lynx Trace panel. For active pages, use the camera button on the right to capture different types of snapshots. Snapshot capture supports only the QuickJS engine.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-trace-panel.png"
+  alt="Memory collection and snapshot capture in the Lynx Trace panel"
+  className="full_image"
+/>
+
+#### Read Memory Tracks
+
+The memory tracks show changes in page-instance memory, background scripting (BTS) VM memory, and process physical memory (PSS).
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-trace-memory-track.png"
+  alt="Page, BTS VM, and process memory tracks"
+  className="full_image"
+/>
+
+Click a BTS VM memory track to see its memory distribution at that moment, including memory used by each page sharing the VM, residuals from destroyed pages, and common scripts.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-memory-trace-click-vm.png"
+  alt="BTS VM memory distribution at a selected moment"
+  className="full_image"
+/>
+
+Select a BTS VM memory track, or select a time range on it, to view an area chart of the VM's memory usage over that interval and identify pages with high memory usage or residuals.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-memory-trace-select-vm.png"
+  alt="BTS VM memory area chart over a selected time range"
+  className="full_image"
+/>
+
+Click the PSS memory track to see memory usage for each Lynx VM and page at that moment.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-memory-trace-click-pss-track.png"
+  alt="Lynx VM and page memory usage at a selected PSS observation"
+  className="full_image"
+/>
+
+#### Inspect Snapshot Details
+
+Single-click a Snapshot icon on a track to view snapshots captured at different times and follow memory changes across the sequence.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-memory-trace-click-snapshot.png"
+  alt="Snapshot sequence captured at different times"
+  className="full_image"
+/>
+
+Double-click a Snapshot icon on a track to open its details and analyze JavaScript object lifetimes and reference relationships.
+
+<img
+  src="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/plugin/static/trace/lynx-memory-trace-view-snapshot.png"
+  alt="Snapshot details showing JavaScript objects and references"
   className="full_image"
 />
 

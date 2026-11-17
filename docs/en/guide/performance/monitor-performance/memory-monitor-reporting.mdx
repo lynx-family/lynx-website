@@ -1,0 +1,70 @@
+# Memory Monitor Event Reporting
+
+Starting with **Lynx 4.4**, memory monitoring provides coordinated page-level and process-level event reporting. These events help identify pages with high memory usage, concurrent page instances, large shared VMs, and sustained memory contributions after page exit.
+
+This page describes the Lynx 4.5 reporting contract and explains the earlier version differences below.
+
+## Version Availability
+
+| SDK Version | Reporting Behavior                                                                                                                                                                                                                                                                                                    |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lynx 4.3    | Uses legacy `lynxsdk_performance_entry_memory` category reporting and separate monitoring settings. The v2 page event and global event families below are not available.                                                                                                                                              |
+| Lynx 4.4    | Introduces `lynxsdk_performance_entry_memory_v2` and all global event families listed below, with unified `memory_monitor_config`. Includes early page means/observed peaks and a complete 10-minute residency window.                                                                                                |
+| Lynx 4.5    | Extends global event fields with VM-name buckets, VM-associated sampled page keys, and module-factory/script-cache creation and reuse diagnostics, including cross-app reuse. Refines residual persistence to measure intervals between full-GC observations and include the final interval when the VM is destroyed. |
+
+The event names alone do not guarantee the same payload across versions. In particular, Lynx 4.4 residual persistence uses sampled residual observations; do not combine it directly with Lynx 4.5 interval-based persistence. Use the event reference for the SDK version that produced the data.
+
+## Interpreting Reported Data
+
+- **Compare early memory with the same observation window.** Each eligible page instance contributes at most one summary of total, background-thread runtime (BTS), and main-thread runtime (MTS) memory within the first 20 seconds after its first load completes, or before exit if earlier. Compare these means and observed peaks with equivalent summaries from other instances. An observed peak is not a continuous measurement of the maximum.
+- **Use the right denominator for residency.** Page residency uses a complete 10-minute observation window. Calculate survival rates only among pages that had the full opportunity to reach that age.
+- **Distinguish page attribution from shared heaps.** Global accounting counts a shared heap once by actual VM identity. Page-attributed bytes and whole-VM heaps describe different scopes; summing them can double-count memory. For persistence, examine both average memory and cumulative memory contribution over time.
+- **Account for sampling and field availability.** Process selection controls event coverage, while sampled entity details have corresponding weights. Respect those weights and event validity conditions when aggregating. Engine support and UI collection settings affect which memory components are available.
+- **Use observation time rather than arrival time.** Events reach the host asynchronously through the SDK statistics service. Align analysis with event observation timestamps and windows instead of the time the monitoring platform receives them.
+- **Keep SDK accounting separate from process PSS.** Their scopes differ. SDK-accounted bytes help attribute Lynx memory, but do not explain every change in process PSS. Residuals after page exit, even when confirmed by a later full GC, do not by themselves prove a permanent leak.
+
+## Enable Reporting
+
+For Lynx 4.4 and later:
+
+Provide [`memory_monitor_config`](./memory-monitor-config.mdx) through the host configuration/Trail integration before settings are first read, normally before creating the first page or VM. `global_sample_rate` defaults to `0`, which disables this event reporting system. Configuration and process sampling decisions are initialized once per process.
+
+For a diagnostic session with UI collection and scheduled page-event delivery enabled in every process:
+
+```json
+{
+  "memory_monitor_config": "global_sample_rate,1,lynx_ui_sample_rate,1,page_scheduled_sample_rate,1"
+}
+```
+
+For online monitoring, choose sampling rates according to the required coverage and event budget. After global process selection, UI collection and scheduled page-event delivery each make an independent conditional draw. `page_scheduled_sample_rate` only controls scheduled page-event delivery; it does not disable planned observations, early summaries, or global events.
+
+Events are delivered to the host through the SDK statistics service. The host must integrate that service and forward events to its monitoring platform. See [Memory Monitor Configuration](./memory-monitor-config.mdx) for platform configuration entries, defaults, and sampling examples.
+
+## Event Overview
+
+All event families in this table are available from Lynx 4.4. The descriptions follow the Lynx 4.5 contract; consult version-matched references for individual fields.
+
+| Event                                                        | Purpose                                                                                                                              |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `lynxsdk_performance_entry_memory_v2`                        | Fixed page observations and one early memory summary per eligible instance, for comparing page memory means and observed peaks.      |
+| `lynxsdk_memory_process`                                     | Process PSS and Lynx-accounted memory, for evaluating Lynx's contribution to process memory.                                         |
+| `lynxsdk_memory_page`                                        | Sampled active-page memory and combined memory of concurrent instances with the same page key.                                       |
+| `lynxsdk_memory_page_residency`                              | Page survival after a complete 10-minute window, for identifying pages that remain resident.                                         |
+| `lynxsdk_memory_vm_stat`, `lynxsdk_memory_vm_quickjs`        | Shared VM heaps, lifetimes, and reuse; QuickJS attribution, residuals, page slots, and first slot overflow.                          |
+| `lynxsdk_memory_page_residual`, `lynxsdk_memory_persistence` | Sampled shared QuickJS residuals confirmed by full GC after page exit, and memory contribution over time for VM heaps and residuals. |
+| `lynxsdk_memory_mts_pool`                                    | Heap memory and runtime counts of bundle-local MTS pools.                                                                            |
+
+These events have different triggers and validity conditions. Not every observation produces every event, and available memory components depend on the engine and collection settings.
+
+## Detailed Documentation
+
+For event fields, production conditions, sampling weights, aggregation formulas, and query examples, read the source repository's `docs`:
+
+- [Documentation index](https://github.com/lynx-family/lynx/blob/develop/core/services/performance/memory_monitor/docs/README.md)
+- [Global reporting design](https://github.com/lynx-family/lynx/blob/develop/core/services/performance/memory_monitor/docs/memory_monitor_reporting_design.md)
+- [Page reporting design](https://github.com/lynx-family/lynx/blob/develop/core/services/performance/memory_monitor/docs/page_memory_monitor_reporting_design.md)
+- [Event property reference](https://github.com/lynx-family/lynx/blob/develop/core/services/performance/memory_monitor/docs/memory_monitor_property_registration.md)
+- [Monitoring query guide](https://github.com/lynx-family/lynx/blob/develop/core/services/performance/memory_monitor/docs/memory_monitor_query_guide.md)
+
+Internal and open-source documentation can differ. Use the documentation in the corresponding source repository and SDK version.

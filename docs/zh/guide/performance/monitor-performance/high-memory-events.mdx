@@ -1,0 +1,188 @@
+# 高内存事件
+
+从 Lynx 4.5 开始，宿主可以注册进程级回调，接收共享后台 VM、页面后台 runtime 和页面 UI 内存的高内存事件，用于定位占用较大的 VM 或页面实例，并决定是否进一步采集诊断信息。
+
+SDK 将事件以字典形式交给宿主。数据上报与后续处理由宿主负责，回调本身不会释放内存。
+
+## 注册回调
+
+建议在应用初始化时尽早注册。回调会被全局持有，并在主线程/UI 线程异步执行。回调内应只做轻量处理，将耗时分析或上传转移到其他线程。
+
+### Android
+
+```java
+import com.lynx.tasm.LynxEnv;
+
+LynxEnv.setHighMemoryCallback(event -> {
+  // event 的类型为 Map<String, Object>。
+  // 读取 event.get("type")、event.get("key") 和 event.get("bytes")。
+});
+
+// 需要时清除所有已注册的高内存回调。
+LynxEnv.setHighMemoryCallback(null);
+```
+
+回调接口为 `LynxEnv.HighMemoryCallback`，方法为 `onHighMemoryEvent(Map<String, Object> event)`。
+
+### iOS
+
+```objective-c
+[LynxEnv setHighMemoryCallback:^(NSDictionary<NSString *, id> *event) {
+  NSString *type = event[@"type"];
+  NSString *key = event[@"key"];
+  int64_t bytes = [event[@"bytes"] longLongValue];
+  // 在主线程处理事件。
+}];
+
+// 需要时清除所有已注册的高内存回调。
+[LynxEnv setHighMemoryCallback:nil];
+```
+
+### HarmonyOS
+
+```typescript
+import { LynxEnv, LynxHighMemoryEvent } from '@lynx/lynx';
+
+LynxEnv.setHighMemoryCallback((event: LynxHighMemoryEvent): void => {
+  const type: string = event.type;
+  const key: string = event.key;
+  const bytes: number = event.bytes;
+  // 在 UI 线程处理事件。
+});
+
+// 需要时清除所有已注册的高内存回调。
+LynxEnv.setHighMemoryCallback(undefined);
+```
+
+HarmonyOS 中的数值字段均为 `number`，`slots` 类型为 `Array<LynxHighMemorySlot>`，`counts` 类型为 `Array<string | number>`。
+
+### 原生嵌入环境
+
+C API 接收回调及不透明的用户数据指针：
+
+```c
+typedef void (*lynx_env_high_memory_callback)(
+    void* user_data, const struct lynx_value* event);
+
+void lynx_env_set_high_memory_callback(
+    lynx_env_high_memory_callback callback, void* user_data);
+```
+
+应在 UI 线程注册或清除回调。传入空回调会清除全部注册项。C++ 入口为 `LynxEnv::GetInstance().SetHighMemoryCallback(callback, user_data)`。
+
+C 回调接收的值为借用值，只在回调返回前有效。如需留到后续处理，可在 C++ 中通过 `lynx_value_add_reference(nullptr, *event, nullptr)` 保留引用，或使用持有所有权的 `pub::LynxValue`。
+
+## 配置采样率与阈值
+
+宿主设置方式、初始化时机、采样率、默认值和高内存回调配置示例见[内存监控配置](./memory-monitor-config.mdx)。通过 `memory_monitor_config` 设置 `large_vm_threshold_mb`、`large_bts_threshold_mb` 和 `large_ui_threshold_mb`。
+
+阈值单位为 MiB，`0` 禁用对应事件类型。测量字节数大于或等于配置阈值时，事件满足触发条件。
+
+`large_bts` 和 `large_ui` 需要启用内存监控，`large_ui` 还需要启用 UI 采集。即使未启用内存监控，共享 QuickJS VM 仍可通过已有 GC 通知触发 `large_vm`。
+
+## 事件字段
+
+每次回调接收一个事件字典。不适用于当前事件类型的字段会被省略。
+
+| 字段               | 类型   | 说明                                                                                                                                                              |
+| ------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`             | string | Lynx 4.5 新增。取值为 `large_vm`、`large_bts` 或 `large_ui`。                                                                                                     |
+| `key`              | string | `large_vm` 使用 VM 名称；页面事件使用内存监控的 `page_key`。共享 QuickJS VM 优先使用非空的 `monitoring_group_label`，否则使用 `group_id`。VM 名称不是唯一 VM ID。 |
+| `bytes`            | number | 当前事件测量的内存，单位字节。`large_vm` 为 VM 堆大小，`large_bts` 为页面后台 runtime 内存，`large_ui` 为页面 UI 内存。                                           |
+| `instance_id`      | number | Lynx 4.5 新增。`large_bts` 和 `large_ui` 对应的 Lynx 实例 ID，用于区分相同页面 key 的不同实例。                                                                   |
+| `vm_type`          | string | 出现在 `large_vm` 和 `large_bts` 中。Runtime 类型为 `quickjs`、`v8`、`jsvm`、`jsc` 或 `unknown`。                                                                 |
+| `total_page_count` | number | 出现在受监控 VM 的事件中。VM 生命周期内接受的页面与 VM 绑定次数，包含没有归因 slot 的页面，不代表当前存活页面数。                                                 |
+| `slots`            | array  | 有 slot 数据时返回的 QuickJS VM 归因记录。每个元素为下表描述的对象，按字节数降序排列，字节数相同时按原生 slot 索引排列。                                          |
+| `counts`           | array  | 出现在 `large_ui` 中。分类名称与对象数量交替排列的扁平数组，例如 `["lynxTasmElement", 12000]`。数值为数量而非内存大小，分类顺序不固定。                           |
+
+### 共享 VM 事件
+
+`large_vm` 表示共享后台 VM 的堆大小。对于共享 QuickJS VM，可通过 `slots` 查看页面和共享分配对堆内存的贡献：
+
+```json
+{
+  "type": "large_vm",
+  "key": "feed_group",
+  "bytes": 1207959552,
+  "vm_type": "quickjs",
+  "total_page_count": 8,
+  "slots": [
+    {
+      "key": "feed_page",
+      "bytes": 603979776,
+      "instance_id": 204
+    },
+    {
+      "key": "common",
+      "bytes": 268435456
+    },
+    {
+      "key": "feed_page",
+      "bytes": 134217728,
+      "instance_id": 199
+    },
+    {
+      "key": "unknown",
+      "bytes": 67108864
+    }
+  ]
+}
+```
+
+| Slot 字段     | 类型   | 说明                                                                                                                                           |
+| ------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`         | string | 已绑定页面 slot 的页面 key。保留 slot `0`、`1`、`2` 分别使用 `unknown`、`common`、`overflow`。已占用但未绑定的 slot 使用空 key。               |
+| `bytes`       | number | 归因到该 slot 的字节数。已占用的 slot 可以为零字节。Slot 是内存拆分信息，不应再累加到事件的 `bytes` 上。                                       |
+| `instance_id` | number | Lynx 4.5 新增。已绑定页面 slot 包含此字段，也包含已退出页面保留的记录；保留或未绑定 slot 不包含此字段。相同页面 key 的记录按实例 ID 分别保留。 |
+
+共享 QuickJS VM 通过已有 GC 通知检查阈值；V8 和 JSVM 在启用监控且成功刷新堆大小后检查。独立 VM 不触发 `large_vm`，JSC 不支持堆大小采集。回调机制不会新增 GC 或分配通知。
+
+### 页面后台 Runtime 事件
+
+`large_bts` 表示归因到存活页面的后台 runtime 内存。对于共享 QuickJS VM，该值为页面的 slot 分量；对于独立 VM，该值为页面所用 VM 的整体堆大小。
+
+```json
+{
+  "type": "large_bts",
+  "key": "feed_page",
+  "bytes": 603979776,
+  "instance_id": 204,
+  "vm_type": "quickjs"
+}
+```
+
+示例表示实例 `204` 的后台 runtime 内存为 `576` MiB。应结合 `instance_id` 与 `key` 区分同一页面的并发实例或重新加载后创建的实例。
+
+### 页面 UI 事件
+
+`large_ui` 表示存活页面的 UI 内存，其 `bytes` 不包含 Element tree 和 runtime 内存。
+
+```json
+{
+  "type": "large_ui",
+  "key": "feed_page",
+  "bytes": 83886080,
+  "instance_id": 204,
+  "counts": ["lynxTasmElement", 12000]
+}
+```
+
+示例表示 UI 内存为 `80` MiB。`counts` 返回缓存的分类对象数量，可能包含脚本引擎或 `lynxTasmElement` 等非 UI 分类。它是诊断上下文，不是对 `bytes` 的字节数拆分。
+
+## 触发与生命周期
+
+- 每次注册非空回调都会追加监听。传入 `null`、`nil` 或 `undefined` 会清除所有监听。监听按注册顺序执行；全局持有的回调应避免捕获页面对象。
+- 每个 VM 最多触发一次 `large_vm`，每个页面最多分别触发一次 `large_bts` 和 `large_ui`。内存降到阈值以下或页面 reload 都不会重置触发标记。
+- 即使没有注册监听，达到阈值的事件也会消耗一次性触发标记。之后注册回调不会补发历史事件。
+- UI 投递任务开始执行时会复制监听列表。在回调内追加或清除监听，只影响后续投递。
+- 页面阈值检查在内存刷新及共享 VM 归因后执行，并跳过已退出页面。由内存数据更新驱动的刷新使用 `60` 秒间隔，tracing 期间为 `16` ms；其他刷新可能重置该间隔。该功能不会新增轮询定时器，因此回调不会即时通知每次阈值跨越。
+
+## 排查高内存
+
+收到 `large_vm` 时，可以检查 `slots`，并将实例 ID 与宿主的页面生命周期记录对照。Slot 可能对应仍有归因内存的已退出页面，这意味着需要排查对象保活，但不能直接证明内存泄漏。`total_page_count` 只应用作生命周期背景信息。
+
+收到页面事件时，应将 `key` 和 `instance_id` 与页面加载、reload 和销毁记录关联。根据 `vm_type` 选择适用的 runtime 诊断方式；收到 `large_ui` 时可进一步检查 UI 对象数量。
+
+可以通过[全局 Lynx 内存查询](./global-memory-usage-query.mdx)获取当前进程的内存清单。Lynx 4.5 中，关闭监控时也可查询，但页面 BTS 归因、UI 内存和已销毁页面残留仍需要监控，应先检查 `memoryMonitoringEnabled` 再解读这些字段。高内存事件用于定位达到阈值的对象，全局查询或 heap snapshot 则提供进一步诊断所需的证据。
+
+排查 QuickJS runtime 对象保活时，参见[堆快照采集](./heap-snapshot.mdx)。存活页面分量使用 `bts_page`，后台 VM 整体堆使用 `bts_vm`；slot 的 `instance_id` 对应已销毁页面时，可在共享 VM 仍存活的前提下使用静态 `takeBtsResidualHeapSnapshot` 接口。

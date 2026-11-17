@@ -1,0 +1,118 @@
+---
+title: getMemoryUsage()
+api: lynx-api/lynx/performance.getMemoryUsage()
+description: 从后台线程 JavaScript 查询当前页面的内存，说明监控前提、状态和字段可用性。
+---
+
+import { APISummary, APITable } from '@lynx';
+
+# lynx.performance.getMemoryUsage()
+
+<APISummary />
+
+从 Lynx 4.4 开始，后台线程 JavaScript 可以通过 `lynx.performance.getMemoryUsage(callback)` 异步查询当前页面实例的内存。结果包括 Element、主线程 runtime（MTS）、页面后台 runtime（BTS）分量、BTS 整体 VM 堆和 UI 内存。
+
+该接口返回尽力采集的内存摘要，不生成堆快照文件，也不查询其他页面或已销毁页面的残留。
+
+## 监控前提
+
+宿主必须在创建页面或 VM 前通过 [`memory_monitor_config`](../../../../guide/performance/monitor-performance/memory-monitor-config.mdx) 启用内存监控，且当前进程被 `global_sample_rate` 采样选中。JavaScript 调用本身不会开启监控。
+
+需要在指定进程启用核心内存采集时，可设置：
+
+```text
+global_sample_rate,1
+```
+
+如还需要 UI 内存，应同时启用 UI 采集：
+
+```text
+global_sample_rate,1,lynx_ui_sample_rate,1
+```
+
+采样率小于 `1` 时不保证进程被选中。关闭监控或进程未被全局选中时，回调返回 `MONITORING_DISABLED`，不会补采未监控页面的内存。
+
+## 语法
+
+```typescript
+getMemoryUsage(callback: (usage: MemoryUsage) => void): void;
+```
+
+| 参数       | 类型                           | 说明                                                                              |
+| ---------- | ------------------------------ | --------------------------------------------------------------------------------- |
+| `callback` | `(usage: MemoryUsage) => void` | 必填回调，接收当前页面的内存查询结果。必须先检查 `usage.status`，再读取其他字段。 |
+
+返回值为 `void`。接口通过回调异步返回结果，不返回 `Promise`；传入无效回调会抛出异常。
+
+## 示例
+
+```typescript
+import type { MemoryUsage } from '@lynx-js/types';
+
+lynx.performance.getMemoryUsage((usage: MemoryUsage): void => {
+  // 0 is MemoryUsageQueryStatus.OK.
+  if (usage.status !== 0) {
+    console.warn(`Memory query unavailable: status=${usage.status}`);
+    return;
+  }
+
+  if (usage.totalBytes > 0) {
+    console.log('Available page memory (MiB):', usage.totalBytes / 1024 / 1024);
+  }
+  if (usage.btsBytes > 0) {
+    console.log('Page BTS memory (MiB):', usage.btsBytes / 1024 / 1024);
+  }
+  if (usage.btsHeapBytes > 0) {
+    console.log('Whole BTS VM heap (MiB):', usage.btsHeapBytes / 1024 / 1024);
+  }
+});
+```
+
+## 查询状态
+
+`MemoryUsageQueryStatus` 定义以下数值状态：
+
+| 值  | 名称                  | 说明                                                                       |
+| --- | --------------------- | -------------------------------------------------------------------------- |
+| `0` | `OK`                  | 已启用监控，找到当前实例，并执行了尽力采集。不保证所有内存来源完整或最新。 |
+| `1` | `MONITORING_DISABLED` | 当前进程未启用内存监控，包括未被全局采样选中的情况。                       |
+| `2` | `INVALID_INSTANCE`    | 找不到目标实例的监控记录，或实例已经销毁。                                 |
+
+只有 `status === 0` 时才能读取其他字段。其他状态下，内存和数量字段返回 `0`，`btsShared` 返回 `false`，这些默认值不能作为页面内存数据使用。
+
+即使状态为 `OK`，不支持、不可用或采集失败的数值字段也可能为 `0`。除 `status` 外，数值字段只有大于 `0` 时才可作为可用数据消费；不要用零值断言真实内存为零。
+
+## 返回字段
+
+回调接收一个 `MemoryUsage` 对象。内存字段的单位均为字节，数量字段为对象数量。
+
+| 字段           | 类型                     | 说明                                                                                                                                                                                    |
+| -------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `status`       | `MemoryUsageQueryStatus` | 查询状态，必须先检查。                                                                                                                                                                  |
+| `totalBytes`   | `number`                 | 可用的页面归因内存总量，即 `elementBytes + mtsBytes + btsBytes + uiBytes`。可能不完整；不额外累加 `btsHeapBytes`。                                                                      |
+| `elementBytes` | `number`                 | 当前页面的 Element 内存。                                                                                                                                                               |
+| `elementCount` | `number`                 | 当前页面的 Element 数量。                                                                                                                                                               |
+| `mtsBytes`     | `number`                 | 当前页面的 MTS 堆内存，仅支持 QuickJS MTS runtime。                                                                                                                                     |
+| `btsBytes`     | `number`                 | 当前页面的 BTS 归因分量。独立 VM 使用可用的整体堆大小；共享 VM 仅支持具有有效页面 slot 的 QuickJS 归因。                                                                                |
+| `btsHeapBytes` | `number`                 | 页面所用 BTS VM 的整体堆。共享 VM 中包含其他页面和 VM 公共内存，不等同于当前页面的 BTS 分量；即使 `btsBytes` 不可用，该字段仍可能可用。JSC 不支持堆大小采集，不可用或采集失败时为 `0`。 |
+| `uiBytes`      | `number`                 | 当前页面的 UI 内存，仅在进程被全局选中且启用 UI 内存采样时可用。                                                                                                                        |
+| `btsShared`    | `boolean`                | 当前页面是否使用共享 BTS VM，仅在 `status` 为 `OK` 时有效。为 `true` 不保证页面 BTS 分量可用。                                                                                          |
+
+共享 QuickJS VM 的 slot `0`、`1`、`2` 为保留 slot。一个 VM 生命周期内最多可为 `253` 个页面分配独立归因 slot；之后使用共享 overflow slot 的页面无法返回页面专属 BTS 分量。该限制不是同时存活页面数限制。
+
+## 采集语义
+
+- 接口仅提供给后台线程 JavaScript，回调异步返回到发起调用的 JS 线程。
+- 查询会汇总页面已有的内存记录，并尝试刷新可用的 BTS 整体堆大小。各字段不一定来自同一时刻，也不保证是即时完整测量。
+- 查询不会触发 GC 或主动释放内存。它适合按需诊断，不适合高频轮询。
+- 如果页面或 JS runtime 在回调投递前销毁，回调可能不再执行。不要依赖该接口在销毁后返回结果。
+
+## 排查建议
+
+先检查 `status`，再比较可用字段。`btsShared` 为 `true` 时，将 `btsBytes` 与 `btsHeapBytes` 分开解读，不能将整个共享 VM 堆归因到当前页面，也不要把它再次加到 `totalBytes` 上。跨查询比较时，应保持监控及 UI 采样配置一致。
+
+需要查看当前进程的其他实例或已销毁页面残留时，使用宿主侧的[全局内存查询](../../../../guide/performance/monitor-performance/global-memory-usage-query.mdx)。需要分析 JavaScript 对象的引用链时，参见[堆快照采集](../../../../guide/performance/monitor-performance/heap-snapshot.mdx)。
+
+## 兼容性
+
+<APITable />
