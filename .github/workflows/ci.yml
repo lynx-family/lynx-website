@@ -92,16 +92,13 @@ jobs:
 
       - name: Generated Documentation Consistency Check
         run: |
-          # Installation runs prepare. Keep this list aligned with every
-          # committed documentation output generated during that lifecycle.
-          generated_documentation_outputs=(
-            "sharedDocs/packageDocs"
-            "sharedDocs/lynx-ui-intros.ts"
-          )
-          changes="$(git status --porcelain=v1 --untracked-files=all -- "${generated_documentation_outputs[@]}")"
+          # Installation runs prepare. Check the whole working tree instead of
+          # a path list so every committed generated output is covered,
+          # including outputs added by future generators.
+          changes="$(git status --porcelain=v1 --untracked-files=all)"
           if [ -n "$changes" ]; then
             printf '%s\n' "$changes"
-            echo "::error::Generated documentation is out of date. Run pnpm run prepare and commit all changes reported above."
+            echo "::error::Generated files are out of date. Run pnpm run prepare and commit all changes reported above."
             exit 1
           fi
 
