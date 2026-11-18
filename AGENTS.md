@@ -19,6 +19,14 @@ Follow the [commit](./CONTRIBUTING.md#commits) and
 `CONTRIBUTING.md`. Automated reviewers must also follow the policy
 embedded in [the pull request template](./.github/pull_request_template.md).
 
+### Issue and Pull Request References
+
+In commit subjects, bodies, and footers, use GitHub's `owner/repo#number`
+syntax for cross-repository references, for example `lynx-community/go-web#94`.
+Apply the same rule to pull request descriptions. Use bare `#number` only
+for issues or pull requests in this repository. A label such as `go-web #94`
+still links to this repository's #94.
+
 ## Repository Hygiene
 
 Do not commit scratch notes, one-off investigation scripts, temporary analysis

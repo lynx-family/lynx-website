@@ -46,12 +46,12 @@ interface Props {
    */
   example: string;
   /**
-   * default file to display
+   * initial source file to display; defaults to 'package.json'
    *
    * @example
    * defaultFile="src/App.tsx"
    */
-  defaultFile: string;
+  defaultFile?: string;
   /**
    * example screenshot, if not provided, the default is example/preview-image.png, supports multiple formats /^preview-image\.(png|jpg|jpeg|webp|gif)$/
    *
@@ -105,12 +105,81 @@ interface Props {
    * defaultTab="web"
    */
   defaultTab?: 'preview' | 'web' | 'qrcode';
+  /**
+   * Caller-owned guidance below Copy link and above the QR entry selector.
+   * Strings receive the default text callout; React nodes retain their styling.
+   * Only appears in the QR tab and does not change host compatibility.
+   */
+  qrcodeNote?: React.ReactNode;
+  /**
+   * Preview app name shown in QR code scanning instructions.
+   * Only shown for universal bundles without nativeFramework.
+   * Falls back to LYNX_EXPLORER_TEXT, then 'Lynx Explorer'.
+   */
+  explorerText?: string;
+  /**
+   * Preview app links shown in QR code scanning instructions.
+   * Only shown for universal bundles without nativeFramework.
+   * Each omitted language falls back to its LYNX_EXPLORER_URL_CN/EN value,
+   * then the site's quick-start download link.
+   */
+  explorerUrl?: { cn?: string; en?: string };
 }
 ```
 
+## Scan Instructions
+
+Use `explorerText` and `explorerUrl` to select a preview app for an example:
+
+```tsx
+<Go
+  example="hello-world"
+  defaultTab="qrcode"
+  explorerText="Custom Preview App"
+  explorerUrl={{ en: '/preview-app', cn: '/zh/preview-app' }}
+/>
+```
+
+The exported `GoProps` type includes both overrides. Each field resolves
+independently: instance prop, then its `LYNX_EXPLORER_*` environment value,
+then the existing site default. `explorerUrl` can contain just `en` or `cn`;
+the omitted language keeps its current link. Only site-root paths (`/...`,
+excluding `//...`) use the Rspress adapter's `withBase`, including archived
+deployments. Absolute URLs, protocol-relative URLs, relative paths, fragments,
+and schemes pass through unchanged.
+
+The website wrapper creates its own `GoConfigProvider`, so an outer provider
+does not override its configuration. Set these props directly on `<Go>`.
+These overrides change the scan instructions. For universal bundles,
+`schema` or the selected `schemaOptions` template determines the QR URL;
+without either, the QR code uses the entry URL. `deepLinkUrl` changes only
+the separate open-in link. For native-framework examples with a QR panel,
+the QR code uses the resolved deep link.
+
+The scan hint appears only for universal bundles without `nativeFramework`.
+Native-framework examples can have a QR panel without that hint. Use
+`qrcodeNote` for additional guidance when the QR panel is available.
+
+## QR Code Notes
+
+Pass `qrcodeNote` to explain host requirements or preview limits:
+
+```tsx
+<Go
+  example="hello-world"
+  defaultTab="qrcode"
+  qrcodeNote="Changing the schema does not change binary compatibility."
+/>
+```
+
+The prop accepts a string or a React node. Strings receive a themed 11px
+callout; React nodes keep caller-owned styling. Omit it, or pass `null`,
+`false`, or an empty string, to add no note. The wrapper forwards it through
+`...props`; source-only SSG output does not include QR-panel notes.
+
 ## Default Tab Configuration
 
-The default preview tab can be configured at three levels (highest priority first):
+The default preview tab can be configured at these levels (highest priority first):
 
 1. **Instance-level** — `defaultTab` prop on `<Go>`:
 
@@ -118,19 +187,17 @@ The default preview tab can be configured at three levels (highest priority firs
    <Go example="hello-world" defaultFile="src/App.tsx" defaultTab="web" />
    ```
 
-2. **Site/Page-level** — `defaultTab` in a `GoConfigProvider`:
+2. **Site-level** — `defaultTab` in the website wrapper's own `GoConfigProvider`:
 
    ```tsx
    // site-wide (e.g. in Go.tsx wrapper)
    const config = { exampleBasePath: '/lynx-examples', defaultTab: 'web' };
-
-   // or page-level override via nested provider in MDX
-   <GoConfigProvider config={{ defaultTab: 'preview' }}>
-     <Go example="a" ... />
-   </GoConfigProvider>
    ```
 
 3. **Fallback** — `'preview'` if an image is available, otherwise `'qrcode'`.
+
+For a page, pass `defaultTab` to each `<Go>` instance. An outer provider is
+shadowed by the website wrapper's own provider.
 
 ## Examples
 

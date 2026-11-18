@@ -2,10 +2,12 @@ import path from 'path';
 import { useMemo } from 'react';
 import { withBase } from '@rspress/core/runtime';
 import { Go as GoBase, GoConfigProvider } from '@lynx-js/go-web';
-import type { GoProps } from '@lynx-js/go-web';
+import type { GoConfig, GoProps as GoBaseProps } from '@lynx-js/go-web';
 import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
 import { ExamplePreviewSSG as SSGComponent } from '@lynx-js/go-web/ssg';
 import { Callout } from '../Callout';
+
+type GoProps = GoBaseProps & Pick<GoConfig, 'explorerText' | 'explorerUrl'>;
 
 const ErrorComponent = ({
   example,
@@ -63,10 +65,15 @@ const baseConfig = {
   SSGComponent,
 };
 
-function Go(props: GoProps) {
+function Go({ explorerText, explorerUrl, ...props }: GoProps) {
   const config = useMemo(
     () => ({
       ...baseConfig,
+      explorerText: explorerText ?? baseConfig.explorerText,
+      explorerUrl: {
+        cn: explorerUrl?.cn ?? baseConfig.explorerUrl.cn,
+        en: explorerUrl?.en ?? baseConfig.explorerUrl.en,
+      },
       nativeFrameworks: {
         lynxtron: {
           learnMoreUrl: {
@@ -79,7 +86,7 @@ function Go(props: GoProps) {
         },
       },
     }),
-    [],
+    [explorerText, explorerUrl],
   );
 
   return (
