@@ -11,7 +11,10 @@ import * as Lynx from '@lynx';
 function setupSymmetricHost(lynxView: any, config?: HostConfig): void;
 ```
 
-Setup Symmetric Host for Web.
+Configure browser host capabilities for a Lynx view.
+Call from the browser main thread before loading the Lynx bundle.
+Registers optional bridge handlers and a background adapter script.
+This replaces the view's nativeModulesMap and onNativeModulesCall.
 
 **参数**
 
@@ -24,6 +27,24 @@ Setup Symmetric Host for Web.
 
 `void`
 
+## 参阅
+
+https://lynxjs.org/next/lynxtron/learn/running-on-web
+
 **定义于**
 
-[apis/web-host.d.ts:24](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/web-host.d.ts#L24)
+[web-host.d.ts:39](https://github.com/lynx-family/lynxtron/blob/main/src/packages/lynxtron/apis/web-host.d.ts#L39)
+
+{/* api-doc-overlay:lynxtron-web-host-function-setupsymmetrichost:start */}
+
+## 在 Web 中使用
+
+在浏览器主线程调用此函数，为 `<lynx-view>` 配置 Native Modules，并在加载 bundle 前完成注册。从 `@lynx-js/lynxtron/web-host` 导入此函数。
+
+`config.bridge` 注册通过 `NativeModules.bridge` 暴露的浏览器主线程处理器；Web 代理将处理器结果传给末尾回调。背景适配脚本导出的能力通过 `NativeModules.nodejs.exposed` 暴露，并不提供 Node.js 运行时。
+
+同时需要两条路径时，在一次调用中配置：当前实现会替换 `nativeModulesMap` 和 `onNativeModulesCall`，而非合并此前的注册。
+
+完整示例及背景适配配置方式参见[在 Web 中运行 Lynxtron](/lynxtron/learn/running-on-web)。
+
+{/* api-doc-overlay:lynxtron-web-host-function-setupsymmetrichost:end */}

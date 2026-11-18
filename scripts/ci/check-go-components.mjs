@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
 import { parseDocumentation } from './documentation-parser.mjs';
+import { assertLynxtronWebHostDocOverlaysCurrent } from '../apply-lynxtron-web-host-doc-overlays.mjs';
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 const scriptPath = fileURLToPath(import.meta.url);
@@ -912,5 +913,8 @@ function run() {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {
+  if (process.argv.length === 2) {
+    await assertLynxtronWebHostDocOverlaysCurrent();
+  }
   run();
 }

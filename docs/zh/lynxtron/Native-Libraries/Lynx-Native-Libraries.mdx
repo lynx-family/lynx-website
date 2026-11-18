@@ -18,6 +18,8 @@ embedder，也可以随应用或包一起分发。在 Lynxtron 应用中，这�
 - [自定义元素](/zh/guide/custom-native-component.html?platform=desktops)
 - [AutoLink](/zh/guide/autolink.html?platform=lynxtron)
 
+Lynx native library 为 Lynx runtime 提供原生模块和自定义元素。若需要在 Node.js 中调用原生能力，请参见 [Node.js 原生模块](/zh/lynxtron/Native-Libraries/NodeJS-Native-Modules)。两类接口的总览参见[原生能力接入](/zh/lynxtron/learn/what-is-lynxtron#原生能力接入)。
+
 ## 加载模型
 
 基础模型是静态注册加宿主侧原生 library 加载：
@@ -26,9 +28,11 @@ embedder，也可以随应用或包一起分发。在 Lynxtron 应用中，这�
    `LYNX_REGISTER_ELEMENT(...)` 等静态注册宏声明 Lynx 能力。
 2. 宿主集成层加载当前平台对应的原生二进制。在 Lynxtron 中，这段加载逻辑可以由
    AutoLink 根据包元数据生成，也可以由应用代码自行实现。
-3. 如果 Lynxtron 侧产物是 `.node` 文件，宿主可以通过 Node.js 常规 `require()`
-   加载它。二进制被加载后，静态 Lynx 注册会在 Lynx runtime 中生效，应用代码即可使用
+3. 如果 Lynxtron 侧 `.node` 产物提供兼容的 Node.js addon 入口，宿主可以通过
+   Node.js 常规 `require()` 加载它。二进制被加载后，静态 Lynx 注册会在 Lynx runtime 中生效，应用代码即可使用
    `NativeModules.<ModuleName>` 和自定义元素。
+
+`require()` 是模块加载入口，`process.dlopen(...)` 是底层原生二进制加载接口，Node.js 加载 addon 时也会使用它。AutoLink 或包内的加载器可以在内部调用该接口。二者属于不同加载层次，并不代表不同的原生能力接入方案。应用优先使用 library 文档说明的入口；任意共享库并不一定都是可以通过 `require()` 加载的 Node.js addon。
 
 如果 library 需要提供宿主侧入口，`.node` 文件也可以暴露常规 Node-API addon
 接口。如果 library 只需要让 Lynx 能力可用，Node-API addon 接口也可以为空；加载副作用
