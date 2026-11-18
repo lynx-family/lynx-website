@@ -38,9 +38,13 @@ Run the Benchmark example in [Lynxtron Go](/lynxtron/go) to see download size, s
 
 ## Familiar Electron APIs and Architecture for Coding Agents \{#multiplatform}
 
+### A Node.js host with Lynx rendering
+
 A coding agent adapting an Electron app already has a starting point: its Node.js main script. We kept Electron’s lifecycle and window APIs familiar so the agent can reuse patterns like waiting for app readiness and opening a window. The rendering architecture changes: Electron uses a separate Chromium process, while Lynxtron renders on the main thread and runs UI logic on a background thread in the same process. [Explore the architecture.](/lynxtron/learn/what-is-lynxtron)
 
 ![Lynxtron runs the Node.js host and Lynx rendering on the main thread, with UI logic on a background thread.](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/lynxtron-architecture-en.png)
+
+### Open a window with familiar APIs
 
 For example, an Electron app opens its first window after `app.whenReady()`. The same pattern works here: create a `LynxWindow` and load a compiled Lynx bundle.
 
@@ -53,6 +57,8 @@ app.whenReady().then(() => {
   win.loadFile('main.lynx.bundle');
 });
 ```
+
+### Develop the desktop UI in a browser
 
 Electron developers can work on a web UI in the browser. Lynx for Web keeps that workflow for Lynx apps. Try editing a note in the preview below. The same UI saves through the same Notes API on both targets, using browser storage on the Web and a file on desktop. [Run Lynxtron in the browser.](/lynxtron/learn/running-on-web)
 
@@ -73,7 +79,9 @@ Electron developers can work on a web UI in the browser. Lynx for Web keeps that
 
 Lynxtron lets you bring native code into your app in three ways. External textures carry frames from a native renderer, custom elements embed native UI, and native modules extend the APIs available to JavaScript.
 
-**External textures.** If your app already has a renderer, it can keep drawing. In the canvas example below, an external texture carries the renderer’s output into Lynx so the native canvas and Lynx controls share one interface.
+### Bring in a native renderer with external textures
+
+If your app already has a renderer, it can keep drawing. In the canvas example below, an external texture carries the renderer’s output into Lynx so the native canvas and Lynx controls share one interface.
 
 <Go
   example="native-texture-canvas"
@@ -85,10 +93,22 @@ Lynxtron lets you bring native code into your app in three ways. External textur
   nativeFramework="lynxtron"
 />
 
-**Native UI.** The [system WebView example](https://github.com/lynx-community/lynxtron-examples/tree/89444589f14da0c511d66d36f9568d954d7b36a8/examples/system-webview) wraps a native view as a Lynx element and uses it to open the Lynxtron homepage inside a desktop window. It uses WKWebView on macOS and WebView2 on Windows. Click **Expand WebView** in the Lynx toolbar to widen the embedded page. Apps that ship Chromium can use the [CEF WebView](/lynxtron/api/@lynx-js/cef-webview/index.mdx). The separate CEF download is **126 MB on macOS arm64** and **161 MB on Windows x64**. [0.0.28 release assets](https://github.com/lynx-family/lynxtron/releases/tag/v0.0.28)
+### Embed native UI with a system WebView
+
+The [system WebView example](https://github.com/lynx-community/lynxtron-examples/tree/89444589f14da0c511d66d36f9568d954d7b36a8/examples/system-webview) wraps a native view as a Lynx element and uses it to open the Lynxtron homepage inside a desktop window. It uses WKWebView on macOS and WebView2 on Windows. Click **Expand WebView** in the Lynx toolbar to widen the embedded page. Apps that ship Chromium can use the [CEF WebView](/lynxtron/api/@lynx-js/cef-webview/index.mdx). The separate CEF download is **126 MB on macOS arm64** and **161 MB on Windows x64**. [0.0.28 release assets](https://github.com/lynx-family/lynxtron/releases/tag/v0.0.28)
 
 ![Default narrow layout on macOS with the Lynxtron homepage embedded in a WKWebView below the Lynx toolbar.](https://raw.githubusercontent.com/lynx-community/lynxtron-examples/89444589f14da0c511d66d36f9568d954d7b36a8/examples/system-webview/preview.webp)
 
-**JavaScript APIs.** A native module can expose functions from an existing native library to your UI code through `NativeModules`. We followed Electron’s lead in choosing [Node-API](/guide/use-native-modules.html?platform=node-api) for Lynxtron’s native modules, and we’re also [bringing Node-API to all Lynx native platforms](https://github.com/lynx-family/lynx/discussions/845).
+<Go
+  example="system-webview"
+  mode="source"
+  defaultFile="src/app/index.tsx"
+  entry={['src/app/index.tsx', 'system_webview.mm', 'system_webview_win.cc']}
+  nativeFramework="lynxtron"
+/>
+
+### Extend JavaScript with Node-API
+
+A native module can expose functions from an existing native library to your UI code through `NativeModules`. We followed Electron’s lead in choosing [Node-API](/guide/use-native-modules.html?platform=node-api) for Lynxtron’s native modules, and we’re also [bringing Node-API to all Lynx native platforms](https://github.com/lynx-family/lynx/discussions/845).
 
 [Create your first Lynxtron app](/lynxtron/introduction) or [try the examples in Lynxtron Go](/lynxtron/go).

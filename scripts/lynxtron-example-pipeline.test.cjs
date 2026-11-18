@@ -21,7 +21,7 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
   const dedicated = readJSON(
     path.join(root, 'packages/lynxtron-example-packages/package.json'),
   );
-  assert.equal(Object.keys(dedicated.dependencies).length, 8);
+  assert.equal(Object.keys(dedicated.dependencies).length, 9);
   // Pin real npm releases, never a GitHub archive or bootstrap placeholder.
   for (const version of Object.values(dedicated.dependencies)) {
     assert.match(version, /^\d+\.\d+\.\d+$/);
@@ -47,6 +47,18 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
     for (const name of Object.keys(dedicated.dependencies)) {
       const example = name.split('/')[1];
       const directory = path.join(examplesRoot, example);
+      if (example === 'system-webview') {
+        fs.mkdirSync(directory);
+        fs.writeFileSync(
+          path.join(directory, 'package.json'),
+          JSON.stringify({ name, version: '0.0.1' }),
+        );
+        fs.writeFileSync(
+          path.join(directory, 'system_webview.mm'),
+          '// native view',
+        );
+        continue;
+      }
       const desktopDir =
         example === 'benchmark' ? 'dist_precompiled/desktop' : 'dist/desktop';
       fs.mkdirSync(path.join(directory, 'dist/web'), {
@@ -110,6 +122,7 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
         'benchmark',
         'cross-platform-notes',
         'native-texture-canvas',
+        'system-webview',
       ]);
       for (const example of examples) {
         const desktopDir =
@@ -118,6 +131,11 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
           path.join(productionRoot, 'output', example, 'example-metadata.json'),
         );
         assert.equal(metadata.nativeFramework, 'lynxtron');
+        if (example === 'system-webview') {
+          assert.deepEqual(metadata.templateFiles, []);
+          assert.ok(metadata.files.includes('system_webview.mm'));
+          continue;
+        }
         assert.deepEqual(metadata.templateFiles, [
           {
             name: 'main',
