@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import type * as LCD from '@lynx-js/lynx-compat-data';
-import { usePageData, withBase } from '@rspress/core/runtime';
+import { usePage, withBase } from '@rspress/core/runtime';
 import React from 'react';
 import useSWR from 'swr';
 import { PLATFORM_CONFIG } from '../api-status/constants';
@@ -132,7 +132,7 @@ function APISummary(props: APISummaryProps) {
 }
 
 function APISummaryView(props: APISummaryProps) {
-  const { page } = usePageData();
+  const { page } = usePage();
   const frontmatter = page.frontmatter;
 
   let query = props.query;

@@ -1,9 +1,4 @@
-import {
-  Head,
-  removeBase,
-  useLocation,
-  usePageData,
-} from '@rspress/core/runtime';
+import { Head, removeBase, useLocation, usePage } from '@rspress/core/runtime';
 import { Layout as BaseLayout } from '@rspress/core/theme-original';
 import { useEffect } from 'react';
 import { Footer } from '@/components/home-comps';
@@ -62,7 +57,7 @@ export default function Layout({
   ...props
 }: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
-  const { page } = usePageData();
+  const { page } = usePage();
   const subsite = subsiteOf(pathname);
   const isApiReference = isGeneratedApiPage(page.pagePath);
   const normalizedPath = removeBase(pathname);

@@ -15,7 +15,8 @@ import {
   removeBase,
   useLang,
   useLocation,
-  usePageData,
+  usePage,
+  useSite,
 } from '@rspress/core/runtime';
 import { OG_BASE, getCover, ogAbsolute, selectOg } from '@og-config';
 
@@ -33,7 +34,8 @@ function clamp(value: unknown, max: number): string | undefined {
 export default function OgHead() {
   const { pathname } = useLocation();
   const lang = useLang();
-  const { page, siteData } = usePageData();
+  const { page } = usePage();
+  const { site } = useSite();
 
   const pathNoBase = removeBase(pathname);
   const selection = selectOg(pathNoBase, lang);
@@ -45,7 +47,7 @@ export default function OgHead() {
   const title =
     (page.title as string) ||
     (frontmatter.title as string) ||
-    siteData?.title ||
+    site?.title ||
     'Lynx';
 
   // Blog: bounded frontmatter description. Docs: the subsite/site description.
@@ -57,14 +59,14 @@ export default function OgHead() {
       selection.kind === 'cover' ? getCover(selection.value) : undefined;
     description =
       (cover && (lang === 'zh' ? cover.descriptionZh : cover.description)) ||
-      siteData?.description ||
+      site?.description ||
       undefined;
   }
 
   return (
     <Head>
       <link rel="canonical" href={canonical} />
-      <meta property="og:site_name" content={siteData?.title || 'Lynx'} />
+      <meta property="og:site_name" content={site?.title || 'Lynx'} />
       <meta property="og:title" content={title} />
       {description ? (
         <meta property="og:description" content={description} />

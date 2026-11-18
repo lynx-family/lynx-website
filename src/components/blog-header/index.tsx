@@ -1,4 +1,4 @@
-import { useLang, usePageData } from '@rspress/core/runtime';
+import { useLang, usePage } from '@rspress/core/runtime';
 import { getLatestBlogIndexPath } from '../../lib/utils';
 import { LlmsContainer, LlmsCopyButton, LlmsViewOptions } from '@theme';
 import { BlogAvatar } from '../blog-avatar';
@@ -6,7 +6,7 @@ import styles from './index.module.less';
 
 export function BlogHeader() {
   const lang = useLang();
-  const { page } = usePageData();
+  const { page } = usePage();
   const authors = (page.frontmatter?.authors as string[]) ?? [];
   const blogIndexPath = getLatestBlogIndexPath(lang);
   const date = page.frontmatter?.date

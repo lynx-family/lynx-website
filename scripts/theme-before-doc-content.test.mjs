@@ -30,7 +30,7 @@ async function loadLayout() {
         Head: empty,
         removeBase: (value) => value,
         useLocation: () => ({ pathname: '/guide/example' }),
-        usePageData: () => ({ page: {} }),
+        usePage: () => ({ page: {} }),
       },
       '@rspress/core/theme-original': {
         Layout: (props) => {

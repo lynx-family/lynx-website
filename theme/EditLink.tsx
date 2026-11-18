@@ -1,4 +1,4 @@
-import { usePageData } from '@rspress/core/runtime';
+import { usePage } from '@rspress/core/runtime';
 import { useI18n } from '@/hooks/use-i18n';
 import {
   EditLink as OriginalEditLink,
@@ -11,7 +11,7 @@ import { isGeneratedApiPage } from './api-reference';
 type Props = Parameters<typeof OriginalEditLink>[0];
 
 export function EditLink(props: Props) {
-  const { page } = usePageData();
+  const { page } = usePage();
   const t = useI18n();
   const sourceEditUrl = page.frontmatter.sourceEditUrl;
   if (typeof sourceEditUrl === 'string') {

@@ -1,4 +1,4 @@
-import { usePageData } from '@rspress/core/runtime';
+import { usePage } from '@rspress/core/runtime';
 import { Callout } from '../Callout';
 import { FetchingCompatTable } from './FetchingCompatTable';
 
@@ -15,7 +15,7 @@ interface APITableProps {
  * get the query from frontmatter.
  */
 function APITable(props: APITableProps) {
-  const { page } = usePageData();
+  const { page } = usePage();
   const frontmatter = page.frontmatter;
 
   let query = props.query;

@@ -55,7 +55,7 @@ function setup(t, lang, pages, pageType = 'home') {
   const runtime = {
     useLang: () => lang,
     usePages: () => ({ pages }),
-    usePageData: () => ({ page: { pageType } }),
+    usePage: () => ({ page: { pageType } }),
     useNavigate: () => (link) => destinations.push(link),
   };
   const blogPages = load('src/hooks/use-blog-pages.ts', {
