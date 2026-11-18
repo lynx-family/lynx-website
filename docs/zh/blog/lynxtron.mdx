@@ -33,9 +33,9 @@ import { BlogHeader, Go } from '@lynx';
 
 在 [Lynxtron Go](/zh/lynxtron/go) 中运行 Benchmark 示例，即可查看本机的下载体积、启动耗时和内存占用。另见[启动基准测试与测量方法](https://github.com/lynx-family/lynxtron/issues/289)。
 
-## 让开发者和编程智能体沿用 Electron 的开发方式 \{#multiplatform}
+## 面向编程智能体的 Electron 风格 API 与架构 \{#multiplatform}
 
-我们希望开发者和编程智能体能从熟悉的 Electron 主进程代码入手。应用生命周期、菜单和窗口仍由 Node.js 宿主管理。变化发生在窗口内：Electron 由独立进程中的 Chromium 渲染页面；Lynxtron 在应用主线程上用 Lynx 渲染界面，在后台线程运行 UI 业务逻辑。[了解 Lynxtron 架构](/zh/lynxtron/learn/what-is-lynxtron)。
+让编程智能体迁移一个 Electron 应用，它可以直接从现有的 Node.js 主进程脚本入手。我们保留了熟悉的生命周期和窗口 API，让智能体可以沿用等待应用就绪、打开窗口等写法。渲染架构则有所变化：Electron 在独立的 Chromium 进程里渲染页面，Lynxtron 在同一进程的主线程上渲染界面，在后台线程执行业务逻辑。[了解 Lynxtron 架构](/zh/lynxtron/learn/what-is-lynxtron)。
 
 ![在 Lynxtron 中，Node.js 宿主和 Lynx 渲染共用主线程，UI 业务逻辑运行在后台线程。](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/lynxtron-architecture.png)
 
@@ -66,9 +66,9 @@ app.whenReady().then(() => {
   nativeFramework="lynxtron"
 />
 
-## 用已有的原生代码扩展 Lynx \{#natively-extensible}
+## 可扩展性 \{#natively-extensible}
 
-如果你的桌面应用已经用原生渲染器绘制画布，把界面迁到 Lynx 时，这套渲染器可以继续用。下面的示例让原生代码画到一张外部纹理上，再由 Lynx 将这张纹理和界面控件一起显示。原有的绘制代码无需重写。[了解 Lynx 原生库](/zh/lynxtron/Native-Libraries/Lynx-Native-Libraries)。
+Web 界面通过浏览器 API 绘图。Lynx 界面还可以直接展示已有原生渲染器绘制的画面。下面的画布示例把原生代码绘制的每一帧写入外部纹理，由 Lynx 将它和界面控件一起显示。[了解 Lynx 原生库](/zh/lynxtron/Native-Libraries/Lynx-Native-Libraries)。
 
 <Go
   example="native-texture-canvas"
