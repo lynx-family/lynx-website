@@ -33,14 +33,13 @@ import { BlogHeader, Go } from '@lynx';
 
 在 [Lynxtron Go](/zh/lynxtron/go) 中运行 Benchmark 示例，即可查看本机的下载体积、启动耗时和内存占用。另见[启动基准测试与测量方法](https://github.com/lynx-family/lynxtron/issues/289)。
 
-## 开发者与编程智能体都能沿用熟悉的 Electron API \{#multiplatform}
+## 让开发者和编程智能体沿用 Electron 的开发方式 \{#multiplatform}
 
-如果你开发过 Electron 应用，这套启动流程会很熟悉：等待应用就绪、创建窗口、加载界面。你可以复用大部分 Node.js 宿主代码，再用 Lynx 构建 UI。参见 [Electron 迁移指南](/zh/lynxtron/learn/Migrating-From-Electron)。
+我们希望开发者和编程智能体能从熟悉的 Electron 主进程代码入手。应用生命周期、菜单和窗口仍由 Node.js 宿主管理。变化发生在窗口内：Electron 由独立进程中的 Chromium 渲染页面；Lynxtron 在应用主线程上用 Lynx 渲染界面，在后台线程运行 UI 业务逻辑。[了解 Lynxtron 架构](/zh/lynxtron/learn/what-is-lynxtron)。
 
-```text
-Electron    [Node.js 主进程] ↔ [Chromium 渲染进程]
-Lynxtron    [同一进程：Node.js 宿主 ↔ Lynx UI]
-```
+![在 Lynxtron 中，Node.js 宿主和 Lynx 渲染共用主线程，UI 业务逻辑运行在后台线程。](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/lynxtron-architecture.png)
+
+例如，Electron 应用通常在 `app.whenReady()` 之后打开第一个窗口。在 Lynxtron 中也一样，创建 `LynxWindow`，然后加载编译好的 Lynx bundle 即可。
 
 ```ts
 import { app, LynxWindow } from '@lynx-js/lynxtron';
@@ -52,7 +51,7 @@ app.whenReady().then(() => {
 });
 ```
 
-你和编程智能体可以先[在浏览器里迭代 UI](/zh/lynxtron/learn/running-on-web)，再回到桌面应用验证系统能力。跨平台笔记示例共用同一套 UI 和笔记 API：桌面端写入文件，Web 端使用浏览器存储。
+开发 Electron 应用时，可以先在浏览器里调页面。借助 Lynx for Web，开发 Lynx 界面也能保留这个习惯。试着在下面的预览里编辑一条笔记：同一套界面调用同一个笔记 API，Web 端将笔记保存到浏览器存储，桌面端则写入文件。[在浏览器中运行 Lynxtron](/zh/lynxtron/learn/running-on-web)。
 
 <Go
   example="cross-platform-notes"
@@ -67,9 +66,9 @@ app.whenReady().then(() => {
   nativeFramework="lynxtron"
 />
 
-## 接入已有的原生代码和网页 \{#natively-extensible}
+## 用已有的原生代码扩展 Lynx \{#natively-extensible}
 
-已有的原生渲染代码可以接入 Lynx 界面。在原生纹理画布示例中，原生代码绘制外部纹理，Lynx 负责控件和交互。参见 [Lynx 原生库指南](/zh/lynxtron/Native-Libraries/Lynx-Native-Libraries)。
+如果你的桌面应用已经用原生渲染器绘制画布，把界面迁到 Lynx 时，这套渲染器可以继续用。下面的示例让原生代码画到一张外部纹理上，再由 Lynx 将这张纹理和界面控件一起显示。原有的绘制代码无需重写。[了解 Lynx 原生库](/zh/lynxtron/Native-Libraries/Lynx-Native-Libraries)。
 
 <Go
   example="native-texture-canvas"
@@ -81,8 +80,8 @@ app.whenReady().then(() => {
   nativeFramework="lynxtron"
 />
 
-需要嵌入现有网页时，可选的 [CEF WebView](/lynxtron/api/@lynx-js/cef-webview/index.mdx) 提供一致的 Chromium 内核。[0.0.28 的独立下载包](https://github.com/lynx-family/lynxtron/releases/tag/v0.0.28)在 macOS arm64 和 Windows x64 上分别为 **126 MB** 和 **161 MB**。对于可以使用平台自带内核的应用，我们也计划支持[系统 WebView](https://github.com/lynx-family/lynxtron/issues/395)。
+已有的网页也可以嵌进 Lynx 界面。对于能接受各平台浏览器内核差异的应用，我们计划支持[系统 WebView](https://github.com/lynx-family/lynxtron/issues/395)。现在就需要嵌入网页的应用可以随包分发 [CEF WebView](/zh/lynxtron/api/@lynx-js/cef-webview/index.mdx)，在各平台使用相同的 Chromium 内核。[Lynxtron 0.0.28](https://github.com/lynx-family/lynxtron/releases/tag/v0.0.28) 的 CEF 独立下载包在 macOS arm64 上为 **126 MB**，在 Windows x64 上为 **161 MB**。
 
-和 Electron 一样，Lynxtron 的 [Node.js 宿主支持 Node-API addon](/zh/lynxtron/Native-Libraries/NodeJS-Native-Modules)。我们也在[将 Node-API 带到更多 Lynx 原生平台](https://github.com/lynx-family/lynx/discussions/845)，方便开发者复用原生代码。
+在原生模块接口上，我们沿用了 Electron 的选择：[Node-API](/zh/guide/use-native-modules.html?platform=node-api)。我们的目标是让同一份原生模块实现可以在所有 Lynx 原生平台上复用。[阅读 Node-API 提案](https://github.com/lynx-family/lynx/discussions/845)。
 
 [创建你的第一个 Lynxtron 应用](/zh/lynxtron/introduction)，或[在 Lynxtron Go 中体验示例](/zh/lynxtron/go)。

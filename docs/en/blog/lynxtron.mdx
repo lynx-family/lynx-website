@@ -33,14 +33,13 @@ Desktop apps need access to the system and a fast way to iterate on UI. **[Lynxt
 
 Run the Benchmark example in [Lynxtron Go](/lynxtron/go) to see download size, startup, and memory on your own machine. [See the separate startup benchmark and methodology.](https://github.com/lynx-family/lynxtron/issues/289)
 
-## Familiar Electron APIs for Developers and Coding Agents \{#multiplatform}
+## An Electron-style architecture for developers and coding agents \{#multiplatform}
 
-If you’ve built an Electron app, the startup flow will look familiar: wait for the app to be ready, create a window, and load the UI. Keep much of your Node.js host code and build the interface with Lynx. [See the migration guide.](/lynxtron/learn/Migrating-From-Electron)
+We wanted developers and coding agents to be able to start with a familiar Electron main script. The Node.js host still manages the app lifecycle, menus, and windows. What changes is what runs inside a window. In Electron, Chromium renders the page in a separate process. In Lynxtron, Lynx renders on the app’s main thread and runs UI logic on a background thread. [Explore the architecture.](/lynxtron/learn/what-is-lynxtron)
 
-```text
-Electron    [Node.js main process] ↔ [Chromium renderer process]
-Lynxtron    [One process: Node.js host ↔ Lynx UI]
-```
+![Lynxtron runs the Node.js host and Lynx rendering on the main thread, with UI logic on a background thread.](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/lynxtron-architecture-en.png)
+
+For example, an Electron app opens its first window after `app.whenReady()`. The same pattern works here: create a `LynxWindow` and load a compiled Lynx bundle.
 
 ```ts
 import { app, LynxWindow } from '@lynx-js/lynxtron';
@@ -52,7 +51,7 @@ app.whenReady().then(() => {
 });
 ```
 
-You and your coding agent can [iterate on the UI in a browser](/lynxtron/learn/running-on-web), then verify desktop integrations in the app. In Cross-Platform Notes, one UI calls the same Notes API, backed by the file system on desktop and browser storage on the Web.
+Electron developers can work on a web UI in the browser. Lynx for Web keeps that workflow for Lynx apps. Try editing a note in the preview below. The same UI saves through the same Notes API on both targets, using browser storage on the Web and a file on desktop. [Run Lynxtron in the browser.](/lynxtron/learn/running-on-web)
 
 <Go
   example="cross-platform-notes"
@@ -67,9 +66,9 @@ You and your coding agent can [iterate on the UI in a browser](/lynxtron/learn/r
   nativeFramework="lynxtron"
 />
 
-## Bring Your Native Code and Web Content Along \{#natively-extensible}
+## Extend Lynx with the native code you already have \{#natively-extensible}
 
-Bring an existing native renderer into a Lynx interface. In Native Texture Canvas, native code draws to an external texture while Lynx handles the controls and interaction. [See how Lynx native libraries work.](/lynxtron/Native-Libraries/Lynx-Native-Libraries)
+If your desktop app already draws a canvas with a native renderer, you can keep that renderer when you move the UI to Lynx. In Native Texture Canvas, the renderer draws into an external texture. Lynx displays that texture alongside ordinary UI controls, so the drawing code stays native. [Explore Lynx native libraries.](/lynxtron/Native-Libraries/Lynx-Native-Libraries)
 
 <Go
   example="native-texture-canvas"
@@ -81,8 +80,8 @@ Bring an existing native renderer into a Lynx interface. In Native Texture Canva
   nativeFramework="lynxtron"
 />
 
-For existing web pages, the optional [CEF WebView](/lynxtron/api/@lynx-js/cef-webview/index.mdx) provides a consistent Chromium engine. Its [0.0.28 download](https://github.com/lynx-family/lynxtron/releases/tag/v0.0.28) is **126 MB on macOS arm64** and **161 MB on Windows x64**. [System WebView support](https://github.com/lynx-family/lynxtron/issues/395) is planned for apps that can use the platform’s own web engine.
+Existing web pages can live inside a Lynx UI, too. We plan to support the [system WebView](https://github.com/lynx-family/lynxtron/issues/395) for apps that can use each platform’s web engine. Today you can bundle the [CEF WebView](/lynxtron/api/@lynx-js/cef-webview/index.mdx) to ship the same Chromium engine across platforms. In [Lynxtron 0.0.28](https://github.com/lynx-family/lynxtron/releases/tag/v0.0.28), the separate CEF download is **126 MB on macOS arm64** and **161 MB on Windows x64**.
 
-Like Electron, Lynxtron supports [Node-API addons in the Node.js host](/lynxtron/Native-Libraries/NodeJS-Native-Modules). We’re also [bringing Node-API to more Lynx native platforms](https://github.com/lynx-family/lynx/discussions/845) so developers can reuse more of their native code.
+For native modules, we followed Electron’s lead and chose [Node-API](/guide/use-native-modules.html?platform=node-api). Our goal is to let developers share a native module implementation across all Lynx native platforms. [Read the Node-API proposal.](https://github.com/lynx-family/lynx/discussions/845)
 
 [Create your first Lynxtron app](/lynxtron/introduction) or [try the examples in Lynxtron Go](/lynxtron/go).
