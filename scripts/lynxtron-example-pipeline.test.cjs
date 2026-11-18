@@ -108,8 +108,8 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
       );
       assert.deepEqual(examples, [
         'benchmark',
-        'native-texture-canvas',
         'cross-platform-notes',
+        'native-texture-canvas',
       ]);
       for (const example of examples) {
         const desktopDir =
