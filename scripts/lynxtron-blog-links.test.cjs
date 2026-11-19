@@ -34,48 +34,45 @@ test('Lynxtron blog entry, localized title and extensionless links', () => {
   }
 });
 
-for (const base of ['/', '/next/', '/custom/docs/']) {
-  test(`Go learn-more links respect ${base}`, () => {
-    const source = ts.transpileModule(
-      fs.readFileSync(path.join(root, 'src/components/go/Go.tsx'), 'utf8'),
-      {
-        compilerOptions: {
-          module: ts.ModuleKind.CommonJS,
-          jsx: ts.JsxEmit.ReactJSX,
-        },
+test('Go delegates localized learn-more URLs to the Rspress adapter', () => {
+  const source = ts.transpileModule(
+    fs.readFileSync(path.join(root, 'src/components/go/Go.tsx'), 'utf8'),
+    {
+      compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        jsx: ts.JsxEmit.ReactJSX,
       },
-    ).outputText;
-    const imports = {
-      path,
-      react: { useMemo: (fn) => fn() },
-      'react/jsx-runtime': {
-        jsx: (type, props) => ({ type, props }),
-        jsxs: (type, props) => ({ type, props }),
-      },
-      '@rspress/core/runtime': { withBase: (url) => base + url.slice(1) },
-      '@lynx-js/go-web': { Go: 'Go', GoConfigProvider: 'Provider' },
-      '@lynx-js/go-web/adapters/rspress': { rspressAdapter: {} },
-      '@lynx-js/go-web/ssg': { ExamplePreviewSSG: 'SSG' },
-      '../Callout': {},
-    };
-    const exports = {};
-    vm.runInNewContext(source, {
-      exports,
-      process: { env: {} },
-      __dirname: path.join(root, 'src/components/go'),
-      require: (name) => {
-        assert.ok(name in imports, `Unexpected import: ${name}`);
-        return imports[name];
-      },
-    });
-    const config = exports.Go({ example: 'cross-platform-notes' }).props.config;
-    assert.equal(
-      config.nativeFrameworks.lynxtron.learnMoreUrl.en,
-      base + 'lynxtron/go',
-    );
-    assert.equal(
-      config.nativeFrameworks.lynxtron.learnMoreUrl.cn,
-      base + 'zh/lynxtron/go',
-    );
+    },
+  ).outputText;
+  const withBase = () => {
+    assert.fail('Go must leave base resolution to go-web');
+  };
+  const imports = {
+    path,
+    react: { useMemo: (fn) => fn() },
+    'react/jsx-runtime': {
+      jsx: (type, props) => ({ type, props }),
+      jsxs: (type, props) => ({ type, props }),
+    },
+    '@lynx-js/go-web': { Go: 'Go', GoConfigProvider: 'Provider' },
+    '@lynx-js/go-web/adapters/rspress': { rspressAdapter: { withBase } },
+    '@lynx-js/go-web/ssg': { ExamplePreviewSSG: 'SSG' },
+    '../Callout': {},
+  };
+  const exports = {};
+  vm.runInNewContext(source, {
+    exports,
+    process: { env: {} },
+    __dirname: path.join(root, 'src/components/go'),
+    require: (name) => {
+      assert.ok(name in imports, `Unexpected import: ${name}`);
+      return imports[name];
+    },
   });
-}
+  const config = exports.Go({ example: 'cross-platform-notes' }).props.config;
+  assert.equal(config.withBase, withBase);
+  assert.deepEqual(
+    { ...config.nativeFrameworks.lynxtron.learnMoreUrl },
+    { en: '/lynxtron/go', cn: '/zh/lynxtron/go' },
+  );
+});
