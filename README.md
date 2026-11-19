@@ -92,8 +92,6 @@ verification requirements.
 │   ├── lynx-living-spec/           # Lynx living specification
 │   ├── lynx-ui-example-packages/   # lynx-ui example dependencies
 │   └── lynxtron-example-packages/  # Lynxtron example dependencies
-├── plugins/
-│   └── llms-postprocess/           # Local Rspress LLMs plugin
 ├── scripts/                        # Prepare and documentation tooling
 ├── functions/                      # Deployment middleware
 ├── rspress.config.ts               # Site build configuration
