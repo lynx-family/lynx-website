@@ -8,7 +8,6 @@ import { transformerCompatibleMetaHighlight } from '@rspress/core/shiki-transfor
 import { pluginAlgolia } from '@rspress/plugin-algolia';
 import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
 import { pluginRss } from '@rspress/plugin-rss';
-import { pluginSitemap } from '@rspress/plugin-sitemap';
 import {
   transformerNotationDiff,
   transformerNotationFocus,
@@ -129,6 +128,9 @@ export default defineConfig({
     dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
   },
   base: SITE_BASE,
+  sitemap: {
+    siteUrl: PUBLISH_URL,
+  },
   themeConfig: {
     editLink: {
       docRepoBaseUrl:
@@ -229,9 +231,6 @@ export default defineConfig({
           to: '/zh/ui$1',
         },
       ],
-    }),
-    pluginSitemap({
-      siteUrl: PUBLISH_URL,
     }),
     pluginRss({
       siteUrl: PUBLISH_URL,
