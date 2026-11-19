@@ -14,17 +14,19 @@ function resolveLogoUrl(url: string): string {
 export function SubsiteLogo({ subsite }: { subsite: SubsiteConfig }) {
   const lightLogoSrc = resolveLogoUrl(subsite.logo.light);
   const darkLogoSrc = resolveLogoUrl(subsite.logo.dark);
+  // Balance the edge-to-edge Lynxtron mark while preserving its layout slot.
+  const scaleClass = subsite.value === 'lynxtron' ? 'scale-[0.96]' : '';
 
   return (
     <>
       <img
         src={lightLogoSrc}
-        className="w-full h-full object-contain dark:hidden"
+        className={`w-full h-full object-contain dark:hidden ${scaleClass}`}
         alt={`${subsite.label} logo`}
       />
       <img
         src={darkLogoSrc}
-        className="hidden w-full h-full object-contain dark:block"
+        className={`hidden w-full h-full object-contain dark:block ${scaleClass}`}
         alt={`${subsite.label} logo`}
       />
     </>

@@ -13,8 +13,11 @@ import { ClearAPI } from './ClearApi';
 import { ConsistencyAndPerformance } from './CombinedConsistencyAndPerformance';
 import { StartBuilding } from './StartBuildingBottom';
 import { LunaStudioShowcase } from '@luna';
+import { useBlogBtnDom } from '../hooks/use-blog-btn-dom';
 
 export const HomeLayout = () => {
+  useBlogBtnDom('/ui/');
+
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
   const copyElementRef = useRef<HTMLElement | null>(null);
@@ -23,10 +26,7 @@ export const HomeLayout = () => {
   >;
 
   const afterHeroActions = (
-    <div
-      className="rp-doc home-hero-codeblock"
-      style={{ minHeight: 'auto', width: '100%', maxWidth: 300 }}
-    >
+    <div className="rp-doc home-hero-codeblock">
       <PreWithCodeButtonGroup
         containerElementClassName="language-bash"
         codeButtonGroupProps={{

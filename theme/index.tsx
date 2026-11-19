@@ -182,14 +182,7 @@ function MainHomeLayoutView(props: Parameters<typeof BaseHomeLayout>[0]) {
     ),
     afterHeroActions = (
       <>
-        <div
-          className="rp-doc home-hero-codeblock"
-          style={{
-            minHeight: 'auto',
-            width: '100%',
-            maxWidth: isLynxtron ? 450 : 300,
-          }}
-        >
+        <div className="rp-doc home-hero-codeblock">
           <PreWithCodeButtonGroup
             containerElementClassName="language-bash"
             codeButtonGroupProps={{

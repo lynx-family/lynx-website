@@ -36,14 +36,19 @@ function post(lang, filename, title, frontmatter) {
   };
 }
 
-function setup(t, lang, pages, pageType = 'home') {
+function setup(t, lang, pages, pageType = 'home', crossVersion = false) {
   const destinations = [];
+  const pageLoads = [];
   const selectedConfigs = [];
   const listeners = new Map();
+  const attributes = new Map();
   const effects = [];
   let cleanups = [];
   const badge = {
     textContent: 'Server-rendered badge',
+    getAttribute: (name) => attributes.get(name) ?? null,
+    setAttribute: (name, value) => attributes.set(name, value),
+    removeAttribute: (name) => attributes.delete(name),
     addEventListener(name, fn) {
       if (!listeners.has(name)) listeners.set(name, new Set());
       listeners.get(name).add(fn);
@@ -64,26 +69,45 @@ function setup(t, lang, pages, pageType = 'home') {
   const latest = load('src/hooks/use-latest-blog.ts', {
     './use-blog-pages': blogPages,
   });
+  const react = {
+    useMemo: (fn) => fn(),
+    useCallback: (fn) => fn,
+    useEffect: (fn) => effects.push(fn),
+    useState: () => [null, () => {}],
+  };
+  const routes = {
+    BLOG_BASE: '/next',
+    BLOG_IS_CROSS_VERSION: crossVersion,
+  };
+  const utils = load('src/lib/utils.ts', {
+    clsx: {},
+    'tailwind-merge': {},
+    '@route-config': routes,
+  });
+  const canonical = load('src/hooks/use-canonical-latest-blog.ts', {
+    react,
+    '@rspress/core/runtime': runtime,
+    '@route-config': routes,
+    '../lib/utils': utils,
+    './use-latest-blog': latest,
+  });
   const { useBlogBtnDom } = load(
     'theme/hooks/use-blog-btn-dom.ts',
     {
-      react: {
-        useMemo: (fn) => fn(),
-        useCallback: (fn) => fn,
-        useEffect: (fn) => effects.push(fn),
-      },
+      react,
       '@rspress/core/runtime': runtime,
-      // The developing build resolves canonical blog data locally.
-      // RSS fetching on archived versions is outside this fixture's scope.
+      // Pinned cross-version cases exercise the real canonical routing.
+      // Unpinned RSS fetching is outside this fixture's scope.
       '@/hooks/use-canonical-latest-blog': {
         useCanonicalLatestBlog: (config) => {
           selectedConfigs.push(config);
-          return latest.useLatestBlog(config);
+          return canonical.useCanonicalLatestBlog(config);
         },
       },
-      '@route-config': { BLOG_IS_CROSS_VERSION: false },
+      '@route-config': routes,
     },
     {
+      window: { location: { assign: (link) => pageLoads.push(link) } },
       document: {
         querySelector: (selector) => {
           if (selector === '.rp-home-hero__badge') return badge;
@@ -102,6 +126,7 @@ function setup(t, lang, pages, pageType = 'home') {
   return {
     badge,
     destinations,
+    pageLoads,
     selectedConfigs,
     dispose,
     render(src) {
@@ -110,8 +135,8 @@ function setup(t, lang, pages, pageType = 'home') {
       useBlogBtnDom(src);
       cleanups = effects.splice(0).map((effect) => effect());
     },
-    dispatch(name) {
-      for (const listener of listeners.get(name) ?? []) listener();
+    dispatch(name, event = {}) {
+      for (const listener of listeners.get(name) ?? []) listener(event);
     },
   };
 }
@@ -231,6 +256,100 @@ for (const lang of ['en', 'zh']) {
       assert.equal(harness.badge.textContent, 'Lynxtron');
       harness.dispatch('click');
       harness.dispatch('touchstart');
+      assert.deepEqual(harness.destinations, []);
+    });
+
+    for (const crossVersion of [false, true]) {
+      const base = crossVersion ? '/next' : '';
+      const uiCopy =
+        lang === 'zh' ? 'lynx-ui 正式发布' : 'lynx-ui is officially released';
+
+      await t.test(
+        `UI follows its pinned post's registered route (${crossVersion ? 'archived' : 'developing'})`,
+        (t) => {
+          const uiPost = post(lang, 'lynx-ui', 'Introducing UI', {
+            date: '2026-09-01',
+            badge_text: 'Different blog copy',
+          });
+          // The registered route, rather than a hardcoded badge URL, wins.
+          uiPost.routePath = `${lang === 'zh' ? '/zh' : ''}/blog/announcements/lynx-ui`;
+          const harness = setup(
+            t,
+            lang,
+            [latestPost, uiPost],
+            'home',
+            crossVersion,
+          );
+          harness.render('/ui/');
+
+          assert.equal(harness.selectedConfigs[0].filename, 'lynx-ui');
+          assert.equal(harness.badge.textContent, uiCopy);
+          assert.equal(harness.badge.getAttribute('role'), 'link');
+          assert.equal(harness.badge.getAttribute('tabindex'), '0');
+          harness.dispatch('click');
+          harness.dispatch('touchstart');
+          let prevented = false;
+          harness.dispatch('keydown', {
+            key: 'Enter',
+            preventDefault: () => (prevented = true),
+          });
+          assert.equal(prevented, true);
+          // Space scrolls for a link; held Enter does not navigate repeatedly.
+          harness.dispatch('keydown', { key: ' ' });
+          harness.dispatch('keydown', { key: 'Enter', repeat: true });
+
+          const targets = crossVersion
+            ? harness.pageLoads
+            : harness.destinations;
+          assert.deepEqual(
+            targets,
+            Array(3).fill(`${base}${uiPost.routePath}`),
+          );
+          assert.deepEqual(
+            crossVersion ? harness.destinations : harness.pageLoads,
+            [],
+          );
+          harness.dispose();
+          harness.dispatch('click');
+          harness.dispatch('touchstart');
+          harness.dispatch('keydown', { key: 'Enter' });
+          assert.equal(targets.length, 3);
+          assert.equal(harness.badge.getAttribute('role'), null);
+          assert.equal(harness.badge.getAttribute('tabindex'), null);
+        },
+      );
+
+      await t.test(
+        `missing UI post leaves a noninteractive announcement (${crossVersion ? 'archived' : 'developing'})`,
+        (t) => {
+          const harness = setup(t, lang, [latestPost], 'home', crossVersion);
+          harness.render('/ui/');
+
+          assert.equal(harness.badge.textContent, uiCopy);
+          assert.equal(harness.badge.className, 'rp-home-hero__badge');
+          assert.equal(harness.badge.getAttribute('role'), null);
+          assert.equal(harness.badge.getAttribute('tabindex'), null);
+          harness.dispatch('click');
+          harness.dispatch('touchstart');
+          harness.dispatch('keydown', { key: 'Enter' });
+          assert.deepEqual(harness.pageLoads, []);
+          assert.deepEqual(harness.destinations, []);
+        },
+      );
+    }
+
+    await t.test('switching to React removes interactive badge state', (t) => {
+      const uiPost = post(lang, 'lynx-ui', 'Introducing UI', {});
+      const harness = setup(t, lang, [latestPost, uiPost]);
+      harness.render('/ui/');
+      harness.render('/react/');
+
+      assert.equal(harness.badge.textContent, 'ReactLynx');
+      assert.equal(harness.badge.className, 'rp-home-hero__badge');
+      assert.equal(harness.badge.getAttribute('role'), null);
+      assert.equal(harness.badge.getAttribute('tabindex'), null);
+      harness.dispatch('click');
+      harness.dispatch('keydown', { key: 'Enter' });
       assert.deepEqual(harness.destinations, []);
     });
 
