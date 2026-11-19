@@ -4,7 +4,7 @@ import { useCanonicalLatestBlog } from '@/hooks/use-canonical-latest-blog';
 import type { LatestBlogConfig } from '@/hooks/use-latest-blog';
 import { BLOG_IS_CROSS_VERSION } from '@route-config';
 
-type ConfigKey = '/' | '/react/' | '/build/' | '/lynxtron/';
+type ConfigKey = '/' | '/react/' | '/lynxtron/' | '/ui/';
 
 /**
  * Configuration for the blog button on different subsites.
@@ -40,17 +40,18 @@ const config: Record<
       en: 'ReactLynx',
     },
   },
-  '/build/': {
-    text: {
-      zh: 'Lynx 构建工具',
-      en: 'Build tool for Lynx',
-    },
-  },
   '/lynxtron/': {
     latestBlogConfig: { filename: 'lynxtron' },
     text: {
       zh: 'Lynxtron',
       en: 'Lynxtron',
+    },
+  },
+  '/ui/': {
+    latestBlogConfig: { filename: 'lynx-ui' },
+    text: {
+      zh: 'lynx-ui 正式发布',
+      en: 'lynx-ui is officially released',
     },
   },
 };
@@ -64,10 +65,10 @@ const useBlogBtnDom = (src: string) => {
     return (
       src.startsWith('/react/')
         ? '/react/'
-        : src.startsWith('/build/')
-          ? '/build/'
-          : src.startsWith('/lynxtron/')
-            ? '/lynxtron/'
+        : src.startsWith('/lynxtron/')
+          ? '/lynxtron/'
+          : src.startsWith('/ui/')
+            ? '/ui/'
             : '/'
     ) as ConfigKey;
   }, [src]);
@@ -120,10 +121,10 @@ const useBlogBtnDom = (src: string) => {
     if (!targetElement) return;
     if (!badgeElement) return;
 
-    badgeElement.className =
-      configKey === '/' || configKey === '/lynxtron/'
-        ? `rp-home-hero__badge active-hover`
-        : `rp-home-hero__badge`;
+    const interactive = configKey !== '/react/' && Boolean(blogLink);
+    badgeElement.className = interactive
+      ? 'rp-home-hero__badge active-hover'
+      : 'rp-home-hero__badge';
     // Upgrade the SSG fallback copy once the post's text is known. The badge
     // is visible the whole time (`opacity: 1` in CSS), so an empty
     // `displayText` must leave the rendered fallback alone rather than blank
@@ -132,16 +133,40 @@ const useBlogBtnDom = (src: string) => {
       badgeElement.textContent = displayText;
     }
 
-    if (configKey === '/' || configKey === '/lynxtron/') {
+    const originalRole = badgeElement.getAttribute('role');
+    const originalTabIndex = badgeElement.getAttribute('tabindex');
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Link semantics use Enter; Space retains normal page scrolling.
+      if (event.key !== 'Enter' || event.repeat) return;
+      event.preventDefault();
+      handleInteraction();
+    };
+
+    if (interactive) {
+      // Rspress renders string badges as divs. Give these navigation controls
+      // link semantics without replacing the React-owned element.
+      badgeElement.setAttribute('role', 'link');
+      badgeElement.setAttribute('tabindex', '0');
       badgeElement.addEventListener('click', handleInteraction);
       badgeElement.addEventListener('touchstart', handleInteraction);
+      badgeElement.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
       badgeElement.removeEventListener('click', handleInteraction);
       badgeElement.removeEventListener('touchstart', handleInteraction);
+      badgeElement.removeEventListener('keydown', handleKeyDown);
+      if (interactive) {
+        for (const [name, value] of [
+          ['role', originalRole],
+          ['tabindex', originalTabIndex],
+        ] as const) {
+          if (value === null) badgeElement.removeAttribute(name);
+          else badgeElement.setAttribute(name, value);
+        }
+      }
     };
-  }, [configKey, displayText, handleInteraction, page.pageType]);
+  }, [configKey, blogLink, displayText, handleInteraction, page.pageType]);
 };
 
 export { useBlogBtnDom };

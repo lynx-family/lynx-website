@@ -26,6 +26,7 @@
   border-radius: 37px;
   border: var(--home-blog-btn-border);
   background: var(--home-blog-btn-bg);
+  -webkit-backdrop-filter: blur(24px);
   backdrop-filter: blur(24px);
   color: var(--home-blog-btn-color);
   font-style: normal;
@@ -37,6 +38,7 @@
   // anyway — the `transition: opacity` that used to follow it overrode the
   // whole shorthand.
   transition: background 0.3s ease;
+  -webkit-user-select: none;
   user-select: none;
   // Rendered in the SSG HTML with the frontmatter's fallback copy, so the
   // badge is readable before (and without) client JS; `use-blog-btn-dom`
@@ -53,7 +55,13 @@
 
   &.active-hover {
     cursor: pointer;
-    &:hover {
+    &:focus-visible {
+      outline: 2px solid var(--rp-c-brand);
+      outline-offset: 3px;
+    }
+
+    // Keep the lynx-ui announcement on its neutral background.
+    :root:not([data-subsite='ui']) &:hover {
       background: linear-gradient(
         to right,
         var(--major-brand-color),
@@ -73,16 +81,25 @@
     transform: translateY(-50%);
     width: 19px;
     height: 20px;
+    // Reset Rspress's circular dot so it does not clip logo corners.
+    border-radius: 0;
     background-image: var(--home-blog-bg-img);
-    background-size: 19px 20px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
 
     @media (max-width: 768px) {
       width: 16px;
       height: 17px;
       left: 16px;
-      background-size: 16px 17px;
     }
   }
+}
+
+:root[data-subsite='lynxtron'] .rp-home-hero__badge::before {
+  // Shrink the edge-to-edge mark by 10% for optical balance, keeping the
+  // original icon slot and vertical alignment.
+  transform: translateY(-50%) scale(0.9);
 }
 
 @keyframes gradientMoveBtn {

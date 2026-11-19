@@ -370,7 +370,7 @@ export default function AfterNavTitle() {
             href={`${getLangPrefix(lang)}${currentSubsite.home}`}
             className="flex items-center gap-2"
           >
-            <div className="relative h-[28px] w-[28px]">
+            <div className="relative h-[26px] w-[26px]">
               <SubsiteLogo subsite={currentSubsite} />
             </div>
             <span className="text-base font-medium">

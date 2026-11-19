@@ -247,13 +247,71 @@ $link-color-dark: rgba(84, 169, 255, 1);
 
 // #endregion ======== home layout =========
 
-.home-hero-codeblock .rp-codeblock {
-  background-color: rgb(from var(--rp-code-block-bg) r g b / 50%) !important;
+.home-hero-codeblock {
+  min-height: auto;
+  width: fit-content;
+  max-width: 100%;
 
-  @media (max-width: 640px) {
-    margin: 6px 0 !important;
-    background-color: transparent !important;
-    font-size: 0.75rem !important;
+  .rp-codeblock {
+    background-color: rgb(from var(--rp-code-block-bg) r g b / 50%) !important;
+
+    @media (max-width: 640px) {
+      --rp-code-font-size: 0.75rem;
+      margin: 6px 0 !important;
+      background-color: transparent !important;
+      font-size: 0.75rem !important;
+    }
+  }
+
+  // Equal side columns keep the command itself centered, with room for the
+  // copy control on the right. Only the middle column scrolls on narrow screens.
+  .rp-codeblock__content {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 32px;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+
+    @media (max-width: 640px) {
+      // Give narrow screens more command space without shrinking the copy target.
+      gap: 4px;
+      padding-inline: 4px;
+    }
+  }
+
+  .rp-codeblock__content__scroll-container {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    // A stable vertical scrollbar gutter offsets a single-line command.
+    scrollbar-gutter: auto;
+  }
+
+  pre {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .rp-code-button-group {
+    grid-column: 3;
+    grid-row: 1;
+    position: static;
+  }
+
+  .rp-code-button-group__button {
+    width: 32px;
+    height: 32px;
+
+    @media (hover: none) {
+      opacity: 1;
+    }
+
+    &:focus-visible {
+      opacity: 1;
+      outline: 2px solid var(--rp-c-brand);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
   }
 }
 
@@ -276,3 +334,8 @@ $link-color-dark: rgba(84, 169, 255, 1);
   word-break: break-all;
 }
 // #endregion ======== overview =========
+
+.rp-nav .rp-nav__title__logo-image {
+  // Keep the Lynx mark's vertical adjustment consistent in both modes.
+  transform: translateY(1.5px);
+}
