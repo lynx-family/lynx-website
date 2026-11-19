@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useLang, useNavigate, usePageData } from '@rspress/core/runtime';
+import { useLang, useNavigate, usePage } from '@rspress/core/runtime';
 import { useCanonicalLatestBlog } from '@/hooks/use-canonical-latest-blog';
 import type { LatestBlogConfig } from '@/hooks/use-latest-blog';
 import { BLOG_IS_CROSS_VERSION } from '@route-config';
@@ -56,7 +56,7 @@ const config: Record<
 };
 
 const useBlogBtnDom = (src: string) => {
-  const { page } = usePageData();
+  const { page } = usePage();
   const navigate = useNavigate();
   const lang = useLang() as 'en' | 'zh';
 

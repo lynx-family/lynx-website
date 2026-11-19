@@ -5,7 +5,7 @@ import {
   removeBase,
   useLang,
   useLocation,
-  usePageData,
+  usePage,
 } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
@@ -69,7 +69,7 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 function MainHomeLayoutView(props: Parameters<typeof BaseHomeLayout>[0]) {
   const { pathname } = useLocation();
   const isZh = pathname.startsWith('/zh/');
-  const { page } = usePageData();
+  const { page } = usePage();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [text, setText] = useState(
@@ -236,7 +236,7 @@ function MainHomeLayoutView(props: Parameters<typeof BaseHomeLayout>[0]) {
 
 function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   const { pathname } = useLocation();
-  const { page } = usePageData();
+  const { page } = usePage();
 
   // Update theme based on URL
   useEffect(() => {
