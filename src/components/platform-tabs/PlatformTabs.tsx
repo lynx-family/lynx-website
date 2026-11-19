@@ -180,9 +180,6 @@ const OptionSelector = React.forwardRef<
   );
 });
 
-//  FIXME: this is a hack for hook Rspress update the TOC */
-let renderCountForTocUpdate = 0;
-
 /**
  * A radio group interface for showing platform-specific content for iOS, Android and Web.
  * Uses a card-based layout with radio buttons for platform selection.
@@ -209,36 +206,49 @@ const PlatformTabs = ({
   queryKey,
 }: PlatformTabsProps) => {
   // Get available platforms from children
-  const availablePlatforms = React.Children.toArray(children).reduce<
-    Platform[]
-  >((acc, child) => {
-    if (React.isValidElement<PlatformTabProps>(child) && child.props.platform) {
-      acc.push(child.props.platform);
-    }
-    return acc;
-  }, []);
+  const availablePlatforms = React.useMemo(
+    () =>
+      React.Children.toArray(children).reduce<Platform[]>((acc, child) => {
+        if (
+          React.isValidElement<PlatformTabProps>(child) &&
+          child.props.platform
+        ) {
+          acc.push(child.props.platform);
+        }
+        return acc;
+      }, []),
+    [children],
+  );
+  const fallbackPlatform = availablePlatforms.includes(defaultPlatform)
+    ? defaultPlatform
+    : availablePlatforms[0];
 
   // Get platform from query parameters or use default
   const getPlatformFromQuery = useCallback(() => {
     if (typeof window === 'undefined') {
-      return defaultPlatform;
+      return fallbackPlatform;
     }
     const searchParams = new URLSearchParams(window.location.search);
     const platformFromQuery = searchParams.get(queryKey);
 
     return availablePlatforms.includes(platformFromQuery as Platform)
       ? (platformFromQuery as Platform)
-      : availablePlatforms.includes(defaultPlatform)
-        ? defaultPlatform
-        : availablePlatforms[0];
-  }, [availablePlatforms, defaultPlatform, queryKey]);
+      : fallbackPlatform;
+  }, [availablePlatforms, fallbackPlatform, queryKey]);
 
-  const [activePlatform, setActivePlatform] = useState<Platform>(
-    getPlatformFromQuery(),
-  );
+  // Match the server's default content before applying the browser's query.
+  const [activePlatform, setActivePlatform] =
+    useState<Platform>(fallbackPlatform);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    setActivePlatform(getPlatformFromQuery());
+    setInitialized(true);
+  }, [getPlatformFromQuery]);
 
   // Update query parameters when platform changes
   useEffect(() => {
+    if (!initialized) return;
     const searchParams = new URLSearchParams(window.location.search);
 
     // Set or update the query parameter
@@ -258,7 +268,7 @@ const PlatformTabs = ({
       cleanUrl.search = searchParams.toString();
       window.history.replaceState(null, '', cleanUrl);
     };
-  }, [activePlatform, queryKey]);
+  }, [activePlatform, initialized, queryKey]);
 
   // Listen for popstate events (back/forward navigation)
   useEffect(() => {
@@ -287,12 +297,14 @@ const PlatformTabs = ({
   }, [activePlatform]);
 
   useEffect(() => {
+    if (!initialized) return;
     // Wait for the component to load, then jump to the hash anchor if any.
-    requestAnimationFrame(() => {
+    const frame = requestAnimationFrame(() => {
       const element = document.getElementById(window.location.hash?.slice(1));
       element?.scrollIntoView({ behavior: 'auto' });
     });
-  }, []);
+    return () => cancelAnimationFrame(frame);
+  }, [initialized]);
 
   // Filter platform options to only show available ones
   const availableOptions = PLATFORM_OPTIONS.filter((option) =>
@@ -301,35 +313,32 @@ const PlatformTabs = ({
 
   const tabContent = React.Children.toArray(children).map((child) => {
     if (!React.isValidElement<PlatformTabProps>(child)) return null;
+    const isActive = child.props.platform === activePlatform;
+    // Keep all content for SSR and Markdown exports, then only keep the
+    // selected platform mounted so anchor IDs resolve to its headings.
+    // Keep panel wrappers stable so Rspress observes headings being replaced,
+    // including headings inside containers such as Steps.
     return (
       <div
         key={child.props.platform}
-        style={{
-          display: child.props.platform === activePlatform ? 'block' : 'none',
-        }}
+        style={{ display: isActive ? 'block' : 'none' }}
       >
-        {child.props.children}
+        {!initialized || isActive ? child.props.children : null}
       </div>
     );
   });
 
-  renderCountForTocUpdate++;
   return (
-    <>
-      <div className={cn('w-full space-y-4', className)}>
-        <OptionSelector
-          ref={trackRef}
-          activeCardRef={activeCardRef}
-          options={availableOptions}
-          selected={activePlatform}
-          onSelect={setActivePlatform}
-        />
-        {tabContent}
-      </div>
-      {renderCountForTocUpdate % 2 === 0 ? (
-        <h2 style={{ display: 'none' }} />
-      ) : null}
-    </>
+    <div className={cn('w-full space-y-4', className)}>
+      <OptionSelector
+        ref={trackRef}
+        activeCardRef={activeCardRef}
+        options={availableOptions}
+        selected={activePlatform}
+        onSelect={setActivePlatform}
+      />
+      {tabContent}
+    </div>
   );
 };
 
