@@ -1,4 +1,3 @@
-// cspell:ignore shikijs
 import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess';
 import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
@@ -8,12 +7,6 @@ import { transformerCompatibleMetaHighlight } from '@rspress/core/shiki-transfor
 import { pluginAlgolia } from '@rspress/plugin-algolia';
 import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
 import { pluginRss } from '@rspress/plugin-rss';
-import { pluginSitemap } from '@rspress/plugin-sitemap';
-import {
-  transformerNotationDiff,
-  transformerNotationFocus,
-  transformerNotationHighlight,
-} from '@shikijs/transformers';
 import type { Dirent } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
@@ -129,6 +122,9 @@ export default defineConfig({
     dark: 'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynx-light-logo.svg',
   },
   base: SITE_BASE,
+  sitemap: {
+    siteUrl: PUBLISH_URL,
+  },
   themeConfig: {
     editLink: {
       docRepoBaseUrl:
@@ -230,9 +226,6 @@ export default defineConfig({
         },
       ],
     }),
-    pluginSitemap({
-      siteUrl: PUBLISH_URL,
-    }),
     pluginRss({
       siteUrl: PUBLISH_URL,
       feed: [
@@ -271,6 +264,8 @@ export default defineConfig({
     // users would see the raw placeholder text in the rendered output.
     remarkPlugins: [remarkReplaceVersionJsonPlaceholders],
     link: {
+      // Preserve the pre-2.1 policy until existing anchors are repaired.
+      checkAnchors: false,
       checkDeadLinks: {
         excludes: [
           '/guide/spec.html?ts=1743416098203#element%E2%91%A0',
@@ -279,12 +274,7 @@ export default defineConfig({
       },
     },
     shiki: {
-      transformers: [
-        transformerCompatibleMetaHighlight(),
-        transformerNotationHighlight(),
-        transformerNotationDiff(),
-        transformerNotationFocus(),
-      ],
+      transformers: [transformerCompatibleMetaHighlight()],
     },
   },
   llms: true,
