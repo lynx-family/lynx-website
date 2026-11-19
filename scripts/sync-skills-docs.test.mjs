@@ -36,6 +36,10 @@ test('the website sync consumes a content-only package and preserves authored so
     mkdirSync(join(ai, 'skills'), { recursive: true });
     writeFileSync(join(ai, '_meta.js'), 'module.exports = meta => meta;');
     writeFileSync(join(ai, 'skills/website.mdx'), '# Website source');
+    writeFileSync(
+      join(ai, 'skills/_meta.json'),
+      JSON.stringify([{ type: 'file', name: 'lynx-devtool.mdx' }]),
+    );
   }
   const result = syncSkillsDocs({ website });
   for (const locale of ['en', 'zh']) {
@@ -48,7 +52,10 @@ test('the website sync consumes a content-only package and preserves authored so
       Object.hasOwn(result.websiteFiles, `${locale}/ai/skills/website.mdx`),
     );
     const navigation = JSON.parse(readFileSync(join(ai, '_meta.json'), 'utf8'));
-    assert.ok(!navigation.some((entry) => entry.name === 'skills/website.mdx'));
+    assert.deepEqual(
+      navigation.filter((entry) => entry.name?.startsWith('skills/')),
+      [{ type: 'file', name: 'skills/lynx-devtool.mdx' }],
+    );
     const packaged = JSON.parse(
       readFileSync(
         join(pkg, 'content', locale, 'ai/agent-lynx/_meta.json'),

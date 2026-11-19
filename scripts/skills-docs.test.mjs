@@ -51,7 +51,7 @@ function fixture(t) {
       { type: 'file', name: 'index.mdx' },
     ]);
     write(join(source, `content/${locale}/ai/agent-lynx/index.mdx`), '# Agent');
-    write(join(source, `content/${locale}/ai/skills/_meta.json`), [
+    write(join(website, `docs/${locale}/ai/skills/_meta.json`), [
       { type: 'file', name: 'owned.mdx' },
     ]);
     write(
@@ -96,6 +96,8 @@ test('metadata controls order while unlisted website pages and resources remain 
   );
   assert.equal(text(join(f.website, 'docs/en/ai/mcp.mdx')), '# Website MCP');
   assert.ok(!text(join(dir, '_meta.json')).includes('hidden'));
+  assert.ok(!Object.hasOwn(result.packageFiles, 'en/ai/skills/_meta.json'));
+  assert.ok(Object.hasOwn(result.websiteFiles, 'en/ai/skills/_meta.json'));
 });
 
 test('duplicate file owners and page routes fail before mutation', (t) => {
@@ -138,14 +140,14 @@ test('only retired package output is removed and repeated sync preserves website
   const target = join(f.website, 'docs/en/ai/skills');
   write(
     join(target, '_meta.js'),
-    `module.exports = meta => [...meta, 'site'];`,
+    `module.exports = meta => [...meta.filter(item => item !== 'site'), 'site'];`,
   );
   write(join(target, 'site.mdx'), '# Keep site');
   syncWebsite(f);
   for (const locale of ['en', 'zh']) {
     const source = join(f.source, `content/${locale}/ai/skills`);
     rmSync(join(source, 'owned.mdx'));
-    write(join(source, '_meta.json'), []);
+    write(join(f.website, `docs/${locale}/ai/skills/_meta.json`), []);
   }
   write(
     join(f.source, 'content/en/ai/agent-lynx/index.mdx'),
@@ -168,7 +170,7 @@ test('a document transferred to the website retains its new edit source', (t) =>
   syncWebsite(f);
   for (const locale of ['en', 'zh']) {
     rmSync(join(f.source, `content/${locale}/ai/skills/owned.mdx`));
-    write(join(f.source, `content/${locale}/ai/skills/_meta.json`), []);
+    write(join(f.website, `docs/${locale}/ai/skills/_meta.json`), []);
   }
   const site = join(f.website, 'docs/en/ai/skills');
   const content =
@@ -198,5 +200,23 @@ test('plain JSON navigation and invalid or duplicate navigation targets are chec
     write(join(target, '_meta.json'), entries);
     assert.throws(() => syncWebsite(f));
     assert.deepEqual(json(join(target, '_meta.json')), entries);
+  }
+});
+
+test('legacy package metadata cannot replace website-owned Skills navigation', (t) => {
+  const f = fixture(t);
+  for (const locale of ['en', 'zh']) {
+    write(join(f.source, `content/${locale}/ai/skills/_meta.json`), [
+      'retired',
+    ]);
+    write(join(f.website, `docs/${locale}/ai/skills/_meta.json`), ['owned']);
+  }
+  syncWebsite(f);
+  syncWebsite(f);
+  for (const locale of ['en', 'zh']) {
+    assert.deepEqual(
+      json(join(f.website, `docs/${locale}/ai/skills/_meta.json`)),
+      ['owned'],
+    );
   }
 });

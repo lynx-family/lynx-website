@@ -233,9 +233,10 @@ package and is replaced on synchronization. The Skills section is the disjoint
 union of package-owned guides and website-owned pages. A Marketplace npm
 registration does not make the registered Skill's guide package-owned.
 
-Website-owned pages stay at their normal routes. `skills/_meta.js` receives
-the package's Skills navigation; return the desired order with website entries
-inserted. Plain `_meta.json` can supply a complete list instead. A page omitted
+Website-owned pages stay at their normal routes. The website maintains the complete
+Skills sidebar in `docs/{en,zh}/ai/skills/_meta.json`, including package and website
+pages. A consumer's `skills/_meta.js` can transform that website navigation. Skills
+packages need no `_meta.json`; legacy package Skills metadata is ignored. A page omitted
 from navigation remains routable; navigation does not select which files are
 published. API docs, UI, A2UI, OpenUI and the external trace guides are website
 sources. A duplicate file or route owner fails before synchronization writes

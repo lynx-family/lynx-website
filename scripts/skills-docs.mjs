@@ -80,15 +80,16 @@ function validateNavigation(
   return entries;
 }
 
-function websiteNavigation(directory, base, generated = false) {
+function websiteNavigation(directory, base) {
+  const file = join(directory, '_meta.json');
+  const entries = base ?? (existsSync(file) ? json(file) : []);
   const script = join(directory, '_meta.js');
   if (existsSync(script)) {
     delete require.cache[require.resolve(script)];
     const transform = require(script);
-    return (transform.default ?? transform)(base);
+    return (transform.default ?? transform)(entries);
   }
-  const file = join(directory, '_meta.json');
-  return !generated && existsSync(file) ? json(file) : base;
+  return existsSync(file) ? json(file) : entries;
 }
 
 function editUrl(text) {
@@ -148,7 +149,10 @@ export function mountSkillsDocs({
     }
     managedRoots.add(to);
     if (!existsSync(from)) throw new Error(`Missing package content: ${from}`);
-    const names = files(from);
+    // Older packages include a Skills sidebar. The website owns this navigation.
+    const names = files(from).filter(
+      (name) => !to.endsWith('/ai/skills') || !/^_meta\.(json|js)$/.test(name),
+    );
     const packageRoutes = names
       .filter((name) => /\.mdx?$/.test(name))
       .map(pageRoute);
@@ -163,10 +167,9 @@ export function mountSkillsDocs({
     const section = to.match(/^(en|zh)\/ai\/(agent-lynx|skills)$/);
     if (!section) continue;
     const [, locale, id] = section;
-    const entries = validateNavigation(from);
     const target = within(docs, to);
     if (id === 'agent-lynx') {
-      navigation.set(`${locale}/${id}`, entries);
+      navigation.set(`${locale}/${id}`, validateNavigation(from));
       continue;
     }
     const routes = new Set(
@@ -197,16 +200,8 @@ export function mountSkillsDocs({
       websiteFiles[relative] = oldUrl ?? null;
     }
     const metaFile = `${to}/_meta.json`;
-    const generated = Object.hasOwn(previous.packageFiles ?? {}, metaFile);
-    const authoredJson =
-      !existsSync(join(target, '_meta.js')) &&
-      !generated &&
-      existsSync(join(target, '_meta.json'));
-    const merged = websiteNavigation(target, entries, generated);
-    if (authoredJson) {
-      delete packageFiles[metaFile];
-      websiteFiles[metaFile] = null;
-    }
+    const merged = websiteNavigation(target);
+    websiteFiles[metaFile] = null;
     planned.set(
       `${to}/_meta.json`,
       Buffer.from(`${JSON.stringify(merged, null, 2)}\n`),
