@@ -1,4 +1,3 @@
-// cspell:ignore shikijs
 import { pluginLLMsPostprocess } from '@lynx-js/rspress-plugin-llms-postprocess';
 import { pluginLess } from '@rsbuild/plugin-less';
 import { pluginSass } from '@rsbuild/plugin-sass';
@@ -8,11 +7,6 @@ import { transformerCompatibleMetaHighlight } from '@rspress/core/shiki-transfor
 import { pluginAlgolia } from '@rspress/plugin-algolia';
 import { pluginClientRedirects } from '@rspress/plugin-client-redirects';
 import { pluginRss } from '@rspress/plugin-rss';
-import {
-  transformerNotationDiff,
-  transformerNotationFocus,
-  transformerNotationHighlight,
-} from '@shikijs/transformers';
 import type { Dirent } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
@@ -280,12 +274,7 @@ export default defineConfig({
       },
     },
     shiki: {
-      transformers: [
-        transformerCompatibleMetaHighlight(),
-        transformerNotationHighlight(),
-        transformerNotationDiff(),
-        transformerNotationFocus(),
-      ],
+      transformers: [transformerCompatibleMetaHighlight()],
     },
   },
   llms: true,
