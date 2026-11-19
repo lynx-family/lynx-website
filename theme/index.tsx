@@ -34,7 +34,6 @@ import {
   Features,
   GalaxyHeroBackground,
   LynxtronFeatures,
-  LynxtronShowcase,
   MeteorsBackground,
   ShowCase,
 } from '@/components/home-comps';
@@ -173,7 +172,6 @@ function MainHomeLayoutView(props: Parameters<typeof BaseHomeLayout>[0]) {
     afterHero = isLynxtron ? (
       <>
         <LynxtronFeatures />
-        <LynxtronShowcase />
       </>
     ) : (
       <>
