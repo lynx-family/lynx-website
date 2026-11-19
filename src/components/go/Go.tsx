@@ -1,6 +1,5 @@
 import path from 'path';
 import { useMemo } from 'react';
-import { withBase } from '@rspress/core/runtime';
 import { Go as GoBase, GoConfigProvider } from '@lynx-js/go-web';
 import type { GoConfig, GoProps as GoBaseProps } from '@lynx-js/go-web';
 import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
@@ -77,10 +76,8 @@ function Go({ explorerText, explorerUrl, ...props }: GoProps) {
       nativeFrameworks: {
         lynxtron: {
           learnMoreUrl: {
-            // TODO: Remove site-level base resolution once go-web handles
-            // nativeFrameworks URLs through its Rspress adapter.
-            en: withBase('/lynxtron/go'),
-            cn: withBase('/zh/lynxtron/go'),
+            en: '/lynxtron/go',
+            cn: '/zh/lynxtron/go',
           },
           downloadUrl: resolveLynxtronDownloadUrl(),
         },
