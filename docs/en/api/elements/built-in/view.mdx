@@ -785,6 +785,14 @@ The front end can execute the element method through the [SelectorQuery](/api/ly
 
 ### `boundingClientRect`
 
+Get the target node's width, height, and position. With native UI rendering on Android, iOS, and Harmony, use `params.relativeTo` to choose the coordinate system for the position.
+
+- Omit it or pass `null` for coordinates relative to `LynxView`.
+- Pass `'screen'` for coordinates relative to the screen.
+- Pass a node's `id` for coordinates relative to that node. Use the ID itself, for example `'container'`, without a `#` prefix.
+
+On Android, set `androidEnableTransformProps: true` for `relativeTo` to take effect.
+
 ```tsx
 lynx
   .createSelectorQuery()
@@ -793,9 +801,9 @@ lynx
     method: 'boundingClientRect',
     params: {
       iOSEnableAnimationProps: false, // Specify whether to consider animation properties when calculating position on iOS; the default is false.
-      androidEnableTransformProps: false, // Specify whether to consider the transform attribute when calculating the position on Android. The default value is false.
+      androidEnableTransformProps: true, // Include Android transforms. The default is false.
       harmonyEnableTransformProps: false, // Specify whether to consider the transform attribute when calculating the position on Harmony. The default value is false.
-      relativeTo: null, // Specify the reference node (select the node via idSelector), which is relative to LynxView by default, but can also be set to "screen" to indicate that it is relative to the screen coordinate system.
+      relativeTo: 'container',
     },
     success: function (res) {
       console.log(res);
@@ -806,8 +814,6 @@ lynx
   })
   .exec();
 ```
-
-The front end can call this method to obtain the width, height and position information of the target node.
 
 ### `takeScreenshot`
 
