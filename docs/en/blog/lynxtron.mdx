@@ -1,43 +1,27 @@
 ---
-title: 'Announcing Lynxtron'
+title: 'Announcing Lynxtron: A Lightweight Desktop Framework with Familiar Electron APIs'
 date: 2026-09-21
 sidebar: false
 blog_hidden: true
 authors: ['icecreamx10', 'GuoXi', 'lynx']
 badge_text: 'Introducing Lynxtron'
 featured: true
-description: 'Lynxtron is an Electron-like app framework with a light-weight Lynx renderer, multiplatform UI, and native extension support through UI/texture extension C-APIs and Node-API.'
+description: 'Build lightweight desktop apps with Electron-style main-process APIs, Lynx UI, and native extensions.'
 ---
 
 import { BlogHeader, Go } from '@lynx';
 
 <BlogHeader authors={['icecreamx10', 'GuoXi', 'lynx']} />
 
-Lynx is moving onto desktop.
+Electron lets front-end developers build desktop apps efficiently in JavaScript: Web technologies for the interface, Node.js for system capabilities. That efficiency rests on Chromium, and so does its cost — every app has to ship its own browser engine, which inflates the base download and runtime memory. To keep that efficiency at a lower cost, we built **[Lynxtron](/lynxtron/)**.
 
-**[Lynxtron](/lynxtron/)** is an Electron-like app framework powered by Lynx. In a Lynxtron application, the host process keeps the Node.js capabilities desktop apps need, while `LynxWindow` hosts Lynx UI through a light-weight renderer instead of a browser page.
+It uses Node.js as the host and Lynx to render the UI, so the base runtime ships without a browser engine. Developers keep using Electron-style main-process APIs to manage windows and the app lifecycle, and write Lynx components and styles the way they would write a web app. The same UI code also [runs in a browser](/lynxtron/learn/running-on-web), so there is no separate Web build to maintain.
 
-That gives developers a way to build desktop applications with the Lynx UI model, while keeping the runtime lightweight, making native extension a first-class part of the app, and organizing UI code across desktop, web, and mobile-native targets.
+<span id="light-weight-and-fast" />
 
-## What Lynxtron Is For
-
-Desktop application development often forces a practical choice: move fast with web technology, or spend more native engineering effort to get smaller binaries, better runtime behavior, and deeper system integration. Lynxtron is a third path: use Lynx for UI, use a desktop host process for system capabilities, and use native extensions where native code is the right tool.
-
-Lynxtron centers on three features: Light-weight and Fast, Multiplatform, and Natively Extensible. Here is how those ideas map to desktop application development.
-
-## Explore with Lynxtron Go
-
-[Lynxtron Go](/lynxtron/go) is the official playground for Lynxtron, and is itself a desktop application built with the Lynxtron framework. It provides templates, a built-in example gallery, an editor, and a console for running and inspecting small Lynxtron applications without first setting up a full project. The runnable examples below can also be opened directly in Lynxtron Go.
-
-:::info Tested versions and platforms
-
-The examples in this article come from the Lynxtron Go 0.1.18 release and use Lynxtron runtime 0.0.28. The desktop examples support macOS on Apple silicon and Intel, and Windows on x64. The Notes example also supports Web. Lynxtron projects require Node.js `^22.18.0 || ^24.0.0 || ^26.0.0`.
-
-:::
-
-## Light-weight and Fast
-
-Lynxtron is Electron-like in the application model, but it does not ship a browser as the UI runtime. [`LynxWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow) hosts UI through the light-weight Lynx renderer, which keeps the desktop runtime smaller and gives startup, window creation, and memory usage a more direct path.
+- **Download size.** The Lynxtron 0.0.28 runtime ZIP is **24 MB on macOS arm64** and **35 MB on Windows x64**. Electron 44.3.0 is **130 MB** and **158 MB** on the same platforms. [Lynxtron release](https://github.com/lynx-family/lynxtron/releases/tag/v0.0.28) · [Electron release](https://github.com/electron/electron/releases/tag/v44.3.0)
+- **Idle memory.** In a 700×520 hello-world idle benchmark, Lynxtron 0.0.28 uses less than Electron 44.3.0: on macOS (Apple M5 Max MacBook Pro) it is **52 MB** of memory Footprint in one process, versus **86 MB** across Electron’s four processes — roughly **40% less**; on Windows (Windows 11 25H2, Core Ultra 7 155H) it is **68.3 MB** of Working Set - Private in one process, versus **158.7 MB** across Electron’s four processes — roughly **57% less**.
+- **Startup speed.** Douyin Desktop on Windows ships a Lynxtron-based startup entry alongside its existing Electron entry. Real-user data shows P50 time to first screen **27% shorter**; on cold start, P90 time to the first feed drops from **19.0 seconds** on Electron to **10.8 seconds**, a **43% reduction**.
 
 <Go
   example="benchmark"
@@ -50,11 +34,55 @@ Lynxtron is Electron-like in the application model, but it does not ship a brows
   nativeFramework="lynxtron"
 />
 
-> The benchmark reports Lynxtron's baseline package size, startup time, physical memory, JS heap, platform information, and the memory delta after opening a second `LynxWindow`, covering startup and memory use with one or two windows. The screenshot shows a cold launch, excluding the first launch after installation, of the Benchmark example v0.0.6 running on Lynxtron 0.0.28 and Windows 11 x64 (Core Ultra 7 155H with Intel Arc); startup spans process creation through the first content appearing on screen and is not an average.
+Run the Benchmark example in [Lynxtron Go](/lynxtron/go) to see download size, startup, and memory on your own machine. [See the separate startup benchmark and methodology.](https://github.com/lynx-family/lynxtron/issues/289)
 
-## Natively Extensible
+## Familiar Electron APIs and Architecture \{#multiplatform}
 
-Lynxtron extends the renderer through [LynxExtensionModule](/api/lynx-native-api/lynx-extension-module), the Desktop C++ extension API backed by the [public Lynx Native API](/api/lynx-native-api/lynx-view). This reference covers the native-view lifecycle, registration, and texture APIs used by this example. Native modules use the C++ extension-module wrapper and expose their JavaScript interface through [Node-API](/lynxtron/Native-Libraries/NodeJS-Native-Modules), while native UI and texture surfaces use the native-view wrappers. In desktop development, it is common for part of an application to need native-rendered graphics or native UI: a camera preview, video surface, map view, drawing canvas, platform control, or any surface that needs hardware access, deeper GPU integration, or system-provided rendering. Lynxtron can combine those native surfaces or native UI with the Lynx runtime, so native-rendered parts stay native while interaction and UI logic can still be built and iterated with Lynx UI.
+### A Node.js host with Lynx rendering
+
+A coding agent adapting an Electron app already has a starting point: its Node.js main script. Lynxtron carries over Electron’s main-process API: app lifecycle, menus, trays, and dialogs keep the same usage. The window layer is the most direct difference: `BrowserWindow` becomes `LynxWindow`, and window management methods such as creation, size, visibility, and full screen keep the naming and semantics of `BaseWindow`, but the window loads a Lynx bundle instead of HTML, and `webContents` is no longer available. Rendering changes with it: Electron renders the page in a separate Chromium process, while Lynxtron renders the interface on the main thread of the same process and runs business logic on a background thread. [Explore the architecture.](/lynxtron/learn/what-is-lynxtron)
+
+![Lynxtron runs the Node.js host and Lynx rendering on the main thread, with UI logic on a background thread.](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/lynxtron-architecture-en.png)
+
+### Manage windows with APIs agents already know
+
+For example, an Electron app opens its first window after `app.whenReady()`. The same pattern works here: create a [`LynxWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx) and load a compiled Lynx bundle.
+
+```ts
+import { app, LynxWindow } from '@lynx-js/lynxtron';
+
+app.whenReady().then(() => {
+  const win = new LynxWindow({ width: 800, height: 600 });
+  win.show();
+  win.loadFile('main.lynx.bundle');
+});
+```
+
+### Call Node.js objects directly from Lynx
+
+Lynxtron’s [preload scripts](/lynxtron/learn/Communication-Between-Node-And-Lynx) work the same way as [Electron’s](https://www.electronjs.org/docs/latest/tutorial/tutorial-preload): gain Node.js access in an isolated context, then expose what the UI needs. What differs is what can pass between the system environment and the UI environment. Electron’s [`contextBridge`](https://www.electronjs.org/docs/latest/api/context-bridge) serializes, proxies, or copies values across contexts, so the page never receives the original objects from the preload context. Lynxtron’s [`contextBridge.exposeInLynxBTS()`](/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) exposes JS objects to Lynx BTS directly: the object can carry functions, and those functions can use closures from the preload context, take other functions as arguments, and return Promises.
+
+Electron also offers `nodeIntegration`, which lets the page use Node.js directly, but it weakens isolation and is generally not recommended. Lynxtron doesn’t need that trade-off: the preload script uses Node.js in an isolated context, and the exposed objects stay directly callable.
+
+The file explorer example below does exactly this: the preload script exposes file APIs, and the Lynx UI calls them through [`NativeModules.nodejs.exposed`](/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed).
+
+<Go
+  example="file-explorer"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/file-explorer.gif"
+  deepLinkUrl="lynxtron-go://showcase/open?id=%40lynxtron-examples%2Ffile-explorer"
+  defaultFile="src/app/App.tsx"
+  defaultEntryName="main"
+  webPreview={false}
+  nativeFramework="lynxtron"
+/>
+
+## Extensible \{#natively-extensible}
+
+A desktop app’s existing native renderer, native views, and native modules can all be brought into Lynxtron, reusing native capabilities you already have.
+
+### Bring in a native renderer with external textures
+
+If your app already has a renderer, it can keep drawing. In the canvas example below, an external texture carries the renderer’s output into Lynx so the native canvas and Lynx controls share one interface.
 
 <Go
   example="native-texture-canvas"
@@ -66,33 +94,20 @@ Lynxtron extends the renderer through [LynxExtensionModule](/api/lynx-native-api
   nativeFramework="lynxtron"
 />
 
-> Lynx UI controls a native texture surface through a registered native module, keeping native rendering and front-end-style interaction in one component tree.
+### Embed native views in Lynxtron
 
-## Multiplatform
-
-Lynxtron does not lock Lynx to desktop. With Lynx, UI code can run across platforms, including the Web, and can be ported to new hosts with minimal effort.
+Lynxtron can wrap a native view as a Lynx element and place it directly in the interface, so existing native capabilities carry over. With this capability you can embed a system WebView in the app; if the app needs to ship Chromium, use the [CEF WebView](/lynxtron/api/@lynx-js/cef-webview/index.mdx) we provide. Any other native view can be wrapped the same way — a rich text editor, a large data grid, a map control.
 
 <Go
-  example="cross-platform-notes"
-  designWidth={800}
-  designHeight={600}
-  deepLinkUrl="lynxtron-go://showcase/open?id=@lynxtron-examples/cross-platform-notes"
-  defaultFile="src/app/api.ts"
-  defaultEntryName="main"
-  defaultTab="web"
-  webPreviewMode="responsive"
-  highlight="{71-87,146-149,165-178}"
+  example="system-webview"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/system-webview-7eb4e077d51a.webp"
+  defaultFile="src/app/index.tsx"
+  entry={['src/app/index.tsx', 'system_webview.mm', 'system_webview_win.cc']}
   nativeFramework="lynxtron"
 />
 
-> The same Lynx UI consumes one notes API. At build time, the desktop and Web targets wire that API to a Node preload bridge and a browser-side bridge, respectively.
+### Load Node-API modules on the UI side
 
-This is the Lynxtron cross-platform engineering model: keep the Lynx UI layer shareable, isolate host-specific logic behind platform adapters, and port the renderer model to new hosts when needed.
+Electron’s renderer runs in Chromium and can’t use [Node-API](/guide/use-native-modules.html?platform=node-api), so native modules live in the main process and the UI reaches them over IPC. Lynxtron’s preload script runs in the Node.js environment, so it can `require` native modules and hand the objects to the Lynx UI. The modules are the same npm Node-API packages Electron uses; only the rebuild tool changes, to [`@lynx-js/lynxtron-rebuild`](/lynxtron/api/@lynx-js/lynxtron-rebuild/). We’re also [bringing Node-API to all Lynx native platforms](https://github.com/lynx-family/lynx/discussions/845).
 
-## Engineering Boundaries
-
-What matters is the inspectable source boundary: the host process owns desktop capabilities, Lynx UI owns interface and interaction, and native extensions own the platform-specific pieces. Lynxtron's design is not about pushing every capability into one layer. It is about letting each layer own the work it is best suited for.
-
-## Get Started
-
-Follow [Lynxtron Getting Started](/lynxtron/introduction) to create and run your first project.
+[Create your first Lynxtron app](/lynxtron/introduction) or [try the examples in Lynxtron Go](/lynxtron/go).
