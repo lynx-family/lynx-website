@@ -245,6 +245,50 @@ In a selector, you can declare the value of CSS variables. By switching the sele
 
 In the example above, by toggling the class 'a' or 'b', you can achieve the effect of modifying the corresponding variable --main-bg-color.
 
+### Environment Variables (`env()`)
+
+On iOS, Lynx supports the `env()` function for four safe area insets: `safe-area-inset-top`, `safe-area-inset-right`, `safe-area-inset-bottom` and `safe-area-inset-left`.
+
+```css
+.top-bar {
+  margin-top: env(safe-area-inset-top);
+}
+```
+
+:::warning
+
+- This is a legacy implementation that does not follow the CSS specification, and it is deprecated.
+- `env()` does not accept a fallback value. A declaration such as `margin-top: env(safe-area-inset-top, 48px)` is dropped as a whole, without a warning.
+- The safe area insets are available only on iOS. On Android they are all `0`.
+
+:::
+
+To use safe area values on every platform, pass them from the client through [globalProps](/api/lynx-api/lynx/lynx-global-props) and set them as CSS variables:
+
+```tsx
+<view
+  style={{
+    '--safe-area-top': `${lynx.__globalProps.safeAreaTop ?? 0}px`, // [!code highlight]
+  }}
+>
+  <view className="top-bar" />
+</view>
+```
+
+```css
+.top-bar {
+  margin-top: var(--safe-area-top, 0px);
+}
+```
+
+`safeAreaTop` is an example name. Use the key that your client sets in `globalProps`, and declare it in the `GlobalProps` interface as shown in [globalProps](/api/lynx-api/lynx/lynx-global-props). Pass the insets in logical pixels, since a Lynx [`px`](/api/css/data-type/length) is a point on iOS and a dp on Android. Android `WindowInsets` report physical pixels, so divide them by the screen density first.
+
+:::info
+
+Setting a CSS variable in the `style` attribute requires LynxSDK 3.6 or later and [`enableCSSInlineVariables: true`](/api/packages/config-rsbuild-plugin/interfaces/Config#enablecssinlinevariables) in `pluginLynxConfig`. The option is `false` by default.
+
+:::
+
 ## Compatibility
 
 <APITable query={'css/properties/custom-property'} />
