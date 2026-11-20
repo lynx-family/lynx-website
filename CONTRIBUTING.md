@@ -218,10 +218,11 @@ The agent-lynx and Agent Skills guides, conversation components, and interactive
 maintained in
 [skills/packages/skills-docs](https://github.com/lynx-community/skills/tree/main/packages/skills-docs).
 `pnpm run sync:skills-docs` mounts `@lynx-js/skills-docs` during
-`prepare`. The skills pages under `docs/{en,zh}/ai/skills` are committed and
-updated by synchronization. The agent-lynx pages, shared modules
-(`docs/_ai`), public assets (`docs/public/ai/agent-lynx`), and top-level AI
-navigation (`docs/{en,zh}/ai/_meta.json`) remain generated and ignored. Change
+`prepare`. Package-owned Skills pages under `docs/{en,zh}/ai/skills` are committed
+and updated by synchronization; website-owned pages in that directory are edited
+directly. The agent-lynx pages, shared modules (`docs/_ai`) and public assets
+(`docs/public/ai/agent-lynx`) remain generated and ignored. Top-level AI navigation
+(`docs/{en,zh}/ai/_meta.json`) is generated and committed for review. Change
 other AI navigation in `docs/{en,zh}/ai/_meta.js`; its function receives the
 package section navigation and returns the complete sidebar. The website owns the AI
 landing page, overall section order, AGENTS.md guide, and MCP guides. Edit

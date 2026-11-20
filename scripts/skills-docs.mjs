@@ -103,9 +103,9 @@ function withEditUrl(text, url) {
   const field = `sourceEditUrl: ${JSON.stringify(url)}\n`;
   if (!text.startsWith('---\n')) return `---\n${field}---\n\n${text}`;
   return text.replace(
-    /^---\n([\s\S]*?)\n---/,
+    /^---\n([\s\S]*?)^---(?=\n|$)/m,
     (_, frontmatter) =>
-      `---\n${field}${frontmatter.replace(/^sourceEditUrl:.*\n?/gm, '')}\n---`,
+      `---\n${field}${frontmatter.replace(/^sourceEditUrl:.*\n?/gm, '')}---`,
   );
 }
 
@@ -183,7 +183,8 @@ export function mountSkillsDocs({
         : undefined;
       // An explicit website edit URL also permits a transfer from old package output.
       const wasPackageOwned = oldUrl
-        ? legacyEditBases.some((base) => oldUrl.startsWith(base + '/'))
+        ? oldUrl === previous.packageFiles?.[relative] ||
+          legacyEditBases.some((base) => oldUrl.startsWith(base + '/'))
         : Object.hasOwn(previous.packageFiles ?? {}, relative);
       if (wasPackageOwned) {
         if (!names.includes(name)) removals.add(relative);
@@ -237,9 +238,19 @@ export function mountSkillsDocs({
       Buffer.from(`${JSON.stringify(entries, null, 2)}\n`),
     );
   }
+  // A file cannot also be the parent directory of another planned file.
+  for (const file of planned.keys()) {
+    for (let parent = dirname(file); parent !== '.'; parent = dirname(parent)) {
+      if (planned.has(parent)) {
+        throw new Error(
+          `Conflicting documentation file/directory: ${parent}, ${file}`,
+        );
+      }
+    }
+  }
   // Metadata controls visibility only. Validate against all final files, including hidden pages.
   for (const [file, content] of planned) {
-    if (!/^(en|zh)\/ai\/(?:skills\/)?_meta.json$/.test(file)) continue;
+    if (!/^(en|zh)\/ai\/(?:.*\/)?_meta\.json$/.test(file)) continue;
     const directory = dirname(file);
     const seen = new Set();
     for (const item of JSON.parse(content)) {

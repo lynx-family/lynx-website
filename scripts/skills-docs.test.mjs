@@ -220,3 +220,70 @@ test('legacy package metadata cannot replace website-owned Skills navigation', (
     );
   }
 });
+
+test('empty frontmatter receives the package edit URL without changing the body', (t) => {
+  const f = fixture(t);
+  for (const locale of ['en', 'zh']) {
+    write(
+      join(f.source, `content/${locale}/ai/skills/owned.mdx`),
+      '---\n---\n# Guide\n',
+    );
+  }
+  syncWebsite(f);
+  for (const locale of ['en', 'zh']) {
+    const page = text(join(f.website, `docs/${locale}/ai/skills/owned.mdx`));
+    assert.match(page, /^---\nsourceEditUrl: "https:\/\/github.com\//);
+    assert.ok(page.endsWith('---\n# Guide\n'));
+  }
+  syncWebsite(f);
+});
+
+test('recorded provenance survives edit-base changes and still permits explicit transfers', (t) => {
+  const f = fixture(t);
+  syncWebsite(f);
+  const manifest = json(join(f.source, 'manifest.json'));
+  manifest.editBaseUrl = 'https://example.org/new-package-source';
+  write(join(f.source, 'manifest.json'), manifest);
+  syncWebsite(f);
+  const target = join(f.website, 'docs/en/ai/skills/owned.mdx');
+  assert.match(
+    text(target),
+    /sourceEditUrl: "https:\/\/example.org\/new-package-source/,
+  );
+  write(
+    target,
+    '---\nsourceEditUrl: "https://example.org/website/owned.mdx"\n---\n# Website',
+  );
+  assert.throws(() => syncWebsite(f), /Duplicate documentation ownership/);
+});
+
+test('resource file and directory collisions fail before any output changes', (t) => {
+  for (const [site, packaged] of [
+    ['examples', 'examples/demo.txt'],
+    ['examples/demo.txt', 'examples'],
+    ['example.json', 'example.json'],
+  ]) {
+    const f = fixture(t);
+    const target = join(f.website, 'docs/en/ai/skills', site);
+    write(target, 'Website resource');
+    write(join(f.source, 'content/en/ai/skills', packaged), 'Package resource');
+    assert.throws(
+      () => syncWebsite(f),
+      /Conflicting documentation file\/directory|Duplicate documentation ownership/,
+    );
+    assert.equal(text(target), 'Website resource');
+    assert.ok(!existsSync(join(f.website, 'docs/en/ai/agent-lynx/index.mdx')));
+  }
+});
+
+test('nested website metadata validates targets before writing', (t) => {
+  const f = fixture(t);
+  const target = join(f.website, 'docs/en/ai/skills');
+  write(join(target, '_meta.json'), [{ type: 'dir', name: 'guides' }]);
+  write(join(target, 'guides/_meta.json'), ['missing']);
+  assert.throws(() => syncWebsite(f), /Missing sidebar page: missing/);
+  assert.ok(!existsSync(join(f.website, 'docs/en/ai/agent-lynx/index.mdx')));
+  write(join(target, 'guides/missing.mdx'), '# Existing');
+  syncWebsite(f);
+  assert.equal(text(join(target, 'guides/missing.mdx')), '# Existing');
+});
