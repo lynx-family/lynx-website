@@ -31,6 +31,20 @@ public interface CDPEventListener {
 }
 ```
 
+### Harmony
+
+```ts title="CDPEventListener.ets"
+export interface CDPEventListener {
+  onEvent: (event: string) => void;
+}
+```
+
+:::note
+
+鸿蒙端 listener 的作用域是单个页面：它会收到该页面发出的所有 CDP 事件，但不会收到其他页面的事件。`onEvent` 会在 ArkTS UI 线程（UI task runner）上回调，且 DevTool 内部只持有 listener 的弱引用。
+
+:::
+
 ### 参数说明
 
 - `event`: 包含 CDP Event 内容的 JSON 字符串。
@@ -236,6 +250,101 @@ public class MainActivity extends Activity {
       LynxBaseInspectorOwner strongOwner = weakOwner.get();
       strongOwner.removeCDPEventListener(name);
     }, 10000);
+  }
+}
+```
+
+#### Harmony
+
+```ts title="TestCDPEventListener.ets"
+import { CDPEventListener } from '@lynx/lynx';
+
+export class TestCDPEventListener implements CDPEventListener {
+  private readonly name: string;
+
+  constructor(name: string) {
+    this.name = name;
+  }
+
+  public getName(): string {
+    return this.name;
+  }
+
+  public onEvent(event: string): void {
+    console.info(`TestCDPEventListener onEvent: ${event}`);
+  }
+}
+```
+
+```ts title="PageLoadClient.ets"
+import {
+  LynxBaseInspectorOwner,
+  LynxContext,
+  LynxPipelineInfo,
+  LynxViewClient,
+} from '@lynx/lynx';
+import { TestCDPEventListener } from './TestCDPEventListener';
+
+export class PageLoadClient extends LynxViewClient {
+  private context?: LynxContext;
+  // 需要保持强引用：DevTool 内部只持有 listener 的弱引用。
+  private listener?: TestCDPEventListener;
+  private owner?: WeakRef<LynxBaseInspectorOwner>;
+
+  public onPageStarted(
+    lynxContext: LynxContext,
+    pipelineInfo: LynxPipelineInfo,
+  ): void {
+    this.context = lynxContext;
+  }
+
+  public onLoadSuccess(url: string): void {
+    const owner = this.context?.getBaseInspectorOwner();
+    if (!owner) {
+      return;
+    }
+    this.owner = new WeakRef(owner);
+    this.addCDPEventListener(owner, 'TestListener');
+  }
+
+  private addCDPEventListener(
+    owner: LynxBaseInspectorOwner,
+    name: string,
+  ): void {
+    this.listener = new TestCDPEventListener(name);
+    owner.addCDPEventListener(name, this.listener);
+
+    const method =
+      '{"id":1,"method":"Page.startScreencast","params":{"format":"jpeg","mode":"fullscreen"}}';
+    owner.invokeCDPFromSDK(method, (result: string) => {});
+
+    setTimeout(() => {
+      this.owner?.deref()?.removeCDPEventListener(name);
+    }, 10000);
+  }
+}
+```
+
+```ts title="Index.ets"
+import { LynxView } from '@lynx/lynx';
+import { PageLoadClient } from './PageLoadClient';
+
+@Entry
+@Component
+struct Index {
+  // ...
+
+  private clients: PageLoadClient[] = [new PageLoadClient()];
+
+  build() {
+    Column() {
+      LynxView({
+        // ...
+        clients: this.clients,
+      })
+        .width('100%')
+        .height('100%');
+    }
   }
 }
 ```
