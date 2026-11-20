@@ -63,6 +63,10 @@ The downstream prepare flow directly executes:
 - `scripts/lynx-example.js`
 - `scripts/lynxtron-examples.js`
 
+The downstream imports `mountSkillsDocs` from `scripts/skills-docs.mjs` to mount
+its composed AI documentation. The docs packages supply content and composition;
+website mounting and cleanup are owned here.
+
 The downstream directly executes `scripts/lynx-living-spec.js` from its
 installed `lynx-doc` dependency through its own Living Spec orchestration layer.
 It prepares downstream source overlays first and runs the generator with the

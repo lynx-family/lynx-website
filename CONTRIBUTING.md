@@ -218,21 +218,43 @@ The agent-lynx and Agent Skills guides, conversation components, and interactive
 maintained in
 [skills/packages/skills-docs](https://github.com/lynx-community/skills/tree/main/packages/skills-docs).
 `pnpm run sync:skills-docs` mounts `@lynx-js/skills-docs` during
-`prepare`. The skills pages under `docs/{en,zh}/ai/skills` are committed and
-updated by synchronization. The agent-lynx pages, shared modules
-(`docs/_ai`), public assets (`docs/public/ai/agent-lynx`), and top-level AI
-navigation (`docs/{en,zh}/ai/_meta.json`) remain generated and ignored. Change
-other AI navigation in `_meta.template.json`; the `agent-lynx` and `skills`
-slots expand from the package's localized navigation. The website owns the AI
+`prepare`. Package-owned Skills pages under `docs/{en,zh}/ai/skills` are committed
+and updated by synchronization; website-owned pages in that directory are edited
+directly. The agent-lynx pages, shared modules (`docs/_ai`) and public assets
+(`docs/public/ai/agent-lynx`) remain generated and ignored. Top-level AI navigation
+(`docs/{en,zh}/ai/_meta.json`) is generated and committed for review. Change
+other AI navigation in `docs/{en,zh}/ai/_meta.js`; its function receives the
+package section navigation and returns the complete sidebar. The website owns the AI
 landing page, overall section order, AGENTS.md guide, and MCP guides. Edit
 packaged content in skills and update this single dependency when it is
 released; commit the synchronized skills output with the dependency change.
 
-Site-owned pages can stay under the same route with their navigation
-declarations in `_meta.site.json`, using `before` or `after` anchors.
-`sync:skills-docs` preserves those tracked files, merges the declarations, and
-lets a same-named site page replace the package page immediately. A2UI and
-OpenUI use this path.
+The complete agent-lynx chapter, including nested navigation, belongs to the
+package and is replaced on synchronization. The Skills section is the disjoint
+union of package-owned guides and website-owned pages. A Marketplace npm
+registration does not make the registered Skill's guide package-owned.
+
+Website-owned pages stay at their normal routes. The website maintains the complete
+Skills sidebar in `docs/{en,zh}/ai/skills/_meta.json`, including package and website
+pages. A consumer's `skills/_meta.js` can transform that website navigation. Skills
+packages need no `_meta.json`; legacy package Skills metadata is ignored. A page omitted
+from navigation remains routable; navigation does not select which files are
+published. API docs, UI, A2UI, OpenUI and the external trace guides are website
+sources. A duplicate file or route owner fails before synchronization writes
+anything. Transfer a page by removing it from the producer and setting its
+website `sourceEditUrl` in the same rollout.
+
+Both websites use this repository's `scripts/skills-docs.mjs`. The public entry
+point is `scripts/sync-skills-docs.mjs`; the internal website imports
+`mountSkillsDocs` from its installed OSS website after composing the internal
+package with the selected public input. The shared script leaves authored source
+unchanged, cleans retired package files using its generated
+`docs/.skills-docs.json` inventory, and exposes package/website source URLs for
+the documentation provenance adapter. That ignored inventory is generated
+metadata, not an additional authoring root. Existing package-generated
+`sourceEditUrl` fields also identify package output. Other files are preserved
+as website sources, including pages absent from navigation and supporting
+resources. CI checks committed generated output after prepare.
 
 For joint development, run the sync watcher alongside the website dev server:
 
