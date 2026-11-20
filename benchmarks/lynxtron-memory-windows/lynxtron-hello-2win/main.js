@@ -1,21 +1,20 @@
-// Same window as lynxtron-hello, plus a second window that opens 12 s after launch
-// so a sampler can compare one-window and two-window memory.
 const { app, LynxWindow } = require('lynxtron');
-const path = require('path');
+const path = require('node:path');
+const { runProbe } = require('../delta-probe.cjs');
 
-function openWindow() {
-  const win = new LynxWindow({
-    width: 700,
-    height: 520,
-    x: 80,
-    y: 80,
-    title: 'hello-lynxtron',
-  });
-  win.show();
-  win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
-}
-
-app.whenReady().then(() => {
-  openWindow();
-  setTimeout(openWindow, 12000);
+runProbe({
+  app,
+  createWindow: (options) => new LynxWindow(options),
+  async loadWindow(win) {
+    const ready = new Promise((resolve, reject) => {
+      win.once('ready-to-show', resolve);
+      win.once('--lynx-error', reject);
+    });
+    win.show();
+    if (!win.loadFile(path.join(__dirname, 'main.lynx.bundle'))) {
+      throw new Error('loadFile rejected the bundle');
+    }
+    await ready;
+    return { loaded: true };
+  },
 });

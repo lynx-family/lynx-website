@@ -1,19 +1,21 @@
-// Same window as electron-hello, plus a second window that opens 12 s after launch
-// so a sampler can compare one-window and two-window memory.
 const { app, BrowserWindow } = require('electron');
+const path = require('node:path');
+const { runProbe } = require('../delta-probe.cjs');
 
-function openWindow() {
-  const win = new BrowserWindow({
-    width: 700,
-    height: 520,
-    x: 80,
-    y: 80,
-    show: true,
-  });
-  win.loadFile('index.html');
-}
-
-app.whenReady().then(() => {
-  openWindow();
-  setTimeout(openWindow, 12000);
+runProbe({
+  app,
+  createWindow: (options) => new BrowserWindow(options),
+  async loadWindow(win) {
+    await win.loadFile(path.join(__dirname, 'index.html'));
+    const text = await win.webContents.executeJavaScript(
+      'document.body.innerText',
+    );
+    if (text.trim() !== 'Hello World')
+      throw new Error('Unexpected page content');
+    return {
+      rendererPID: win.webContents.getOSProcessId(),
+      url: win.webContents.getURL(),
+      text,
+    };
+  },
 });
