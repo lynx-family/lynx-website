@@ -8,7 +8,6 @@ import {
   HomeLayout as BaseHomeLayout,
   getCustomMDXComponent as basicGetCustomMDXComponent,
 } from '@rspress/core/theme-original';
-import { useRef } from 'react';
 import { ClearAPI } from './ClearApi';
 import { ConsistencyAndPerformance } from './CombinedConsistencyAndPerformance';
 import { StartBuilding } from './StartBuildingBottom';
@@ -20,23 +19,16 @@ export const HomeLayout = () => {
 
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
-  const copyElementRef = useRef<HTMLElement | null>(null);
-  const CodeWithRef = Code as unknown as React.ComponentType<
-    React.ComponentProps<typeof Code> & { ref?: React.Ref<HTMLElement> }
-  >;
 
   const afterHeroActions = (
     <div className="rp-doc home-hero-codeblock">
       <PreWithCodeButtonGroup
         containerElementClassName="language-bash"
         codeButtonGroupProps={{
-          copyElementRef:
-            copyElementRef as unknown as React.RefObject<HTMLDivElement | null>,
           showWrapCodeButton: false,
         }}
       >
-        <CodeWithRef
-          ref={copyElementRef}
+        <Code
           className="language-bash"
           style={{
             display: 'block',
@@ -45,7 +37,7 @@ export const HomeLayout = () => {
           }}
         >
           npm i @lynx-js/lynx-ui
-        </CodeWithRef>
+        </Code>
       </PreWithCodeButtonGroup>
     </div>
   );

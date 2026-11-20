@@ -16,14 +16,7 @@ import {
   Search as PluginAlgoliaSearch,
   ZH_LOCALES,
 } from '@rspress/plugin-algolia/runtime';
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
 
 import './index.scss';
 import './api-reference.scss';
@@ -162,10 +155,6 @@ function MainHomeLayoutView(props: Parameters<typeof BaseHomeLayout>[0]) {
 
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
-  const copyElementRef = useRef<HTMLElement | null>(null);
-  const CodeWithRef = Code as unknown as React.ComponentType<
-    React.ComponentProps<typeof Code> & { ref?: React.Ref<HTMLElement> }
-  >;
 
   // Rspress would pass `afterHero: undefined` and `afterHeroActions: undefined` props to HomeLayout,
   const {
@@ -186,18 +175,12 @@ function MainHomeLayoutView(props: Parameters<typeof BaseHomeLayout>[0]) {
           <PreWithCodeButtonGroup
             containerElementClassName="language-bash"
             codeButtonGroupProps={{
-              copyElementRef:
-                copyElementRef as unknown as React.RefObject<HTMLDivElement | null>,
               showWrapCodeButton: false,
             }}
           >
-            <CodeWithRef
-              ref={copyElementRef}
-              className="language-bash"
-              style={{ textAlign: 'center' }}
-            >
+            <Code className="language-bash" style={{ textAlign: 'center' }}>
               {createCliStr}
-            </CodeWithRef>
+            </Code>
           </PreWithCodeButtonGroup>
         </div>
       </>
