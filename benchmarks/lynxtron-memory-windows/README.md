@@ -20,9 +20,12 @@ used 86 MB across four processes. This kit reproduces the same protocol on Windo
 ## Layout
 
 ```
-lynxtron-hello/   minimal Lynxtron app (main.js + main.lynx.bundle)
-electron-hello/   minimal Electron app (main.js + index.html)
-measure.ps1       launcher + sampler
+lynxtron-hello/        minimal Lynxtron app (main.js + main.lynx.bundle)
+electron-hello/        minimal Electron app (main.js + index.html)
+lynxtron-hello-2win/   same app, plus a second window 12 s after launch
+electron-hello-2win/   same app, plus a second window 12 s after launch
+measure.ps1            launcher + sampler, one window
+measure-delta.ps1      launcher + sampler, one window then two windows
 ```
 
 Both apps open the same 700×520 window with the same static text, so the only
