@@ -789,6 +789,14 @@ transitioncancel: TransitionEvent;
 
 ### `boundingClientRect`
 
+获取目标节点的宽高和位置。在 Android、iOS 和 Harmony 的原生 UI 渲染路径中，`params.relativeTo` 指定位置坐标的参照系。
+
+- 省略或传 `null` 时，相对于 `LynxView`。
+- 传 `'screen'` 时，相对于屏幕。
+- 传节点的 `id` 时，相对于该节点。使用 `id` 本身，例如 `'container'`，无需添加 `#`。
+
+在 Android 上，设置 `androidEnableTransformProps: true` 后，`relativeTo` 才会生效。
+
 ```tsx
 lynx
   .createSelectorQuery()
@@ -797,9 +805,9 @@ lynx
     method: 'boundingClientRect',
     params: {
       iOSEnableAnimationProps: false, // 指定 iOS 上计算位置时是否考虑 animation 属性，默认为 false
-      androidEnableTransformProps: false, // 指定 Android 上计算位置时是否考虑 transform 属性，默认为 false
+      androidEnableTransformProps: true, // 考虑 Android 上的 transform 属性，默认为 false
       harmonyEnableTransformProps: false, // 指定 Harmony 上计算位置时是否考虑 transform 属性，默认为 false
-      relativeTo: null, // 指定参考节点（通过 idSelector 选择节点），默认相对于 LynxView，也可以设置为 "screen" 表示相对于屏幕坐标系
+      relativeTo: 'container',
     },
     success: function (res) {
       console.log(res);
@@ -810,8 +818,6 @@ lynx
   })
   .exec();
 ```
-
-前端可以调用该方法来获取目标节点的宽高和位置信息。
 
 ### `takeScreenshot`
 

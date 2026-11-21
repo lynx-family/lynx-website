@@ -10,60 +10,51 @@ import { APISummary, APITable } from '@lynx';
 
 <APISummary />
 
-`IntersectionObserver` is used to observe the intersection status between the target node and the reference node and the target node and the ancestor node. When the intersection status changes, the corresponding callback is triggered. Based on this, you can monitor whether the target node is exposed/de-exposed.
+`IntersectionObserver` tracks how a target node intersects a reference area, accounting for clipping by ancestor nodes. Use it to detect when a node becomes visible or leaves the visible area.
 
 ## Instance method
 
 [`IntersectionObserver.relativeTo()`](./intersection-observer/intersection-observer-relative-to.mdx)
 
-Specify the reference node, which is specified based on `id`.
+Select the reference node with a `#id` selector.
 
 [`IntersectionObserver.relativeToViewport()`](./intersection-observer/intersection-observer-relative-to-viewport.mdx)
 
-Specify `LynxView` as the reference node.
+Use the `LynxView` viewport as the reference area.
 
 [`IntersectionObserver.relativeToScreen()`](./intersection-observer/intersection-observer-relative-to-screen.mdx)
 
-Specify the screen as the reference node.
+Use the screen as the reference area.
 
-[`IntersectionObserver.observer()`](./intersection-observer/intersection-observer-observe.mdx)
+[`IntersectionObserver.observe()`](./intersection-observer/intersection-observer-observe.mdx)
 
-Specify the target node and callback. The target node is specified based on `id`.
+Select the target node with a `#id` selector and register a callback.
 
 [`IntersectionObserver.disconnect()`](./intersection-observer/intersection-observer-disconnect.mdx)
 
-Clear the target node and callback, the target node will no longer be observed, and the corresponding callback will not be triggered.
+Stop observing all target nodes.
 
 ## Example
 
-You can observe changes in the intersection status of the target node and the reference node through the following three steps:
-
-1. Create an `IntersectionObserver` object and specify a threshold list for intersection state changes
-2. Call the `relativeTo*` method of the `IntersectionObserver` object to specify the reference node
-3. Call the `observe` method of the `IntersectionObserver` object to specify the target node and callback
-4. Call the `disconnect` method of the `IntersectionObserver` object to clear the target node and callback
+This example observes how `#targetNode` intersects `#refNode` in the current `LynxView`.
 
 ```tsx
-// 1. Create IntersectionObserver object
-const observer = lynx.createIntersectionObserver(this, {
-  thresholds: [0, 0.25, 0.5, 0.75, 1.0],
-});
+const observer = lynx.createIntersectionObserver(
+  { componentId: '' },
+  { thresholds: [0, 0.25, 0.5, 0.75, 1] },
+);
 
-// 2. Call the relativeTo method to specify the reference node
 observer.relativeTo('#refNode', { left: 10, right: 10 });
-
-// 3. Call the observe method to specify the target node and callback
-observer.observe('#targetNode', (res) => {
-  console.log('IntersectionObserver: ', JSON.stringify(res));
+observer.observe('#targetNode', (entry) => {
+  console.log(entry.intersectionRatio);
 });
-
-// 4. Call the disconnect method to clear the target node and callback
-observer.disconnect();
 ```
+
+Call `observer.disconnect()` when you no longer need to observe the target.
 
 ## Precautions
 
-- When using `relativeTo` and `observe` methods, you need to pay attention to the calling timing and ensure that the reference node and target node have been created when calling. Otherwise, the observation will be invalid, that is, the corresponding callback will never be triggered.
+- Call `relativeTo()` and `observe()` after the reference and target nodes have been created.
 - On Android, child nodes of a horizontally scrolling `scroll-view` do not trigger callbacks while scrolling. Set [`flatten`](../elements/built-in/view.mdx#flatten) to `false` on the child node to trigger them.
 
 ## Compatibility
