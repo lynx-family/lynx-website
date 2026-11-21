@@ -22,6 +22,10 @@ type Platform =
   | 'macos-intel'
   | 'reactlynx';
 
+// Marks a selection until the next frame so newly mounted nested tabs can
+// distinguish it from the page's initial anchor navigation.
+let selection: { platform: Platform } | null = null;
+
 type IconRef = LCD.PlatformName | string;
 const PLATFORM_OPTIONS: Array<{
   id: Platform;
@@ -230,7 +234,14 @@ const PlatformTabsWithQuery = (props: PlatformTabsProps) => {
       {...props}
       initialized={initialized}
       platformFromQuery={platformFromQuery}
-      onSelect={(platform) => void setPlatformFromQuery(platform)}
+      onSelect={(platform) => {
+        const currentSelection = { platform };
+        selection = currentSelection;
+        void setPlatformFromQuery(platform);
+        requestAnimationFrame(() => {
+          if (selection === currentSelection) selection = null;
+        });
+      }}
     />
   );
 };
@@ -247,6 +258,8 @@ const PlatformTabsContent = ({
   platformFromQuery?: string | null;
   onSelect?: (platform: Platform) => void;
 }) => {
+  const [mountedBySelection] = useState(() => selection !== null);
+
   // Get available platforms from children
   const availablePlatforms = React.useMemo(
     () =>
@@ -283,14 +296,16 @@ const PlatformTabsContent = ({
   }, [activePlatform]);
 
   useEffect(() => {
-    if (!initialized) return;
+    // A nested instance revealed by selecting a tab keeps the reader's
+    // position instead of jumping to the URL fragment.
+    if (!initialized || mountedBySelection) return;
     // Wait for the component to load, then jump to the hash anchor if any.
     const frame = requestAnimationFrame(() => {
       const element = document.getElementById(window.location.hash?.slice(1));
       element?.scrollIntoView({ behavior: 'auto' });
     });
     return () => cancelAnimationFrame(frame);
-  }, [initialized]);
+  }, [initialized, mountedBySelection]);
 
   // Filter platform options to only show available ones
   const availableOptions = PLATFORM_OPTIONS.filter((option) =>
