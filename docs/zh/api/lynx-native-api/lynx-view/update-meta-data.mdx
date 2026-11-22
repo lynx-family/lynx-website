@@ -10,6 +10,19 @@ import { APISummary, APITable } from '@lynx';
 
 使用 [LynxUpdateMeta](/api/lynx-native-api/lynx-update-meta) 更新 `LynxView`，是客户端更新模板数据的主入口。
 
+本页统一维护各平台更新方法的完整签名、参数、类型和版本说明。
+
+## 平台对应关系
+
+原生平台通过 [LynxUpdateMeta](/api/lynx-native-api/lynx-update-meta) 对象传递模板数据和 globalProps。在 Web 平台上，[`<lynx-view>`](/api/lynx-native-api/lynx-view/lynx-view) 没有元数据结构，其方法直接接收数据。
+
+| 平台          | 更新方法                             | 输入                                                         |
+| :------------ | :----------------------------------- | :----------------------------------------------------------- |
+| Android       | `updateMetaData`                     | `LynxUpdateMeta`                                             |
+| iOS           | `updateMetaData:`                    | `LynxUpdateMeta`                                             |
+| Desktop (C++) | `UpdateData`                         | `std::shared_ptr<lynx::pub::LynxUpdateMeta>`                 |
+| Web           | `updateData` 和 `updateGlobalProps` | [`Cloneable`](#cloneable) 类型的模板数据或 globalProps |
+
 ## 语法
 
 ### Android
@@ -41,12 +54,6 @@ public void updateMetaData(LynxUpdateMeta meta);
 :::
 
 ```ts
-export type Cloneable<T = string | number | null | boolean | undefined> =
-  | T
-  | Record<string, T>
-  | T[]
-  | Array<Record<string, Cloneable>>;
-
 updateData(
   data: Cloneable,
   processorName?: string,
@@ -57,7 +64,22 @@ updateGlobalProps(data: Cloneable): void;
 
 #### 参数说明
 
-- `data`: 要更新的数据，应与 `structuredClone` 兼容。
+- `data`: 要更新的数据，应与 `structuredClone` 兼容。对于 `updateData`，它是模板数据；对于 `updateGlobalProps`，它是 globalProps。
+- `processorName`: 可选。在更新前处理 `data` 的 `dataProcessor` 名称。省略时使用默认的 `dataProcessor`。参见[使用宿主平台数据](/guide/use-data-from-host-platform)。
+- `callback`: 可选。更新完成后调用。
+
+#### Cloneable
+
+`<lynx-view>` 方法（包括 [`sendGlobalEvent`](/api/lynx-native-api/lynx-view/send-global-event)）接收的数据使用 `Cloneable` 类型声明：
+
+```ts
+export type Cloneable<T = string | number | null | boolean | undefined> =
+  | T
+  | Record<string, T>
+  | T[]
+  | Array<Record<string, Cloneable>>;
+```
+
 ### Desktop (C++)
 
 ```cpp
