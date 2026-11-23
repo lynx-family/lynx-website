@@ -101,6 +101,12 @@ export { Deprecated, Experimental, Required } from './api-badge';
 
 export { Go } from './go';
 export type { GoProps } from './go';
+export {
+  VersionLink,
+  VersionQRCode,
+  versionResolver,
+} from './version-resolver';
+export type { VersionLinkProps, VersionQRCodeProps } from './version-resolver';
 
 // ----------------------------------------------------------------------------
 // Media & Visuals

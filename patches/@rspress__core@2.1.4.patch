@@ -1,0 +1,238 @@
+diff --git a/dist/node/ssg-md/remarkSplitMdx.js b/dist/node/ssg-md/remarkSplitMdx.js
+index dba67dcae5497038ca42884559cf3e729da06874..6b7c8d9c43b8aaa6e2da2273079f006f07a17f90 100644
+--- a/dist/node/ssg-md/remarkSplitMdx.js
++++ b/dist/node/ssg-md/remarkSplitMdx.js
+@@ -1,8 +1,22 @@
++import { randomUUID } from "node:crypto";
++import { mdxToMarkdown } from "mdast-util-mdx";
+ import { unified, visit, remark_gfm, remark_mdx, remark_stringify } from "../../tx~0.js";
+ function remarkSplitMdx(options = {}) {
+     return (tree)=>{
+         const newChildren = [];
+         const { importMap, esmNodes } = collectEsmMetadata(tree);
++        visit(tree, 'listItem', (node)=>{
++            const head = node.children[0];
++            if ('boolean' == typeof node.checked && (head?.type === 'mdxJsxFlowElement' || head?.type === 'mdxFlowExpression')) node.children[0] = {
++                type: 'paragraph',
++                children: [
++                    {
++                        ...head,
++                        type: 'mdxJsxFlowElement' === head.type ? 'mdxJsxTextElement' : 'mdxTextExpression'
++                    }
++                ]
++            };
++        });
+         newChildren.push(...esmNodes);
+         for (const node of tree.children){
+             if ('mdxjsEsm' === node.type) continue;
+@@ -14,35 +28,44 @@ function remarkSplitMdx(options = {}) {
+                 newChildren.push(processJsxElement(node, importMap, options));
+                 continue;
+             }
+-            const hasJsxChildren = node.children?.some((child)=>'mdxJsxFlowElement' === child.type || 'mdxJsxTextElement' === child.type || 'mdxFlowExpression' === child.type || 'mdxTextExpression' === child.type);
+-            if (hasJsxChildren) {
+-                const processedChildren = processMixedContent(node, node.children || [], importMap, options);
+-                newChildren.push({
+-                    type: 'mdxJsxFlowElement',
+-                    name: null,
+-                    attributes: [],
+-                    children: processedChildren
+-                });
+-            } else newChildren.push(buildMdxFlowExpressionFragment(node));
++            let hasMdxDescendants = false;
++            visit(node, [
++                'mdxJsxFlowElement',
++                'mdxJsxTextElement',
++                'mdxFlowExpression',
++                'mdxTextExpression'
++            ], ()=>{
++                hasMdxDescendants = true;
++            });
++            if (hasMdxDescendants) newChildren.push({
++                type: 'mdxJsxFlowElement',
++                name: null,
++                attributes: [],
++                children: serializeMarkdownWithMdx([
++                    node
++                ], importMap, options)
++            });
++            else newChildren.push(buildMdxFlowExpressionFragment(node));
+         }
+         tree.children = newChildren;
+     };
+ }
+ function processJsxElement(node, importMap, options) {
+     const processedNode = processJsxChildren(node, importMap, options);
+-    const componentName = getComponentName(node.name);
+-    const isMdxFragment = componentName && importMap.get(componentName)?.endsWith('.mdx');
+-    if (isMdxFragment || shouldKeepJsxElement(node.name, importMap, options)) return processedNode;
++    if (shouldKeepJsxElement(node.name, importMap, options)) return processedNode;
+     return buildMdxFlowExpressionFragment(processedNode);
+ }
+ function processJsxChildren(node, importMap, options) {
+     if (!node.children || 0 === node.children.length) return node;
++    if ('mdxJsxTextElement' === node.type) return {
++        ...node,
++        children: serializeMarkdownWithMdx(node.children, importMap, options, node)
++    };
+     const processedChildren = [];
+     let textBuffer = [];
+     const flushTextBuffer = ()=>{
+         if (0 === textBuffer.length) return;
+-        const combined = textBuffer.map((child)=>serializeNodeToMarkdown(child)).join('');
+-        if (combined) processedChildren.push(createTextExpression(combined));
++        processedChildren.push(...serializeMarkdownWithMdx(textBuffer, importMap, options));
+         textBuffer = [];
+     };
+     for (const child of node.children)if ('mdxJsxFlowElement' === child.type || 'mdxJsxTextElement' === child.type) {
+@@ -58,6 +81,71 @@ function processJsxChildren(node, importMap, options) {
+         children: processedChildren
+     };
+ }
++function serializeMarkdownWithMdx(children, importMap, options, inlineParent) {
++    const prefix = `rspress${randomUUID().replaceAll('-', '')}mdx`;
++    const nodes = [];
++    const markers = new Map();
++    const preserveMdx = (node)=>{
++        let marker = markers.get(node);
++        if (!marker) {
++            marker = `${prefix}${nodes.length}end`;
++            nodes.push(node);
++            markers.set(node, marker);
++        }
++        return marker;
++    };
++    const handlers = {
++        mdxJsxFlowElement: preserveMdx,
++        mdxJsxTextElement (node, parent, state, info) {
++            return shouldKeepJsxElement(node.name, importMap, options) ? preserveMdx(node) : mdxJsxTextElementHandler(node, parent, state, info);
++        },
++        mdxFlowExpression: preserveMdx,
++        mdxTextExpression: preserveMdx
++    };
++    let inlineMarkdown;
++    if (inlineParent) handlers.root = (_node, _parent, state, info)=>{
++        const exit = state.enter(inlineParent.type);
++        inlineMarkdown = state.containerPhrasing(inlineParent, {
++            ...info,
++            before: '>',
++            after: '<'
++        });
++        exit();
++        return inlineMarkdown;
++    };
++    const serialized = createMarkdownProcessor(handlers).stringify({
++        type: 'root',
++        children
++    });
++    const markdown = inlineMarkdown ?? serialized;
++    const result = [];
++    const restored = new Set();
++    let offset = 0;
++    for (const match of markdown.matchAll(new RegExp(`(?:r|&#x72;)${prefix.slice(1)}(\\d+)en(?:d|&#x64;)`, 'g'))){
++        if (match.index > offset) result.push(createTextExpression(markdown.slice(offset, match.index)));
++        const index = Number(match[1]);
++        const node = nodes[index];
++        if (!node || restored.has(index)) throw new Error('[SSG-MD] Invalid or duplicate MDX marker during Markdown serialization.');
++        restored.add(index);
++        const processedNode = 'mdxJsxFlowElement' === node.type || 'mdxJsxTextElement' === node.type ? processJsxElement(node, importMap, options) : node;
++        if ('mdxJsxTextElement' === node.type || 'mdxTextExpression' === node.type) result.push({
++            type: 'mdxJsxTextElement',
++            name: 'span',
++            attributes: [],
++            data: {
++                _mdxExplicitJsx: true
++            },
++            children: [
++                processedNode
++            ]
++        });
++        else result.push(processedNode);
++        offset = match.index + match[0].length;
++    }
++    if (restored.size !== nodes.length) throw new Error('[SSG-MD] Could not restore all MDX markers after Markdown serialization.');
++    if (offset < markdown.length) result.push(createTextExpression(markdown.slice(offset)));
++    return result;
++}
+ function getComponentName(name) {
+     if (!name) return null;
+     if ('string' == typeof name) {
+@@ -70,39 +158,6 @@ function getComponentName(name) {
+     }
+     return null;
+ }
+-function processMixedContent(parentNode, children, importMap, options) {
+-    const result = [];
+-    let textBuffer = [];
+-    const prefix = 'heading' === parentNode.type ? `${'#'.repeat(parentNode.depth || 1)} ` : '';
+-    let prefixAdded = false;
+-    const flushTextBuffer = ()=>{
+-        if (textBuffer.length > 0) {
+-            let combined = textBuffer.join('');
+-            if (!prefixAdded && prefix) {
+-                combined = prefix + combined;
+-                prefixAdded = true;
+-            }
+-            if (combined) result.push(createTextExpression(combined));
+-            textBuffer = [];
+-        } else if (!prefixAdded && prefix) {
+-            result.push(createTextExpression(prefix.trimEnd()));
+-            prefixAdded = true;
+-        }
+-    };
+-    for (const child of children)if ('mdxJsxFlowElement' === child.type || 'mdxJsxTextElement' === child.type) {
+-        flushTextBuffer();
+-        result.push(processJsxElement(child, importMap, options));
+-    } else if ('mdxFlowExpression' === child.type || 'mdxTextExpression' === child.type) {
+-        flushTextBuffer();
+-        result.push(child);
+-    } else if ('text' === child.type) textBuffer.push(child.value || '');
+-    else {
+-        const serialized = serializeNodeToMarkdown(child);
+-        if (serialized) textBuffer.push(serialized);
+-    }
+-    flushTextBuffer();
+-    return result;
+-}
+ function buildMdxFlowExpressionFragment(node) {
+     const children = node.children;
+     const hasJsxChildren = children?.some((child)=>'mdxJsxFlowElement' === child.type || 'mdxJsxTextElement' === child.type || 'mdxFlowExpression' === child.type || 'mdxTextExpression' === child.type);
+@@ -193,15 +248,20 @@ function serializeClosingTag(node) {
+     if (!name) return '';
+     return `</${name}>`;
+ }
+-const processor = unified().use(remark_mdx).use(remark_gfm).use(remark_stringify, {
+-    bullet: '-',
+-    emphasis: '_',
+-    fences: true,
+-    incrementListMarker: true,
+-    handlers: {
+-        mdxjsEsm: ()=>''
+-    }
+-});
++const processor = createMarkdownProcessor();
++const mdxJsxTextElementHandler = mdxToMarkdown().extensions.find((extension)=>extension.handlers?.mdxJsxTextElement).handlers.mdxJsxTextElement;
++function createMarkdownProcessor(handlers = {}) {
++    return unified().use(remark_mdx).use(remark_gfm).use(remark_stringify, {
++        bullet: '-',
++        emphasis: '_',
++        fences: true,
++        incrementListMarker: true,
++        handlers: {
++            mdxjsEsm: ()=>'',
++            ...handlers
++        }
++    });
++}
+ function serializeNodeToMarkdown(node) {
+     const tempRoot = {
+         type: 'root',
+@@ -235,7 +295,7 @@ function collectEsmMetadata(tree) {
+ }
+ function shouldKeepJsxElement(nameField, importMap, options) {
+     const componentName = getComponentName(nameField);
+-    if (!componentName) return true;
++    if (!componentName || importMap.get(componentName)?.endsWith('.mdx')) return true;
+     const { includes, excludes } = options;
+     const importSource = importMap.get(componentName);
+     if (!includes && !excludes) return true;
