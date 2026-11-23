@@ -21,7 +21,7 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
   const dedicated = readJSON(
     path.join(root, 'packages/lynxtron-example-packages/package.json'),
   );
-  assert.equal(Object.keys(dedicated.dependencies).length, 8);
+  assert.equal(Object.keys(dedicated.dependencies).length, 9);
   // Pin real npm releases, never a GitHub archive or bootstrap placeholder.
   for (const version of Object.values(dedicated.dependencies)) {
     assert.match(version, /^\d+\.\d+\.\d+$/);
@@ -108,10 +108,12 @@ test('Lynxtron examples use the source-specific pipeline and blog references', (
       );
       assert.deepEqual(examples, [
         'benchmark',
+        'file-explorer',
         'native-texture-canvas',
-        'cross-platform-notes',
+        'system-webview',
       ]);
-      for (const example of examples) {
+      // Keep Web host coverage even when the blog does not embed that example.
+      for (const example of [...examples, 'cross-platform-notes']) {
         const desktopDir =
           example === 'benchmark' ? 'dist_precompiled/desktop' : 'dist/desktop';
         const metadata = readJSON(
