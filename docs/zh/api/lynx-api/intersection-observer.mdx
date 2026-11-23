@@ -9,60 +9,51 @@ import { APISummary, APITable } from '@lynx';
 
 <APISummary />
 
-`IntersectionObserver` 用于观察目标节点与参照节点及目标节点与祖先节点的交叉状态，当交叉状态发生变化时，触发相应回调，可以基于此实现监听目标节点是否曝光/反曝光。
+`IntersectionObserver` 观察目标节点与参照区域的相交情况，并考虑祖先节点的裁剪。可以用它检测节点的曝光和反曝光。
 
 ## 实例方法
 
 [`IntersectionObserver.relativeTo()`](./intersection-observer/intersection-observer-relative-to.mdx)
 
-指定参照节点，参照节点根据 `id` 指定。
+通过 `#id` 选择参照节点。
 
 [`IntersectionObserver.relativeToViewport()`](./intersection-observer/intersection-observer-relative-to-viewport.mdx)
 
-指定 `LynxView` 作为参照节点。
+以 `LynxView` 的可视区域为参照。
 
 [`IntersectionObserver.relativeToScreen()`](./intersection-observer/intersection-observer-relative-to-screen.mdx)
 
-指定屏幕作为参照节点。
+以屏幕为参照。
 
 [`IntersectionObserver.observe()`](./intersection-observer/intersection-observer-observe.mdx)
 
-指定目标节点与回调，目标节点根据 `id` 指定。
+通过 `#id` 选择目标节点，并注册回调。
 
 [`IntersectionObserver.disconnect()`](./intersection-observer/intersection-observer-disconnect.mdx)
 
-清除目标节点与回调，不再观察目标节点，也不会触发相应回调。
+停止观察所有目标节点。
 
 ## 示例
 
-可以通过以下三个步骤来观察目标节点与参照节点交叉状态的变化：
-
-1. 创建 `IntersectionObserver` 对象，指定交叉状态变化的阈值列表
-2. 调用 `IntersectionObserver` 对象的 `relativeTo*` 方法指定参照节点
-3. 调用 `IntersectionObserver` 对象的 `observe` 方法指定目标节点与回调
-4. 调用 `IntersectionObserver` 对象的 `disconnect` 方法清除目标节点与回调
+以下示例在当前 `LynxView` 中观察 `#targetNode` 与 `#refNode` 的相交情况。
 
 ```tsx
-// 1. 创建 IntersectionObserver 对象
-const observer = lynx.createIntersectionObserver(this, {
-  thresholds: [0, 0.25, 0.5, 0.75, 1.0],
-});
+const observer = lynx.createIntersectionObserver(
+  { componentId: '' },
+  { thresholds: [0, 0.25, 0.5, 0.75, 1] },
+);
 
-// 2. 调用 relativeTo 方法指定参照节点
 observer.relativeTo('#refNode', { left: 10, right: 10 });
-
-// 3. 调用 observe 方法指定目标节点与回调
-observer.observe('#targetNode', (res) => {
-  console.log('IntersectionObserver: ', JSON.stringify(res));
+observer.observe('#targetNode', (entry) => {
+  console.log(entry.intersectionRatio);
 });
-
-// 4. 调用 disconnect 方法清除目标节点与回调
-observer.disconnect();
 ```
+
+不再需要观察时，调用 `observer.disconnect()`。
 
 ## 注意事项
 
-- 使用 `relativeTo` 和 `observe` 方法需要注意调用时机，确保调用时候参照节点和目标节点已经创建，否则会导致观察失效，即始终无法触发相应回调
+- 在参照节点和目标节点创建后调用 `relativeTo()` 和 `observe()`。
 - Android 端横滑 `scroll-view` 的子节点在滑动时无法触发相应回调，需要在子节点上设置 [`flatten`](../elements/built-in/view.mdx#flatten) 为 `false` 才能触发回调。
 
 ## 兼容性
