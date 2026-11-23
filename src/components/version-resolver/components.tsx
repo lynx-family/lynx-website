@@ -79,6 +79,12 @@ export function createVersionComponents<R extends VersionResources, B>(
   }: Request & QRPresentation) {
     const result = resolve({ resource, params } as Request);
     const hasLabel = Boolean(label?.trim());
+    const text = hasLabel ? label : defaultLabel(result);
+
+    if (import.meta.env.SSG_MD) {
+      return <Link href={result.href}>{text}</Link>;
+    }
+
     return (
       <Link className={styles.qrCode} href={result.href}>
         <QRCodeSVG
@@ -88,7 +94,7 @@ export function createVersionComponents<R extends VersionResources, B>(
           focusable="false"
         />
         <span className={hasLabel ? styles.label : styles.visuallyHidden}>
-          {hasLabel ? label : defaultLabel(result)}
+          {text}
         </span>
       </Link>
     );
