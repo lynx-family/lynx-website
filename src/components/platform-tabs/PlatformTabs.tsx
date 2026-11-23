@@ -1,6 +1,8 @@
 import { cn } from '@/lib/utils';
 import { BorderBeam } from '@/components/home-comps/border-beam';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useQueryState } from 'nuqs';
+import { enableHistorySync, NuqsAdapter } from 'nuqs/adapters/react';
+import React, { useEffect, useState } from 'react';
 import { PlatformIcon } from '../platform/PlatformIcon';
 import type * as LCD from '@lynx-js/lynx-compat-data';
 import '../shared-tabs.scss';
@@ -136,7 +138,7 @@ const OptionSelector = React.forwardRef<
   {
     options: typeof PLATFORM_OPTIONS;
     selected: Platform;
-    onSelect: (id: Platform) => void;
+    onSelect?: (id: Platform) => void;
     activeCardRef?: React.Ref<HTMLButtonElement>;
   }
 >(({ options, selected, onSelect, activeCardRef }, ref) => {
@@ -153,7 +155,7 @@ const OptionSelector = React.forwardRef<
               'shared-tabs__card',
               isActive && 'shared-tabs__card--active',
             )}
-            onClick={() => onSelect(option.id)}
+            onClick={() => onSelect?.(option.id)}
           >
             {isActive && <BorderBeam duration={3} size={2} />}
             {Array.isArray(option.iconName) ? (
@@ -199,12 +201,52 @@ const OptionSelector = React.forwardRef<
  * </PlatformTabs>
  * ```
  */
-const PlatformTabs = ({
+const PlatformTabs = (props: PlatformTabsProps) => {
+  if (import.meta.env.SSG_MD) {
+    // Rspress's Markdown renderer runs effects without a browser.
+    return <PlatformTabsContent {...props} />;
+  }
+  return (
+    <NuqsAdapter>
+      <PlatformTabsWithQuery {...props} />
+    </NuqsAdapter>
+  );
+};
+
+const PlatformTabsWithQuery = (props: PlatformTabsProps) => {
+  const [platformFromQuery, setPlatformFromQuery] = useQueryState(
+    props.queryKey,
+  );
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    // Pick up Rspress client navigations that change the query string.
+    enableHistorySync();
+    setInitialized(true);
+  }, []);
+
+  return (
+    <PlatformTabsContent
+      {...props}
+      initialized={initialized}
+      platformFromQuery={platformFromQuery}
+      onSelect={(platform) => void setPlatformFromQuery(platform)}
+    />
+  );
+};
+
+const PlatformTabsContent = ({
   defaultPlatform = 'ios',
   children,
   className,
-  queryKey,
-}: PlatformTabsProps) => {
+  initialized = false,
+  platformFromQuery,
+  onSelect,
+}: PlatformTabsProps & {
+  initialized?: boolean;
+  platformFromQuery?: string | null;
+  onSelect?: (platform: Platform) => void;
+}) => {
   // Get available platforms from children
   const availablePlatforms = React.useMemo(
     () =>
@@ -223,65 +265,9 @@ const PlatformTabs = ({
     ? defaultPlatform
     : availablePlatforms[0];
 
-  // Get platform from query parameters or use default
-  const getPlatformFromQuery = useCallback(() => {
-    if (typeof window === 'undefined') {
-      return fallbackPlatform;
-    }
-    const searchParams = new URLSearchParams(window.location.search);
-    const platformFromQuery = searchParams.get(queryKey);
-
-    return availablePlatforms.includes(platformFromQuery as Platform)
-      ? (platformFromQuery as Platform)
-      : fallbackPlatform;
-  }, [availablePlatforms, fallbackPlatform, queryKey]);
-
-  // Match the server's default content before applying the browser's query.
-  const [activePlatform, setActivePlatform] =
-    useState<Platform>(fallbackPlatform);
-  const [initialized, setInitialized] = useState(false);
-
-  useEffect(() => {
-    setActivePlatform(getPlatformFromQuery());
-    setInitialized(true);
-  }, [getPlatformFromQuery]);
-
-  // Update query parameters when platform changes
-  useEffect(() => {
-    if (!initialized) return;
-    const searchParams = new URLSearchParams(window.location.search);
-
-    // Set or update the query parameter
-    searchParams.set(queryKey, activePlatform);
-
-    // Use replaceState to update query without page reload
-    const newUrl = new URL(window.location.href);
-    newUrl.search = searchParams.toString();
-    window.history.replaceState(null, '', newUrl);
-
-    // Cleanup query parameter when component unmounts
-    return () => {
-      const searchParams = new URLSearchParams(window.location.search);
-      searchParams.delete(queryKey);
-
-      const cleanUrl = new URL(window.location.href);
-      cleanUrl.search = searchParams.toString();
-      window.history.replaceState(null, '', cleanUrl);
-    };
-  }, [activePlatform, initialized, queryKey]);
-
-  // Listen for popstate events (back/forward navigation)
-  useEffect(() => {
-    const handlePopState = () => {
-      const newPlatform = getPlatformFromQuery();
-      if (newPlatform !== activePlatform) {
-        setActivePlatform(newPlatform);
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [activePlatform, getPlatformFromQuery]);
+  const activePlatform =
+    availablePlatforms.find((platform) => platform === platformFromQuery) ??
+    fallbackPlatform;
 
   const trackRef = React.useRef<HTMLDivElement>(null);
   const activeCardRef = React.useRef<HTMLButtonElement>(null);
@@ -335,7 +321,7 @@ const PlatformTabs = ({
         activeCardRef={activeCardRef}
         options={availableOptions}
         selected={activePlatform}
-        onSelect={setActivePlatform}
+        onSelect={onSelect}
       />
       {tabContent}
     </div>
