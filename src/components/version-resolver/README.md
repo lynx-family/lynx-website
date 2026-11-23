@@ -76,13 +76,18 @@ work without the prop. Other Link presentation props pass through.
 
 `VersionQRCode` owns `value` and accepts an optional text `label`. Omitted or
 blank labels show only the clickable QR. Its default text remains visually
-hidden to provide an accessible name and a normal link in Markdown SSG.
+hidden to provide an accessible name.
 An explicit nonblank label appears below the QR. The component renders an
 inline-block link without a paragraph wrapper; the parent controls surrounding
 layout. Size, `className`, and `style` target the SVG. One resolution supplies
 both the QR and its enclosing link; the SVG is hidden from assistive technology.
 Both components use Rspress's theme `Link`. The QR wrapper suppresses automatic
 host and external-link icons because the QR itself is the link's visual content.
+
+For Markdown SSG (`import.meta.env.SSG_MD`), `VersionQRCode` returns only a
+text link using the same URL and effective label, without rendering the QR SVG
+or its layout markup. `VersionLink` uses the same minimal rendering in both
+targets, preserving its text and optional code formatting.
 
 The link text and QR accessible name use these defaults from resolved parameters:
 
