@@ -6,11 +6,11 @@
 
 ## 监控与数据可用性
 
-Android 和 iOS 接口从 **Lynx 4.3** 开始提供，HarmonyOS 从 **Lynx 4.5** 开始支持。
+Android 和 iOS 的新接入建议使用 **Lynx 4.4 及以上版本**。HarmonyOS 从 **Lynx 4.5** 开始支持。更早版本采用下文所述的旧行为。
 
 | SDK 版本        | 查询行为                                                                                                                                                                                                      |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lynx 4.3        | 异步采集已注册且启用监控的实例。并发调用共享进行中的采集，`timeoutMs` 是采集截止时间。单实例 BTS 字节数表示后台 VM 整体堆。使用[内存监控配置](./memory-monitor-config.mdx#lynx-43-旧配置)中的旧配置开启监控。 |
+| Lynx 4.3 及以前 | 异步采集已注册且启用监控的实例。并发调用共享进行中的采集，`timeoutMs` 是采集截止时间。单实例 BTS 字节数表示后台 VM 整体堆。使用[内存监控配置](./memory-monitor-config.mdx#lynx-43-旧配置)中的旧配置开启监控。 |
 | Lynx 4.4        | 每次调用使用独立的原生监控快照。需要启用监控且进程被 `global_sample_rate` 选中。单实例 BTS 字节数改为页面归因分量，全局 BTS 堆按 VM 身份去重。`timeoutMs` 仅保留为元数据。                                    |
 | Lynx 4.5 及以上 | 即使关闭监控或进程未被选中，仍采集可用的 Element 内存、节点数、MTS 堆和 BTS VM 整体堆。新增监控/错误诊断、单实例 VM 信息、已销毁页面残留记录，并支持 HarmonyOS。                                              |
 
@@ -30,7 +30,7 @@ Lynx 4.5 还会返回已销毁页面的 BTS 残留诊断记录。关闭监控时
 
 ## 原生 API
 
-以下 iOS 和 Android 基础示例适用于 **Lynx 4.3 及以上版本**。使用总量前应检查 `collectionStatus`；Lynx 4.3 超时可能返回部分结果。
+以下 iOS 和 Android 示例以 **Lynx 4.4 及以上版本**为前提。使用总量前应检查 `collectionStatus`。
 
 ### iOS
 
@@ -121,24 +121,24 @@ LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
 );
 ```
 
-省略 `timeoutMs` 或传入 `<= 0` 的值时，使用默认值 `2000` ms。在 Lynx 4.3 的 Android 和 iOS 中，该值限制采集等待时间，到期可返回 `timeout` 和已经采集到的部分实例。从 Lynx 4.4 开始，原生快照仅为 API 兼容保留该值，不将其作为采集截止时间。Lynx 4.5 新增的 HarmonyOS 接口采用相同的元数据语义。
+省略 `timeoutMs` 或传入 `<= 0` 的值时，使用默认值 `2000` ms。在 Lynx 4.3 及以前版本的 Android 和 iOS 中，该值限制采集等待时间，到期可返回 `timeout` 和已经采集到的部分实例。从 Lynx 4.4 开始，原生快照仅为 API 兼容保留该值，不将其作为采集截止时间。Lynx 4.5 新增的 HarmonyOS 接口采用相同的元数据语义。
 
 ## 返回字段
 
-下表使用原生数值类型名称；HarmonyOS 中的数值字段均为 `number`。公共字段从 Lynx 4.3 开始在 Android 和 iOS 提供，新增字段和行为变化在下表标注；HarmonyOS 从 Lynx 4.5 开始提供这些字段。
+下表使用原生数值类型名称；HarmonyOS 中的数值字段均为 `number`。下表介绍 Android 和 iOS 的公共字段，并按 SDK 版本标注新增字段和行为变化；HarmonyOS 从 Lynx 4.5 开始提供这些字段。
 
 ### 全局结果
 
 | 字段                           | 类型             | 说明                                                                                                                                                                                                             |
 | ------------------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `collectionStartMs`            | `long`           | 采集开始的墙钟时间戳，单位毫秒。                                                                                                                                                                                 |
-| `collectionStatus`             | enum             | 成功为 `completed`，失败为 `error`。Lynx 4.3 可返回 `timeout` 和部分结果；从 Lynx 4.4 开始，原生快照不会返回 `timeout`。                                                                                         |
+| `collectionStatus`             | enum             | 成功为 `completed`，失败为 `error`。Lynx 4.3 及以前版本可返回 `timeout` 和部分结果；从 Lynx 4.4 开始，原生快照不会返回 `timeout`。                                                                               |
 | `memoryMonitoringEnabled`      | boolean          | Lynx 4.5 新增，表示本次查询是否启用监控。成功结果中为 `false` 时，页面 BTS 归因、UI 内存和已销毁页面残留不可用，但仍查询支持的 VM 整体堆；为 `true` 也不保证所有数据来源都可用。                                 |
 | `errorMessage`                 | string           | Lynx 4.5 新增。成功时为空，关闭监控时的查询也包括在内；失败时说明原因。                                                                                                                                          |
 | `collectionDurationMs`         | `long`           | 本次采集耗时，单位毫秒。                                                                                                                                                                                         |
-| `collectionTimeoutMs`          | `long`           | Lynx 4.3 中是采集截止时间；从 Lynx 4.4 开始仅保留为超时元数据。                                                                                                                                                  |
-| `expectedInstanceCount`        | `int`            | 查询开始时选取的实例数。Lynx 4.3 选取已注册的 fetcher，Lynx 4.4 选取原生监控实例，Lynx 4.5 还包含未启用监控的存活实例。不包含已销毁实例记录。                                                                    |
-| `completedInstanceCount`       | `int`            | `instances` 中的实例数。Lynx 4.3 超时时可能小于 `expectedInstanceCount`；从 Lynx 4.4 开始，原生快照成功时两者相等。                                                                                              |
+| `collectionTimeoutMs`          | `long`           | Lynx 4.3 及以前版本中是采集截止时间；从 Lynx 4.4 开始仅保留为超时元数据。                                                                                                                                        |
+| `expectedInstanceCount`        | `int`            | 查询开始时选取的实例数。Lynx 4.3 及以前版本选取已注册的 fetcher，Lynx 4.4 选取原生监控实例，Lynx 4.5 还包含未启用监控的存活实例。不包含已销毁实例记录。                                                          |
+| `completedInstanceCount`       | `int`            | `instances` 中的实例数。Lynx 4.3 及以前版本超时时可能小于 `expectedInstanceCount`；从 Lynx 4.4 开始，原生快照成功时两者相等。                                                                                    |
 | `totalBytes`                   | `long`           | 全局 Lynx 归因总内存，不包含 `appBytes`。Lynx 4.5 关闭监控时，包含可用的 Element + MTS + 活跃 BTS VM 整体堆；VM 按真实身份去重，UI 内存不可用。                                                                  |
 | `appBytes`                     | `long`           | 平台采样到的当前 App 内存 footprint。                                                                                                                                                                            |
 | `ratioToApp`                   | `double`         | `totalBytes / appBytes`；当 app bytes 不可用时为 `0`。                                                                                                                                                           |
@@ -146,27 +146,27 @@ LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
 | `elementNodeCount`             | `long` / `int32` | 聚合后的 Element 节点数。                                                                                                                                                                                        |
 | `viewBytes`                    | `long`           | 聚合后的 UI/View 内存。Lynx 4.5 关闭监控时为 `0`；启用监控时也取决于 UI 采集是否被采样选中。                                                                                                                     |
 | `mainThreadRuntimeBytes`       | `long`           | 聚合后的主线程 runtime 内存。                                                                                                                                                                                    |
-| `backgroundThreadRuntimeBytes` | `long`           | 全局 BTS 堆内存。Lynx 4.3 按非空 runtime group ID 分组，每组取最大的上报堆大小；空或 `-1` ID 按实例计入。从 Lynx 4.4 开始，每个实际原生 VM 堆只计入一次。Lynx 4.5 关闭监控时也查询支持的 VM 堆。                 |
+| `backgroundThreadRuntimeBytes` | `long`           | 全局 BTS 堆内存。Lynx 4.3 及以前版本按非空 runtime group ID 分组，每组取最大的上报堆大小；空或 `-1` ID 按实例计入。从 Lynx 4.4 开始，每个实际原生 VM 堆只计入一次。Lynx 4.5 关闭监控时也查询支持的 VM 堆。       |
 | `instances`                    | list             | 已采集的存活实例列表，按 `totalBytes` 降序排列。从 Lynx 4.4 开始，实例总量使用页面归因的 BTS 字节数。                                                                                                            |
 | `destroyedInstances`           | list             | Lynx 4.5 新增，关闭监控时为空。启用监控时复用 `LynxInstanceMemoryUsage`，每个共享 QuickJS VM 最多返回 5 个残留至少为 `1024` 字节的已销毁页面，在各 VM 内按残留字节数降序排列。记录不单独累加到全局总量或实例数。 |
 
 ### 单实例结果
 
-| 字段                           | 类型             | 说明                                                                                                                                                                                               |
-| ------------------------------ | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `instanceId`                   | `int32`          | 实例标识。从 Lynx 4.4 开始为原生 LynxShell ID；`-1` 表示实例尚未完全 attach。                                                                                                                      |
-| `pageId`                       | string           | Lynx 4.3 使用从 View 派生的临时标识；从 Lynx 4.4 开始为原生内存监控的页面 key。不可用时为空。                                                                                                      |
-| `url`                          | string           | template URL。Lynx 4.3 在每个 fetch 完成时获取，从 Lynx 4.4 开始由原生快照记录。不可用时为空。                                                                                                     |
-| `totalBytes`                   | `long`           | Element + View + MTS + BTS 字节数。Lynx 4.3 为每个实例计入 BTS VM 整体堆，从 Lynx 4.4 开始使用页面归因的 BTS 分量。Lynx 4.5 关闭监控时仅包含可用的 Element + MTS。不要把实例总量相加当作全局总量。 |
-| `elementBytes`                 | `long`           | 该实例的 Element tree 内存。                                                                                                                                                                       |
-| `elementNodeCount`             | `long` / `int32` | 该实例的 Element 节点数。                                                                                                                                                                          |
-| `viewBytes`                    | `long`           | 该实例的 UI/View 内存。Lynx 4.5 关闭监控时为 `0`，表示 UI 数据不可用，而非测得零内存。                                                                                                             |
-| `viewDetail`                   | object           | 按 view category、tag 或 view key 聚合的 UI 内存记录。Lynx 4.5 关闭监控时为空；启用监控时，当前全局快照桥接也可能返回空对象。                                                                      |
-| `mainThreadRuntimeBytes`       | `long`           | 主线程 runtime 堆字节数。Lynx 4.5 关闭监控时也会按需读取支持的 MTS 堆数据；不可用时为 `0`。查询不会触发 GC。                                                                                       |
-| `backgroundThreadRuntimeBytes` | `long`           | Lynx 4.3：实例所用后台 VM 的整体堆大小，共享实例可能各自返回同一份堆大小。从 Lynx 4.4 开始：VM 堆中归因到该页面的分量。Lynx 4.5 关闭监控时为 `0`；页面跟踪不可用时也可能为 `0`。                   |
-| `btsRuntimeGroupId`            | string           | 后台 runtime group ID。Lynx 4.3 用于全局 BTS 聚合，从 Lynx 4.4 开始全局聚合使用实际 VM 身份。该字符串不是唯一 VM 身份。                                                                            |
-| `btsRuntimeType`               | string           | Lynx 4.5 新增。后台 runtime 引擎类型：`quickjs`、`v8`、`jsvm`、`jsc` 或 `unknown`。                                                                                                                |
-| `btsRuntimeTotalBytes`         | `long`           | Lynx 4.5 新增。实例所用后台 VM 的整体堆大小，关闭监控时也会查询支持的 VM；不可用时为 `0`。与页面归因的 `backgroundThreadRuntimeBytes` 分开，不要将它加到实例的 `totalBytes` 中。                   |
+| 字段                           | 类型             | 说明                                                                                                                                                                                                         |
+| ------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `instanceId`                   | `int32`          | 实例标识。从 Lynx 4.4 开始为原生 LynxShell ID；`-1` 表示实例尚未完全 attach。                                                                                                                                |
+| `pageId`                       | string           | Lynx 4.3 及以前版本使用从 View 派生的临时标识；从 Lynx 4.4 开始为原生内存监控的页面 key。不可用时为空。                                                                                                      |
+| `url`                          | string           | template URL。Lynx 4.3 及以前版本在每个 fetch 完成时获取，从 Lynx 4.4 开始由原生快照记录。不可用时为空。                                                                                                     |
+| `totalBytes`                   | `long`           | Element + View + MTS + BTS 字节数。Lynx 4.3 及以前版本为每个实例计入 BTS VM 整体堆，从 Lynx 4.4 开始使用页面归因的 BTS 分量。Lynx 4.5 关闭监控时仅包含可用的 Element + MTS。不要把实例总量相加当作全局总量。 |
+| `elementBytes`                 | `long`           | 该实例的 Element tree 内存。                                                                                                                                                                                 |
+| `elementNodeCount`             | `long` / `int32` | 该实例的 Element 节点数。                                                                                                                                                                                    |
+| `viewBytes`                    | `long`           | 该实例的 UI/View 内存。Lynx 4.5 关闭监控时为 `0`，表示 UI 数据不可用，而非测得零内存。                                                                                                                       |
+| `viewDetail`                   | object           | 按 view category、tag 或 view key 聚合的 UI 内存记录。Lynx 4.5 关闭监控时为空；启用监控时，当前全局快照桥接也可能返回空对象。                                                                                |
+| `mainThreadRuntimeBytes`       | `long`           | 主线程 runtime 堆字节数。Lynx 4.5 关闭监控时也会按需读取支持的 MTS 堆数据；不可用时为 `0`。查询不会触发 GC。                                                                                                 |
+| `backgroundThreadRuntimeBytes` | `long`           | Lynx 4.3 及以前版本：实例所用后台 VM 的整体堆大小，共享实例可能各自返回同一份堆大小。从 Lynx 4.4 开始：VM 堆中归因到该页面的分量。Lynx 4.5 关闭监控时为 `0`；页面跟踪不可用时也可能为 `0`。                  |
+| `btsRuntimeGroupId`            | string           | 后台 runtime group ID。Lynx 4.3 及以前版本用于全局 BTS 聚合，从 Lynx 4.4 开始全局聚合使用实际 VM 身份。该字符串不是唯一 VM 身份。                                                                            |
+| `btsRuntimeType`               | string           | Lynx 4.5 新增。后台 runtime 引擎类型：`quickjs`、`v8`、`jsvm`、`jsc` 或 `unknown`。                                                                                                                          |
+| `btsRuntimeTotalBytes`         | `long`           | Lynx 4.5 新增。实例所用后台 VM 的整体堆大小，关闭监控时也会查询支持的 VM；不可用时为 `0`。与页面归因的 `backgroundThreadRuntimeBytes` 分开，不要将它加到实例的 `totalBytes` 中。                             |
 
 ### 已销毁实例结果
 
@@ -187,31 +187,35 @@ LynxMemoryUsageQuery.inst().queryLynxGlobalMemoryUsageAsync(
 ## 采集语义
 
 - Android 和 iOS 在 native 初始化后于 Lynx report thread 调用 callback；触碰平台 View 对象前必须切回主线程。HarmonyOS 的 callback 返回到发起调用的 ArkTS 环境。
-- Lynx 4.3 中，并发调用共享进行中的采集，选取的 fetcher 在采集开始时确定。超时会结束请求并返回可用的部分数据。
+- Lynx 4.3 及以前版本中，并发调用共享进行中的采集，选取的 fetcher 在采集开始时确定。超时会结束请求并返回可用的部分数据。
 - 从 Lynx 4.4 开始，每次调用使用独立的原生快照，成功结果的两个实例数相等；SDK 仅保留 `timeoutMs` 元数据。
 - Lynx 4.5 包含未启用监控的存活实例，并可在不开启监控的情况下查询。Engine actor 不可用或已销毁时，分类值可能为 `0`；查询完成不代表所有来源都可用。
 - Android 在 native library 初始化前查询时，Lynx 4.4 返回空的已完成结果，Lynx 4.5 返回错误。旧版 SDK 的空实例列表不能证明进程没有 Lynx 内存。
 - 没有被选取的存活实例时，已完成结果的 Lynx 归因内存为 0。Lynx 4.5 启用监控时，只要被跟踪的共享 VM 仍存活，`destroyedInstances` 仍可能包含诊断记录；关闭监控时该列表为空。
 - 按需查询不会开启内存监控、启动监控定时器或产生周期监控上报。
-- 从 Lynx 4.4 开始，全局 BTS 内存按原生 VM 身份去重，存活实例所用的每个 VM 整体堆只计入一次；具有相同 `btsRuntimeGroupId` 的不同 VM 仍分别统计。Lynx 4.3 使用字段表中的 group 聚合方式。
+- 从 Lynx 4.4 开始，全局 BTS 内存按原生 VM 身份去重，存活实例所用的每个 VM 整体堆只计入一次；具有相同 `btsRuntimeGroupId` 的不同 VM 仍分别统计。Lynx 4.3 及以前版本使用字段表中的 group 聚合方式。
 - Lynx 4.5 的已销毁实例残留不会单独累加到总量；存活实例所用 VM 中的残留已包含在其整体堆内。
 - 查询不会触发 GC。Lynx 4.5 支持采集的 VM 堆会在所属 JS runner 上刷新；页面残留取自最近一次内存监控 callback。
 
 ## 如何解读
 
-所有 SDK 版本都应先检查 `collectionStatus`：`error` 表示查询失败，不能当作内存为零。Lynx 4.3 的 `timeout` 表示部分数据，使用总量前应比较 `completedInstanceCount` 和 `expectedInstanceCount`。
+所有 SDK 版本都应先检查 `collectionStatus`：`error` 表示查询失败，不能当作内存为零。Lynx 4.3 及以前版本的 `timeout` 表示部分数据，使用总量前应比较 `completedInstanceCount` 和 `expectedInstanceCount`。
 
 Lynx 4.5 及以上版本还应检查 `errorMessage` 和 `memoryMonitoringEnabled`。关闭监控时，UI 内存和页面 BTS 归因内存不可用，返回 `0`，`destroyedInstances` 为空；可用的 BTS VM 整体堆仍计入全局总量。旧版 SDK 不提供这些诊断字段，需要从宿主配置确认监控状态。
 
-检查 `collectionDurationMs` 和两个实例数，再比较 `totalBytes`、`appBytes` 和 `ratioToApp`。跨快照比较时应保持 SDK 版本、监控和 UI 配置一致。Lynx 4.3/4.4 的零值或空结果可能来自缺少监控实例。实例 BTS 总量在 Lynx 4.4 改变口径，仅凭升级后的数值下降不能证明内存优化。
+检查 `collectionDurationMs` 和两个实例数，再比较 `totalBytes`、`appBytes` 和 `ratioToApp`。跨快照比较时应保持 SDK 版本、监控和 UI 配置一致。
+
+Lynx 4.3 及以前版本的零值或空结果可能来自实例未注册或未启用监控。Lynx 4.4 的零值或空结果可能来自未开启监控、进程未被 `global_sample_rate` 选中，或 Android 在原生库初始化前发起查询。
+
+实例 BTS 总量在 Lynx 4.4 改变口径，仅凭升级后的数值下降不能证明内存优化。
 
 再比较分类内存：
 
 - `elementBytes` 和 `elementNodeCount` 同时偏高，通常指向 Element tree 或节点数增长。
 - `viewBytes` 偏高，通常指向平台 UI/View 侧较重。可以通过 `viewDetail` 看主导 view 类别。
-- 全局 `mainThreadRuntimeBytes` 或 `backgroundThreadRuntimeBytes` 偏高，通常指向 runtime 内存。Lynx 4.3 的实例 BTS 字节数表示 VM 整体堆，从 Lynx 4.4 开始表示页面归因。Lynx 4.5 中可将页面分量与 `btsRuntimeTotalBytes` 比较，并通过 `btsRuntimeType` 确认引擎类型。堆大小为零也可能表示数据不可用。
+- 全局 `mainThreadRuntimeBytes` 或 `backgroundThreadRuntimeBytes` 偏高，通常指向 runtime 内存。Lynx 4.3 及以前版本的实例 BTS 字节数表示 VM 整体堆，从 Lynx 4.4 开始表示页面归因。Lynx 4.5 中可将页面分量与 `btsRuntimeTotalBytes` 比较，并通过 `btsRuntimeType` 确认引擎类型。堆大小为零也可能表示数据不可用。
 
-所有版本都可以通过多次查询检查生命周期：打开目标页面前、复现高内存后、退出页面并等待清理后。Lynx 4.3 应等待每次 callback 完成后再查询，避免多个观测共享进行中的请求。比较实例列表、分类内存和总量是否接近初始水位。仍出现在 `instances[]` 中的页面被视为存活；从列表消失也不能单独证明相关内存全部释放。
+所有版本都可以通过多次查询检查生命周期：打开目标页面前、复现高内存后、退出页面并等待清理后。Lynx 4.3 及以前版本应等待每次 callback 完成后再查询，避免多个观测共享进行中的请求。比较实例列表、分类内存和总量是否接近初始水位。仍出现在 `instances[]` 中的页面被视为存活；从列表消失也不能单独证明相关内存全部释放。
 
 Lynx 4.5 中，出现在 `destroyedInstances[]` 的页面已经退出，但仍有被跟踪到的 BTS 内存，可检查 `backgroundThreadRuntimeResidualBytes` 是否持续存在或增长。这些记录是线索，不能直接证明泄漏：每个共享 QuickJS VM 最多返回 5 个满足条件的页面，且查询不会强制 GC。
 
