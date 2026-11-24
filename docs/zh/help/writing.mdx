@@ -3,13 +3,13 @@ description: '文档指南的编写标准与最佳实践。'
 ---
 
 import { PackageManagerTabs, Steps } from '@theme';
-import { NextSteps, PlatformTabs } from '@lynx';
+import { NextSteps, Note, PlatformTabs } from '@lynx';
 
 # 编写指南
 
-本页概述了在 Lynx 网站上编写 **指南** 的标准和最佳实践。指南是叙述性文档，旨在教授概念、解释架构或引导用户完成特定任务。
+本页概述了在 Lynx 网站上编写**指南**的标准和最佳实践。指南是叙述性文档，旨在教授概念、解释架构或引导用户完成特定任务。
 
-有关结构良好的指南的优秀示例，请参阅 [快速上手](/guide/start/quick-start) 和 [与现有应用集成](/guide/start/integrate-with-existing-apps) 页面。
+有关结构良好的指南的优秀示例，请参阅[快速上手](/guide/start/quick-start)和[与现有应用集成](/guide/start/integrate-with-existing-apps)页面。
 
 ## 页面结构 (Frontmatter)
 
@@ -27,13 +27,28 @@ title: 理解生命周期
 
 ### `context`
 
-定义页面的框架或上下文（例如 `react`, `vue`, `new`）。这对于 **DSL 切换器** 功能至关重要，该功能允许用户在不同框架实现之间切换文档视图。
+定义页面的框架或上下文（例如 `react`, `vue`, `new`）。这对于 **DSL 切换器**功能至关重要，该功能允许用户在不同框架实现之间切换文档视图。
 
 ```yaml
 ---
 context: react
 ---
 ```
+
+### `since`
+
+声明整页所讲解的能力或用法需要的最低 Lynx SDK 版本。
+使用带引号的 `x.y` 字符串，并保持中英文页面一致。
+
+```yaml
+---
+since: '4.3'
+---
+```
+
+主题会自动显示页面级版本胶囊。最新稳定版和显示基线由站点提供，
+作者只需声明 `since`。它表示支持要求，不是页面创建或最后更新时的版本。
+未填写时，不作版本支持声明。
 
 ## 编写教程
 
@@ -136,6 +151,74 @@ import { PlatformTabs } from '@lynx';
 使用 `<PlatformBadge>` 或特定平台图标（如 `<AndroidOnly />`）显式标记仅适用于特定平台的功能或注意事项。
 
 有关使用详情，请参阅 [MDX 组件参考](./components#平台徽章-platform-badges)。
+
+## 版本特定内容 (Version-Specific Content)
+
+把版本信息放在它实际约束的最小范围内：
+
+- **整页**：整个能力或流程有统一的 SDK 要求时，使用 frontmatter `since`。
+- **小节或方法**：在标题下方或受影响的内容旁放置 `<Since since="x.y" />`。
+  可选的新功能不应抬高整页的最低版本。
+- **用法变化**：在受影响的示例旁放置 Note，写清版本边界和旧版本的做法。
+
+明确区分 Lynx SDK、ReactLynx 包、工具链和平台要求。
+`Unreleased` 表示该版本尚未包含在稳定版 Lynx SDK 中，
+不意味着已有 Nightly 产物，也不等同于 Experimental API 稳定性。
+
+### 局部 SDK 要求 (Local SDK Requirements)
+
+从 `@lynx` 导入 `Since`。小节具有统一要求时使用紧凑标识；
+某项能力需要单独说明时，传入子内容：
+
+```mdx
+import { Since } from '@lynx';
+
+<Since since="3.4" />
+
+<Since since="4.5">
+
+堆快照采集当前仅支持 QuickJS。
+
+</Since>
+```
+
+声明应只约束版本已知的能力。SDK 版本不能说明 DevTool 或引擎是否支持，
+这些限制需要在正文中保留。发布状态和 HTML 显示基线由站点提供。
+隐藏标识不会隐藏子内容。Markdown 始终保留版本事实；
+存在子内容时，将版本和子内容放在同一个 blockquote 中。
+
+### 版本差异说明 (Version-Specific Note)
+
+同一 API 或流程在不同版本有不同用法时，使用 Note。
+写清受影响的功能、用法变化的起始版本和旧版本的替代方式。
+把说明放在它约束的代码附近，保持直接可见。
+
+下面的示例来自 React 的
+[`createContext` 参考](https://react.dev/reference/react/createContext#provider)，
+描述的是 React 的版本边界：
+
+```mdx
+import { Note } from '@lynx';
+
+<Note title="版本差异说明">
+
+从 React 19 开始，可以直接将 `<SomeContext>` 渲染为 provider。
+
+在更早的 React 版本中，使用 `<SomeContext.Provider>`。
+
+</Note>
+```
+
+<Note title="版本差异说明">
+
+从 React 19 开始，可以直接将 `<SomeContext>` 渲染为 provider。
+
+在更早的 React 版本中，使用 `<SomeContext.Provider>`。
+
+</Note>
+
+Lynx 功能也采用这个写法，并使用实际的 SDK 或包版本边界。
+未发布功能应明确写出未发布状态；存在已发布的替代方案时，同时提供该方案。
 
 ## 相关资源
 

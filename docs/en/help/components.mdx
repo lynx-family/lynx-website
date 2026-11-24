@@ -20,11 +20,128 @@ import {
   VideoList,
   EditThis,
   VersionTable,
+  Since,
 } from '@lynx';
 
 # MDX Components Reference
 
 This page serves as a reference for the custom components available in the Lynx documentation. You can import these from `@lynx`.
+
+## Versioning
+
+The page-level SDK indicator uses `since` from guide frontmatter and the site's
+release configuration. Import `Since` from `@lynx` for requirements scoped
+to local content in MDX:
+
+```tsx
+<Since since="4.3" />
+```
+
+Place a local indicator immediately below the heading or beside the content it
+qualifies. Local indicators use a brand-colored icon and the soft Note background.
+
+`Since` reads `latestStable` and `baseline` from the site's configuration by
+default. Either prop can override its site value; omitted props still use the
+site's settings. Without site configuration, it uses the SDK release metadata
+with no display baseline. The examples below specify overrides to demonstrate
+particular states. Guide frontmatter only needs `since`.
+
+### Released
+
+The stable indicator includes the **L** icon and a compact version label such
+as **4.2+**, meaning this version and later.
+
+```tsx
+<Since since="4.2" latestStable="4.2" />
+```
+
+<div className="rp-not-doc">
+  <Since since="4.2" latestStable="4.2" />
+</div>
+
+### Unreleased
+
+The indicator still shows the minimum version with **+**. Its sparkle icon
+signals an upcoming release. Hover or focus the capsule to see **Unreleased**.
+Expand it to read the explanation and release notes link; the tooltip stays
+hidden while expanded.
+
+```tsx
+<Since since="4.3" latestStable="4.2" />
+```
+
+<div className="rp-not-doc">
+  <Since since="4.3" latestStable="4.2" />
+</div>
+
+### Page-level
+
+When one SDK requirement applies to a whole guide, declare it in frontmatter:
+
+```yaml
+---
+since: '4.3'
+---
+```
+
+The theme renders a neutral indicator before the page title. Authors do not
+need to add `Since` to the page body.
+
+### Local Content
+
+Pass children to group a version requirement with its explanation in a Note-style
+block. The version replaces the generic Note title. Only the release explanation
+collapses; the authored content remains visible.
+
+```mdx
+<Since since="4.5">
+
+Heap snapshot collection currently supports QuickJS only.
+
+</Since>
+```
+
+<Since since="4.5" latestStable="4.2">
+
+Heap snapshot collection currently supports QuickJS only.
+
+</Since>
+
+Markdown export keeps the version, unreleased status when applicable, and children
+inside one blockquote. Without children, the version and status are plain paragraphs.
+
+### Display Baseline
+
+Versions at or below `baseline` hide the HTML indicator. The first example
+renders nothing; Markdown output still includes the version fact.
+
+```tsx
+<Since since="3.2" latestStable="4.2" baseline="3.2" />
+<Since since="3.2" latestStable="4.2" baseline="3.2" format="markdown" />
+```
+
+<div className="rp-not-doc">
+  <Since since="3.2" latestStable="4.2" baseline="3.2" />
+</div>
+
+<Since since="3.2" latestStable="4.2" baseline="3.2" format="markdown" />
+
+When children are present, the baseline hides only the indicator. The content
+block remains visible, including any platform, engine, or tooling restrictions:
+
+```mdx
+<Since since="3.2" baseline="3.2">
+
+Platform requirements still apply.
+
+</Since>
+```
+
+<Since since="3.2" latestStable="4.2" baseline="3.2">
+
+Platform requirements still apply.
+
+</Since>
 
 ## Callout & Alerts
 
