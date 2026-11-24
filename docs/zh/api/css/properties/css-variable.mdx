@@ -246,6 +246,50 @@ lynx.getElementById('test').setProperty({
 
 对于上面的例子，通过切换 class 'a' 或者 'b' 可以达到修改对应变量 `--main-bg-color` 的效果。
 
+### 环境变量（`env()`）
+
+在 iOS 上，Lynx 支持通过 `env()` 函数读取四个安全区域内边距：`safe-area-inset-top`、`safe-area-inset-right`、`safe-area-inset-bottom` 和 `safe-area-inset-left`。
+
+```css
+.top-bar {
+  margin-top: env(safe-area-inset-top);
+}
+```
+
+:::warning
+
+- 这是一个不遵循 CSS 规范的旧实现，已被弃用。
+- `env()` 不接受回退值。像 `margin-top: env(safe-area-inset-top, 48px)` 这样的声明会被整体丢弃，并且不会给出任何警告。
+- 安全区域内边距只在 iOS 上可用，在 Android 上全部为 `0`。
+
+:::
+
+如需在所有平台上使用安全区域的值，请由客户端通过 [globalProps](/api/lynx-api/lynx/lynx-global-props) 传入，并将其设置为 CSS 变量：
+
+```tsx
+<view
+  style={{
+    '--safe-area-top': `${lynx.__globalProps.safeAreaTop ?? 0}px`, // [!code highlight]
+  }}
+>
+  <view className="top-bar" />
+</view>
+```
+
+```css
+.top-bar {
+  margin-top: var(--safe-area-top, 0px);
+}
+```
+
+`safeAreaTop` 只是示例名称，请使用客户端在 `globalProps` 中设置的键名，并按照 [globalProps](/api/lynx-api/lynx/lynx-global-props) 中的说明在 `GlobalProps` 接口中声明它。请以逻辑像素传入内边距值，因为 Lynx 的 [`px`](/api/css/data-type/length) 在 iOS 上等于 pt，在 Android 上等于 dp。Android 的 `WindowInsets` 返回的是物理像素，需要先除以屏幕密度。
+
+:::info
+
+在 `style` 属性中设置 CSS 变量需要 LynxSDK 3.6 及以上版本，并在 `pluginLynxConfig` 中开启 [`enableCSSInlineVariables: true`](/api/packages/config-rsbuild-plugin/interfaces/Config#enablecssinlinevariables)。该选项默认为 `false`。
+
+:::
+
 ## 兼容性
 
 <APITable query={'css/properties/custom-property'} />
