@@ -152,7 +152,9 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
       return platforms[browser].name;
     };
     const escapeCell = (value: string) =>
-      value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+      value
+        .replace(/\r\n?|\n/g, ' ')
+        .replace(/[&\\|`*_[\]<>~]/g, (char) => `&#${char.charCodeAt(0)};`);
     const code = (value: string) => {
       const runs = value.match(/`+/g) ?? [];
       const fence = '`'.repeat(
@@ -222,7 +224,7 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
       if (compat) {
         const feature = name || accessor.split('.').pop()!;
         rows.push(
-          `| ${escapeCell(code(feature))} | ${visible.map((browser) => escapeCell(supportLabel(compat.support[browser], browser))).join(' | ')} |\n`,
+          `| ${escapeCell(feature)} | ${visible.map((browser) => escapeCell(supportLabel(compat.support[browser], browser))).join(' | ')} |\n`,
         );
 
         const lines: string[] = [];
