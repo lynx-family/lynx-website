@@ -8,27 +8,29 @@ import { APISummary, APITable } from '@lynx';
 
 <APISummary />
 
-表示动画事件对象，继承自 [CustomEvent](./custom-event)，用于描述动画在其生命周期中的状态变化，比如开始、结束等。
+`AnimationEvent` 表示动画开始、结束等状态变化。
 
 该事件对象包含动画的类型、名称等信息。
 
 ## 实例属性
 
-### detail
+### params
 
 ```ts
-detail: {
+params: {
   animation_type: string,
-  animation_name: string,
-  new_animator: boolean,
+  animation_name?: string,
+  new_animator?: boolean,
+  elapsedTime?: number,
 }
 ```
 
-表示该事件所属动画的一些基础信息。
+推荐优先从 [`detail`](./custom-event#detail) 读取动画字段。如果某个字段缺失，可从 [`params`](./custom-event#params) 读取。
 
-- `animation-type`: 该动画的类型。如果是关键帧动画，这个值为 `keyframe-animation`；如果是过渡动画，这个值为 `transition-animation`。
-- `animation-name`: 该动画的名称。如果是关键帧动画，就是 CSS 里 [`@keyframes`](../../css/at-rule/keyframes.mdx) 的名字；如果是过渡动画，就是 CSS 里 [`transition-property`](../../css/properties/transition-property.mdx) 的名字。
-- `new_animator`: 默认值，为 `true`。
+- `animation_type`: 该动画的类型。如果是关键帧动画，这个值为 `keyframe-animation`；如果是过渡动画，这个值为 `transition-animation`。
+- `animation_name`: 该动画的名称。如果是关键帧动画，就是 CSS 里 [`@keyframes`](../../css/at-rule/keyframes.mdx) 的名字；过渡动画提供名称时，取 CSS 里 [`transition-property`](../../css/properties/transition-property.mdx) 的名字。
+- `new_animator`: 该字段存在时，值为 `true`。
+- `elapsedTime`: 事件发生时的动画时间，单位为秒，不计入暂停时间和正值的动画延迟。
 
 ## AnimationEvent 的类型
 

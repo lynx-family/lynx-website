@@ -8,27 +8,29 @@ import { APISummary, APITable } from '@lynx';
 
 <APISummary />
 
-Represents the animation event object, inherited from [CustomEvent](./custom-event), used to describe the state changes of the animation in its life cycle, such as start, end, etc.
+An `AnimationEvent` describes a change in an animation, such as when it starts or ends.
 
 The event object contains information such as the type and name of the animation.
 
 ## Instance property
 
-### detail
+### params
 
 ```ts
-detail: {
+params: {
   animation_type: string,
-  animation_name: string,
-  new_animator: boolean,
+  animation_name?: string,
+  new_animator?: boolean,
+  elapsedTime?: number,
 }
 ```
 
-Represents some basic information of the animation to which the event belongs.
+Prefer reading animation fields from [`detail`](./custom-event#detail). If a field is missing there, check [`params`](./custom-event#params).
 
-- `animation-type`: The type of the animation. If it is a keyframe animation, this value is `keyframe-animation`; if it is a transition animation, this value is `transition-animation`.
-- `animation-name`: The name of the animation. If it is a keyframe animation, it is the name of [`@keyframes`](../../css/at-rule/keyframes.mdx) in CSS; if it is a transition animation, it is the name of [`transition-property`](../../css/properties/transition-property.mdx) in CSS.
-- `new_animator`: The default value is `true`.
+- `animation_type`: The type of the animation. If it is a keyframe animation, this value is `keyframe-animation`; if it is a transition animation, this value is `transition-animation`.
+- `animation_name`: The name of the animation. For keyframe animations, this is the name of [`@keyframes`](../../css/at-rule/keyframes.mdx) in CSS. For transitions, it is the name of [`transition-property`](../../css/properties/transition-property.mdx) in CSS, when provided.
+- `new_animator`: When present, this flag is `true`.
+- `elapsedTime`: The animation time in seconds when the event occurs, excluding pauses and positive delay.
 
 ## AnimationEvent type
 

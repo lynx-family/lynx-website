@@ -43,14 +43,14 @@ element.animate(
       color: '#000',
     },
   ],
-  2000,
+  { duration: 2000 },
 );
 ```
 
-2. 一个 key 是 offset，value 是关键帧组成的**对象**。
+2. 一个 key 是 offset，value 是关键帧组成的**对象**。偏移量用 `'50%'` 这样的百分数表示。Lynx 会将 `'.50'` 解析为 0.5%，将 `'50'` 解析为 50%。
 
 ```js
-element.animate({
+const keyframes = {
   '0%': {
     // from
     opacity: 0,
@@ -66,13 +66,14 @@ element.animate({
     opacity: 1,
     color: '#000',
   },
-});
+};
+element.animate(keyframes, { duration: 2000 });
 ```
 
-3. 你也可以给关键帧指定一个 [timing-function](../../css/properties/animation-timing-function)。
+也可以为关键帧指定 [timing-function](../../css/properties/animation-timing-function)。
 
 ```js
-element.animate([
+const keyframes = [
   {
     // from
     opacity: 0,
@@ -85,7 +86,8 @@ element.animate([
     color: '#000',
     'animation-timing-function': 'ease-in',
   },
-]);
+];
+element.animate(keyframes, { duration: 2000 });
 ```
 
 #### options
@@ -113,13 +115,14 @@ element.animate([
 ### 返回值
 
 返回 `Animation` 对象。
-`Animation` 对象上的方法：
 
-| 方法名               | 说明                                         |
-| -------------------- | -------------------------------------------- |
-| `Animation.cancel()` | 取消动画的执行，会触发animation cancel事件。 |
-| `Animation.pause()`  | 暂停动画的执行。                             |
-| `Animation.play()`   | 恢复动画的执行。                             |
+| `Animation` 的方法 | `AnimationElement` 的方法                   | 行为               |
+| ------------------ | ------------------------------------------- | ------------------ |
+| `cancel(): void`   | `cancelAnimate(animation: Animation): void` | 取消动画。         |
+| `pause(): void`    | `pauseAnimate(animation: Animation): void`  | 暂停动画。         |
+| `play(): void`     | `playAnimate(animation: Animation): void`   | 恢复已暂停的动画。 |
+
+推荐使用 `Animation.play()`、`Animation.pause()` 和 `Animation.cancel()`。
 
 ## 示例
 
@@ -146,8 +149,9 @@ let ani = lynx.getElementById('test').animate(
     fill: 'both',
   },
 );
+```
 
-// 当参数为Object时，严格要求百分比写法为带有百分号的百分数 诸如'.50','50'等值都会被除以100
+```js
 let ani = lynx.getElementById('test').animate(
   {
     '0%': {
@@ -284,9 +288,7 @@ Animate API 的事件和 CSS Animation [动画事件](../event/animation-event#a
 
 - Animate API 与 CSS Animation 会互相覆盖，后生效的那一方会覆盖前者。
 
-- Animate API 不生效，可能是 getElementById 未能选中节点：
-  - 可能是 ID 选择器不正确
-  - 可能是 ID 选择器的值依赖复杂 JS 表达式，导致 ID 选择器的值无法在首屏得到，此时若 getElementById 的时机过早 (如在 ComponentDidMount)，则可能找不到节点
+- 如果动画不生效，请确认 Lynx 处理 `animate()` 调用时，对应 ID 的节点已存在。
 
 :::
 

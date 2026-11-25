@@ -43,14 +43,14 @@ element.animate(
       color: '#000',
     },
   ],
-  2000,
+  { duration: 2000 },
 );
 ```
 
-2. An **object** consisting of keys as offsets and values as keyframes.
+2. An **object** consisting of keys as offsets and values as keyframes. Use percentages such as `'50%'` for offsets. Lynx interprets `'.50'` as 0.5% and `'50'` as 50%.
 
 ```js
-element.animate({
+const keyframes = {
   '0%': {
     // from
     opacity: 0,
@@ -66,13 +66,14 @@ element.animate({
     opacity: 1,
     color: '#000',
   },
-});
+};
+element.animate(keyframes, { duration: 2000 });
 ```
 
-3. You can also assign a [timing-function](../../css/properties/animation-timing-function) for each keyframe.
+You can also assign a [timing-function](../../css/properties/animation-timing-function) for each keyframe.
 
 ```js
-element.animate([
+const keyframes = [
   {
     // from
     opacity: 0,
@@ -85,7 +86,8 @@ element.animate([
     color: '#000',
     'animation-timing-function': 'ease-in',
   },
-]);
+];
+element.animate(keyframes, { duration: 2000 });
 ```
 
 #### options
@@ -113,13 +115,14 @@ An **object** that contains one or more properties:
 ### Return Value
 
 Returns an `Animation` object.
-The `Animation` object has the following methods:
 
-| Method Name          | Description                                                      |
-| -------------------- | ---------------------------------------------------------------- |
-| `Animation.cancel()` | Cancels the animation and triggers the `animation cancel` event. |
-| `Animation.pause()`  | Pauses the animation.                                            |
-| `Animation.play()`   | Resumes the animation.                                           |
+| `Animation` method | `AnimationElement` method                   | Behavior                    |
+| ------------------ | ------------------------------------------- | --------------------------- |
+| `cancel(): void`   | `cancelAnimate(animation: Animation): void` | Cancels the animation.      |
+| `pause(): void`    | `pauseAnimate(animation: Animation): void`  | Pauses the animation.       |
+| `play(): void`     | `playAnimate(animation: Animation): void`   | Resumes a paused animation. |
+
+We recommend using `Animation.play()`, `Animation.pause()`, and `Animation.cancel()`.
 
 ## Example
 
@@ -146,8 +149,9 @@ let ani = lynx.getElementById('test').animate(
     fill: 'both',
   },
 );
+```
 
-// When the parameter is Object, it is strictly required to write percentages with a percent sign such as '.50' and '50' equivalents are divided by 100
+```js
 let ani = lynx.getElementById('test').animate(
   {
     '0%': {
@@ -284,9 +288,7 @@ The events for the `animate()` API are the same as the [animation events](../eve
 
 - Animate Api and CSS Animation will override each other, and the one that takes effect later will override the former.
 
-- The Animate API may not take effect, possibly because `getElementById` failed to select the node:
-  - The ID selector might be incorrect
-  - The value of the ID selector might depend on a complex JS expression, causing the value of the ID selector not to be available on the first screen. In this case, if getElementById is invoked too early (like in ComponentDidMount), it might not find the node.
+- If the animation does not start, check that the node with the specified ID exists when Lynx processes the `animate()` call.
 
 :::
 
