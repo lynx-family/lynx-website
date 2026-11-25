@@ -22,6 +22,10 @@ type Platform =
   | 'macos-intel'
   | 'reactlynx';
 
+// Descendants mounted after an ancestor initializes are tab changes, rather
+// than the page's initial anchor navigation.
+const InitializedTabsContext = React.createContext(false);
+
 type IconRef = LCD.PlatformName | string;
 const PLATFORM_OPTIONS: Array<{
   id: Platform;
@@ -247,6 +251,9 @@ const PlatformTabsContent = ({
   platformFromQuery?: string | null;
   onSelect?: (platform: Platform) => void;
 }) => {
+  const ancestorInitialized = React.useContext(InitializedTabsContext);
+  const [skipInitialHashScroll] = useState(() => ancestorInitialized);
+
   // Get available platforms from children
   const availablePlatforms = React.useMemo(
     () =>
@@ -283,14 +290,16 @@ const PlatformTabsContent = ({
   }, [activePlatform]);
 
   useEffect(() => {
-    if (!initialized) return;
+    // A nested instance revealed by selecting a tab keeps the reader's
+    // position instead of jumping to the URL fragment.
+    if (!initialized || skipInitialHashScroll) return;
     // Wait for the component to load, then jump to the hash anchor if any.
     const frame = requestAnimationFrame(() => {
       const element = document.getElementById(window.location.hash?.slice(1));
       element?.scrollIntoView({ behavior: 'auto' });
     });
     return () => cancelAnimationFrame(frame);
-  }, [initialized]);
+  }, [initialized, skipInitialHashScroll]);
 
   // Filter platform options to only show available ones
   const availableOptions = PLATFORM_OPTIONS.filter((option) =>
@@ -323,7 +332,11 @@ const PlatformTabsContent = ({
         selected={activePlatform}
         onSelect={onSelect}
       />
-      {tabContent}
+      <InitializedTabsContext.Provider
+        value={initialized || ancestorInitialized}
+      >
+        {tabContent}
+      </InitializedTabsContext.Provider>
     </div>
   );
 };
