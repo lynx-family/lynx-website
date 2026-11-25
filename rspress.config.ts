@@ -18,9 +18,8 @@ import {
   normalizeGeneratedRoute,
   removeBrokenLanguageAlternates,
 } from './scripts/build/generated-html.mts';
-import versionJson from './docs/public/version.json';
+import { pluginVersionBindings } from '@lynx-js/lynx-doc-transform/rsbuild';
 import { SITE_BASE } from './shared-route-config';
-import { visit } from 'unist-util-visit';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 
 const PUBLISH_URL = 'https://lynxjs.org/';
@@ -58,6 +57,9 @@ export default defineConfig({
       printFileSize: false,
     },
     plugins: [
+      pluginVersionBindings({
+        versionFile: path.join(__dirname, 'docs/public/version.json'),
+      }),
       pluginGoogleAnalytics({ id: 'G-WGP37JWP9M' }),
       // Open Graph / Twitter Card meta is injected per-page by the theme
       // (theme/OgHead.tsx) so each route gets its build-time OG image and
@@ -259,10 +261,6 @@ export default defineConfig({
   ],
   markdown: {
     defaultWrapCode: false,
-    // Replace "{versionJson.X}" placeholders inside fenced/inline code.
-    // MDX does not evaluate JS expressions inside code fences, so without this
-    // users would see the raw placeholder text in the rendered output.
-    remarkPlugins: [remarkReplaceVersionJsonPlaceholders],
     link: {
       // Preserve the pre-2.1 policy until existing anchors are repaired.
       checkAnchors: false,
@@ -355,30 +353,4 @@ async function collectHtmlFiles(dir: string): Promise<string[]> {
 
 function routeForHtmlFile(root: string, file: string) {
   return normalizeGeneratedRoute(path.relative(root, file));
-}
-
-function remarkReplaceVersionJsonPlaceholders() {
-  const replacements: Array<[string, string]> = [
-    ['{versionJson.LYNX_VERSION}', String(versionJson.LYNX_VERSION ?? '')],
-    ['{versionJson.PRIMJS_VERSION}', String(versionJson.PRIMJS_VERSION ?? '')],
-  ];
-
-  const applyReplacements = (input: string) => {
-    let out = input;
-    for (const [from, to] of replacements) {
-      if (from && to) out = out.split(from).join(to);
-    }
-    return out;
-  };
-
-  return (tree: unknown) => {
-    visit(tree as any, (node: any) => {
-      if (
-        (node?.type === 'code' || node?.type === 'inlineCode') &&
-        typeof node.value === 'string'
-      ) {
-        node.value = applyReplacements(node.value);
-      }
-    });
-  };
 }

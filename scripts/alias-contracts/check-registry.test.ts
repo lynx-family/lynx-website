@@ -1861,11 +1861,8 @@ test('validates consumer modules from the package produced by pnpm pack', async 
       // Gate 3 uses the same declared parser/runtime dependencies as Gate 2.
       for (const dependency of [
         'typescript',
-        '@mdx-js/mdx',
+        '@lynx-js/lynx-doc-transform',
         'gray-matter',
-        'remark-cjk-friendly',
-        'remark-cjk-friendly-gfm-strikethrough',
-        'remark-gfm',
         '@rspress/core',
       ]) {
         const target = path.join(io.directory, 'node_modules', dependency);

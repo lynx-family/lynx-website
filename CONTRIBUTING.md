@@ -371,6 +371,19 @@ candidate revision. See the
 [understanding guide](./scripts/alias-contracts/UNDERSTANDING.md) for gate
 architecture and scope.
 
+### Version Bindings in Code Examples
+
+Use `{versionJson.LYNX_VERSION}` and `{versionJson.PRIMJS_VERSION}` inside
+Markdown code examples when the example follows the site's native SDK
+versions. These exact bindings resolve before both HTML and Markdown-export
+compilation; surrounding text and suffixes remain unchanged. Unknown uppercase
+keys and missing version values fail the build. This syntax does not evaluate
+arbitrary JavaScript.
+
+See [Documentation version bindings](./packages/lynx-doc-transform/README.md) for supported
+code regions, literal examples, downstream configuration, and compiler
+boundaries.
+
 ### Portable Documentation Imports
 
 Documentation runtime modules and public assets have different portability
