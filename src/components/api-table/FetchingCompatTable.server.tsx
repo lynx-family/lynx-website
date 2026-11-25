@@ -254,7 +254,13 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
           const statements = Array.isArray(support) ? support : [support];
           for (const statement of statements) {
             const notes: string[] = [];
-            if (statement.version_removed)
+            if (
+              statement.version_removed &&
+              !statements.some(
+                (otherStatement) =>
+                  otherStatement.version_added === statement.version_removed,
+              )
+            )
               notes.push(
                 typeof statement.version_removed === 'string'
                   ? `Removed in ${statement.version_removed} and later`
