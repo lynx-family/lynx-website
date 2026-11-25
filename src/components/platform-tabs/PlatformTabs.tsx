@@ -22,9 +22,9 @@ type Platform =
   | 'macos-intel'
   | 'reactlynx';
 
-// Marks a selection until the next frame so newly mounted nested tabs can
-// distinguish it from the page's initial anchor navigation.
-let selection: { platform: Platform } | null = null;
+// Descendants mounted after an ancestor initializes are tab changes, rather
+// than the page's initial anchor navigation.
+const InitializedTabsContext = React.createContext(false);
 
 type IconRef = LCD.PlatformName | string;
 const PLATFORM_OPTIONS: Array<{
@@ -234,14 +234,7 @@ const PlatformTabsWithQuery = (props: PlatformTabsProps) => {
       {...props}
       initialized={initialized}
       platformFromQuery={platformFromQuery}
-      onSelect={(platform) => {
-        const currentSelection = { platform };
-        selection = currentSelection;
-        void setPlatformFromQuery(platform);
-        requestAnimationFrame(() => {
-          if (selection === currentSelection) selection = null;
-        });
-      }}
+      onSelect={(platform) => void setPlatformFromQuery(platform)}
     />
   );
 };
@@ -258,7 +251,8 @@ const PlatformTabsContent = ({
   platformFromQuery?: string | null;
   onSelect?: (platform: Platform) => void;
 }) => {
-  const [mountedBySelection] = useState(() => selection !== null);
+  const ancestorInitialized = React.useContext(InitializedTabsContext);
+  const [skipInitialHashScroll] = useState(() => ancestorInitialized);
 
   // Get available platforms from children
   const availablePlatforms = React.useMemo(
@@ -298,14 +292,14 @@ const PlatformTabsContent = ({
   useEffect(() => {
     // A nested instance revealed by selecting a tab keeps the reader's
     // position instead of jumping to the URL fragment.
-    if (!initialized || mountedBySelection) return;
+    if (!initialized || skipInitialHashScroll) return;
     // Wait for the component to load, then jump to the hash anchor if any.
     const frame = requestAnimationFrame(() => {
       const element = document.getElementById(window.location.hash?.slice(1));
       element?.scrollIntoView({ behavior: 'auto' });
     });
     return () => cancelAnimationFrame(frame);
-  }, [initialized, mountedBySelection]);
+  }, [initialized, skipInitialHashScroll]);
 
   // Filter platform options to only show available ones
   const availableOptions = PLATFORM_OPTIONS.filter((option) =>
@@ -338,7 +332,11 @@ const PlatformTabsContent = ({
         selected={activePlatform}
         onSelect={onSelect}
       />
-      {tabContent}
+      <InitializedTabsContext.Provider
+        value={initialized || ancestorInitialized}
+      >
+        {tabContent}
+      </InitializedTabsContext.Provider>
     </div>
   );
 };
