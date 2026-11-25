@@ -1,9 +1,10 @@
 import React from 'react';
 import type * as LCD from '@lynx-js/lynx-compat-data';
-import { useLang } from '@rspress/core/runtime';
+import { useLang, useLocation, withBase } from '@rspress/core/runtime';
 import fs from 'fs';
 import path from 'path';
-import { localizeMdnUrl } from './compat-table/links';
+import { isCurrentDocPath, localizeMdnUrl } from './compat-table/links';
+import { getCurrentSupport, versionIsPreview } from './compat-table/utils';
 
 const LCD_BASE_PATH = path?.join?.(
   __dirname,
@@ -88,6 +89,7 @@ type FetchingCompatTableProps = {
  */
 export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
   const locale = useLang();
+  const { pathname } = useLocation();
 
   // Use the utility function within useMemo
   const { module, accessor } = React.useMemo(() => parseQuery(query), [query]);
@@ -126,122 +128,212 @@ export function FetchingCompatTable({ query }: FetchingCompatTableProps) {
       return `**Error:** Could not load compatibility data for \`${query}\``;
     }
 
-    const parts: string[] = [];
-
-    // Title
-    parts.push(`**Compatibility Table**\n`);
-    parts.push(`**Query:** \`${accessor}\`\n\n`);
-
-    // Check if __compat exists
-    if (!compatData.__compat) {
-      return `**Error:** No compatibility data found for \`${accessor}\``;
+    const platforms = platformData.platforms;
+    const native: LCD.PlatformName[] = [];
+    const clay: LCD.PlatformName[] = [];
+    const web: LCD.PlatformName[] = [];
+    const hideClay = Boolean(process.env.COMPAT_TABLE_HIDE_CLAY);
+    for (const browser of Object.keys(platforms) as LCD.PlatformName[]) {
+      if (browser.startsWith('clay_')) {
+        if (!hideClay) clay.push(browser);
+      } else if (platforms[browser].type === 'native') native.push(browser);
+      else if (platforms[browser].type === 'web') web.push(browser);
     }
-
-    const compat = compatData.__compat;
-
-    // Status information
-    if (compat.status) {
-      const statuses: string[] = [];
-      if (compat.status.experimental) statuses.push('🧪 Experimental');
-      if (compat.status.deprecated) statuses.push('⚠️ Deprecated');
-      if (statuses.length > 0) {
-        parts.push(`**Status:** ${statuses.join(', ')}\n\n`);
+    if (hideClay) {
+      if (platforms.clay_macos) native.push('clay_macos');
+      if (platforms.clay_windows) native.push('clay_windows');
+    }
+    const visible = [...native, ...clay, ...web];
+    const platformName = (browser: LCD.PlatformName) => {
+      if (hideClay) {
+        if (browser === 'clay_macos') return 'macOS';
+        if (browser === 'clay_windows') return 'Windows';
       }
-    }
+      return platforms[browser].name;
+    };
+    const escapeCell = (value: string) =>
+      value
+        .replace(/\r\n?|\n/g, ' ')
+        .replace(/[&\\|`*_[\]<>~]/g, (char) => `&#${char.charCodeAt(0)};`);
+    const code = (value: string) => {
+      const runs = value.match(/`+/g) ?? [];
+      const fence = '`'.repeat(
+        Math.max(0, ...runs.map((run) => run.length)) + 1,
+      );
+      const padding = value.startsWith('`') || value.endsWith('`') ? ' ' : '';
+      return `${fence}${padding}${value}${padding}${fence}`;
+    };
+    const link = (label: string, url: string) =>
+      `[${label}](${url.replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29')})`;
+    const supportLabel = (
+      support: LCD.SupportStatement | undefined,
+      browser: LCD.PlatformName,
+    ) => {
+      const current = getCurrentSupport(support);
+      if (!current || current.version_added === null) return 'Unknown';
+      const added = current.version_added;
+      const version =
+        typeof added === 'string' && added !== 'preview' ? ` (${added})` : '';
+      if (current.version_removed)
+        return `Removed${typeof current.version_removed === 'string' ? ` in ${current.version_removed}` : ''}`;
+      if (versionIsPreview(added, platforms[browser]))
+        return `Preview${version}`;
+      if (current.partial_implementation)
+        return `Partial${version}${current.flags?.length ? '; requires flags' : ''}`;
+      if (!added) return 'No';
+      if (current.flags?.length) return `Requires flags${version}`;
+      return `Yes${version}`;
+    };
 
-    // MDN URL
-    const mdnUrl = localizeMdnUrl(compat.mdn_url, locale);
-    if (mdnUrl) {
-      parts.push(`**MDN Reference:** [${mdnUrl}](${mdnUrl})\n\n`);
-    }
+    const renderReferences = (identifier: LCD.Identifier) => {
+      const compat = identifier.__compat;
+      const sourceFile =
+        (typeof identifier.source_file === 'string'
+          ? identifier.source_file
+          : undefined) || compat?.source_file;
+      const sourceUrl =
+        (typeof identifier.source_url === 'string'
+          ? identifier.source_url
+          : undefined) || compat?.source_url;
+      const sourcePath = sourceFile
+        ? `packages/lynx-compat-data/${sourceFile}`
+        : `packages/lynx-compat-data/${module}.json`;
+      const source =
+        sourceUrl ||
+        (sourcePath && process.env.DOC_GIT_BASE_URL
+          ? `${process.env.DOC_GIT_BASE_URL}/${sourcePath}`
+          : undefined);
+      const lynxPath =
+        (typeof identifier.lynx_path === 'string'
+          ? identifier.lynx_path
+          : undefined) || compat?.lynx_path;
+      const references: string[] = [];
+      if (source) references.push(link('Source', source));
+      if (lynxPath && !isCurrentDocPath(pathname, lynxPath))
+        references.push(link('API Reference', withBase(`/${lynxPath}`)));
+      const mdnUrl = localizeMdnUrl(compat?.mdn_url, locale);
+      if (mdnUrl) references.push(link('MDN', mdnUrl));
+      return references.length ? `${references.join(' · ')}\n\n` : '';
+    };
 
-    // Spec URLs
-    if (
-      compat.spec_url &&
-      Array.isArray(compat.spec_url) &&
-      compat.spec_url.length > 0
-    ) {
-      parts.push(`**Specifications:**\n`);
-      compat.spec_url.forEach((url) => {
-        parts.push(`- [${url}](${url})\n`);
-      });
-      parts.push('\n');
-    }
+    const references = renderReferences(compatData);
+    const rows: string[] = [];
+    const details: string[] = [];
+    const render = (identifier: LCD.Identifier, name: string) => {
+      const compat = identifier.__compat;
+      if (compat) {
+        const feature = name || accessor.split('.').pop()!;
+        rows.push(
+          `| ${escapeCell(feature)} | ${visible.map((browser) => escapeCell(supportLabel(compat.support[browser], browser))).join(' | ')} |\n`,
+        );
 
-    // Support table
-    if (compat.support) {
-      parts.push(`**Platform Support**\n\n`);
-      parts.push(`| Platform | Version Added | Notes |\n`);
-      parts.push(`|----------|---------------|-------|\n`);
+        const lines: string[] = [];
+        if (compat.description) lines.push(`${compat.description}\n\n`);
+        const statuses: string[] = [];
+        if (compat.status?.experimental) statuses.push('Experimental');
+        if (compat.status?.deprecated) statuses.push('Deprecated');
+        if (statuses.length)
+          lines.push(`**Status:** ${statuses.join(', ')}\n\n`);
 
-      const platforms = Object.keys(compat.support) as Array<
-        keyof typeof compat.support
-      >;
-
-      for (const platform of platforms) {
-        const supportData = compat.support[platform];
-        const platformName = platformData.platforms[platform]?.name || platform;
-
-        if (!supportData) continue;
-
-        // Handle array of support statements
-        const supportArray = Array.isArray(supportData)
-          ? supportData
-          : [supportData];
-
-        for (const support of supportArray) {
-          let versionInfo = '';
-
-          if (typeof support.version_added === 'string') {
-            versionInfo = support.version_added;
-          } else if (support.version_added === true) {
-            versionInfo = '✅ Yes';
-          } else if (support.version_added === false) {
-            versionInfo = '❌ No';
-          } else if (support.version_added === null) {
-            versionInfo = '❓ Unknown';
-          }
-
-          const notes: string[] = [];
-          if (support.notes) {
-            const noteText = Array.isArray(support.notes)
-              ? support.notes.join('; ')
-              : support.notes;
-            notes.push(noteText);
-          }
-          if (support.prefix) {
-            notes.push(`Prefix: \`${support.prefix}\``);
-          }
-          if (support.alternative_name) {
-            notes.push(`Alternative name: \`${support.alternative_name}\``);
-          }
-          if (
-            support.flags &&
-            Array.isArray(support.flags) &&
-            support.flags.length > 0
-          ) {
-            notes.push('Requires flags');
-          }
-          if (support.partial_implementation) {
-            notes.push('⚠️ Partial implementation');
-          }
-
-          parts.push(
-            `| ${platformName} | ${versionInfo} | ${notes.join('; ') || '-'} |\n`,
+        if (name) {
+          const childReferences = renderReferences(identifier);
+          if (childReferences !== references) lines.push(childReferences);
+        }
+        if (compat.spec_url) {
+          const specs = Array.isArray(compat.spec_url)
+            ? compat.spec_url
+            : [compat.spec_url];
+          lines.push(
+            `**Specifications:**\n${specs.map((url) => `- ${link(url, url)}\n`).join('')}\n`,
           );
         }
+
+        for (const browser of visible) {
+          const support = compat.support[browser];
+          if (!support) continue;
+          const statements = Array.isArray(support) ? support : [support];
+          for (const statement of statements) {
+            const notes: string[] = [];
+            if (
+              statement.version_removed &&
+              !statements.some(
+                (otherStatement) =>
+                  otherStatement.version_added === statement.version_removed,
+              )
+            )
+              notes.push(
+                typeof statement.version_removed === 'string'
+                  ? `Removed in ${statement.version_removed} and later`
+                  : 'Removed (version unknown)',
+              );
+            if (statement.version_last)
+              notes.push(
+                typeof statement.version_last === 'string'
+                  ? `Last supported version: ${statement.version_last}`
+                  : 'Support ended (version unknown)',
+              );
+            if (statement.partial_implementation) notes.push('Partial support');
+            if (statement.prefix)
+              notes.push(`Prefix: ${code(statement.prefix)}`);
+            if (statement.alternative_name)
+              notes.push(`Alternate name: ${code(statement.alternative_name)}`);
+            for (const flag of statement.flags ?? []) {
+              const kind =
+                flag.type === 'preference' ? 'preference' : 'runtime flag';
+              notes.push(
+                `Requires ${kind} ${code(flag.name)}${flag.value_to_set ? ` = ${code(flag.value_to_set)}` : ''}`,
+              );
+            }
+            if (statement.notes)
+              notes.push(
+                ...(Array.isArray(statement.notes)
+                  ? statement.notes
+                  : [statement.notes]),
+              );
+            if (statement.impl_url) {
+              const urls = Array.isArray(statement.impl_url)
+                ? statement.impl_url
+                : [statement.impl_url];
+              notes.push(...urls.map((url) => link('Implementation', url)));
+            }
+            if (versionIsPreview(statement.version_added, platforms[browser]))
+              notes.push('Preview platform support');
+            if (!notes.length && statements.length === 1) continue;
+            const added = statement.version_added;
+            const version =
+              typeof added === 'string'
+                ? `From ${added}`
+                : added === true
+                  ? 'Supported (version unknown)'
+                  : added === false
+                    ? 'Not supported'
+                    : 'Compatibility unknown';
+            lines.push(
+              `- **${platformName(browser)} — ${version}:** ${notes.join('; ') || (added ? 'Full support' : added === false ? 'No support' : 'Compatibility unknown')}\n`,
+            );
+          }
+        }
+        if (lines.length)
+          details.push(
+            `**${code(feature)}**\n\n${lines.join('').trimEnd()}\n\n`,
+          );
       }
-
-      parts.push('\n');
-    }
-
-    // Description
-    if (compat.description) {
-      parts.push(`**Description:** ${compat.description}\n\n`);
-    }
-
-    return parts.join('');
-  }, [compatData, platformData, accessor, query, locale]);
+      for (const key in identifier) {
+        if (
+          key === '__compat' ||
+          !Object.prototype.hasOwnProperty.call(identifier, key)
+        )
+          continue;
+        const child = identifier[key];
+        if (child && typeof child === 'object')
+          render(child, name ? `${name}.${key}` : key);
+      }
+    };
+    render(compatData, '');
+    if (!rows.length)
+      return `**Error:** No compatibility data found for \`${accessor}\``;
+    return `**Compatibility Table**\n\n**Query:** ${code(accessor)}\n\n${references}| Feature | ${visible.map((browser) => escapeCell(platformName(browser))).join(' | ')} |\n| --- | ${visible.map(() => '---').join(' | ')} |\n${rows.join('')}\n${details.join('')}`;
+  }, [compatData, platformData, accessor, module, query, locale, pathname]);
 
   return <>{markdownContent}</>;
 }
