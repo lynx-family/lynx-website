@@ -111,7 +111,7 @@ contracts and running the listed parser, binding, and integration tests.
 
 Edits validate their original substring and cannot overlap. MagicString emits
 a high-resolution map from transformed Markdown to original Markdown.
-**Rspress 2.1.4's MDX loader discards incoming source maps**; this plugin cannot
+**Rspress 2.1.5's MDX loader discards incoming source maps**; this plugin cannot
 provide an end-to-end JavaScript-to-original-MDX map until that upstream
 loader supports map composition. CI's existing source-line semantics remain
 unchanged.

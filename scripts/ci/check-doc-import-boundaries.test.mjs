@@ -23,10 +23,10 @@ const rspressPackage = JSON.parse(readFileSync(rspressPackagePath, 'utf8'));
 const rspressRequire = createRequire(rspressPackagePath);
 // Rspress does not expose its parser setup as a public API. A version bump must
 // therefore trigger a review of its MDX options and preprocessing behavior.
-// Audited 2.1.4: format selection, syntax plugins, frontmatter, and heading-ID
-// escaping are unchanged; use the same updated CJK plugins as the compiler.
+// Audited 2.1.5: format selection, syntax plugins, frontmatter, and heading-ID
+// escaping are unchanged.
 // The site explicitly retains pre-2.1 anchor checking; Shiki adds defaults.
-const auditedRspressVersion = '2.1.4';
+const auditedRspressVersion = '2.1.5';
 // Audited 2.3.3: api.transform pre-order, dependency tracking, map composition,
 // and whole-build/watch hooks used by the version-binding pre-transform.
 const auditedRsbuildVersion = '2.3.3';
@@ -86,7 +86,7 @@ test('uses audited Rspress parser and Rsbuild transform contracts', () => {
 test('reports actionable instructions for unaudited Rspress and Rsbuild versions', () => {
   const message = rspressVersionAuditMessage('2.0.21', '2.0.0');
   for (const expected of [
-    'Audited @rspress/core version: 2.1.4',
+    'Audited @rspress/core version: 2.1.5',
     'Installed @rspress/core version: 2.0.21',
     'Audited @rsbuild/core version: 2.3.3',
     'Installed @rsbuild/core version: 2.0.0',
