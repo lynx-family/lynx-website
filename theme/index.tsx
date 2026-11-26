@@ -42,8 +42,10 @@ import {
   SUBSITES_CONFIG,
 } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
+import BeforeDocContent from './BeforeDocContent';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
+import RspeedyMigrationNotice from './RspeedyMigrationNotice';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
 // Match subsite by checking if any path segment exactly equals the subsite value
@@ -93,6 +95,7 @@ declare global {
 
 function Layout({
   afterNavTitle = <AfterNavTitle />,
+  beforeDocContent = <BeforeDocContent />,
   ...props
 }: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
@@ -118,6 +121,7 @@ function Layout({
         {...props}
         afterNavTitle={afterNavTitle}
         beforeSidebar={<BeforeSidebar />}
+        beforeDocContent={beforeDocContent}
         bottom={<Footer />}
       />
     </>
@@ -293,7 +297,12 @@ function MainHomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       <div className="home-layout-container">
         <BaseHomeLayout
           {...props}
-          beforeHero={beforeHero}
+          beforeHero={
+            <>
+              <RspeedyMigrationNotice />
+              {beforeHero}
+            </>
+          }
           afterHero={afterHero}
           afterHeroActions={afterHeroActions}
         />
@@ -365,7 +374,7 @@ const Search = () => {
   );
 };
 
-export { HomeLayout, Layout, Search };
+export { BeforeDocContent, HomeLayout, Layout, Search };
 
 type BaseLinkProps = Parameters<typeof BaseLink>[0];
 type BaseLinkRestProps = Omit<
