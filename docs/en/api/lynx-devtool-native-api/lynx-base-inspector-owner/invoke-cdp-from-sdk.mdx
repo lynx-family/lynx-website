@@ -26,6 +26,12 @@ This can be used simultaneously with the [DevTool desktop application](/guide/de
 void invokeCDPFromSDK(final String cdpMsg, final CDPResultCallback callback);
 ```
 
+### Harmony
+
+```ts title="LynxBaseInspectorOwner.ets"
+invokeCDPFromSDK(cdpMsg: string, callback: CDPResultCallback): void;
+```
+
 ### Parameters
 
 - `msg` / `cdpMsg`: The message to send, a JSON string formatted as a CDP Method.
@@ -144,6 +150,68 @@ public class MainActivity extends Activity {
         Log.i("MainActivity", "CDPResultCallback: " + result);
       }
     });
+  }
+}
+```
+
+#### Harmony
+
+```ts title="PageLoadClient.ets"
+import {
+  LynxBaseInspectorOwner,
+  LynxContext,
+  LynxPipelineInfo,
+  LynxViewClient,
+} from '@lynx/lynx';
+
+export class PageLoadClient extends LynxViewClient {
+  private context?: LynxContext;
+
+  public onPageStarted(
+    lynxContext: LynxContext,
+    pipelineInfo: LynxPipelineInfo,
+  ): void {
+    this.context = lynxContext;
+  }
+
+  public onLoadSuccess(url: string): void {
+    const owner = this.context?.getBaseInspectorOwner();
+    if (!owner) {
+      // The debugging capability is not available for this page.
+      return;
+    }
+    this.invokeCDPMethod(owner);
+  }
+
+  private invokeCDPMethod(owner: LynxBaseInspectorOwner): void {
+    const method = '{"id":1,"method":"DOM.getDocument","params":{}}';
+    owner.invokeCDPFromSDK(method, (result: string) => {
+      console.info(`CDPResultCallback: ${result}`);
+    });
+  }
+}
+```
+
+```ts title="Index.ets"
+import { LynxView } from '@lynx/lynx';
+import { PageLoadClient } from './PageLoadClient';
+
+@Entry
+@Component
+struct Index {
+  // ...
+
+  private clients: PageLoadClient[] = [new PageLoadClient()];
+
+  build() {
+    Column() {
+      LynxView({
+        // ...
+        clients: this.clients,
+      })
+        .width('100%')
+        .height('100%');
+    }
   }
 }
 ```
