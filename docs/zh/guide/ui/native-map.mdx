@@ -1,0 +1,116 @@
+---
+description: '在 Android、iOS 和 HarmonyOS 上展示原生地图和可点击的自定义标记。'
+---
+
+# 展示原生地图
+
+`<map>` 用于嵌入原生地图。将 `<map-marker>` 作为它的直接子元素，可以把 Lynx 内容固定在指定的地理坐标上。各端宿主接入对应的地图包后，可以使用同一个 ReactLynx 组件。
+
+## iOS
+
+使用 Apple MapKit 时，引入 `XElement/MapImpl`。已经使用 `XElement/Behavior` 的应用会自动引入它。在 AppDelegate 创建 LynxView 前注册 provider。接入自定义地图时，可以单独依赖 `XElement/MapInterface` 并注册自己的实现。
+
+```ruby
+pod 'XElement/MapImpl'
+```
+
+```objective-c
+#import <XElement/LynxMapKitProvider.h>
+#import <XElement/LynxXElementMapService.h>
+
+// application:didFinishLaunchingWithOptions:
+[LynxXElementMapService registerProvider:[LynxMapKitProvider new]];
+```
+
+## Android
+
+在应用模块中添加 XElement 和 Google Maps 实现。将 `lynxVersion` 设为宿主使用的 SDK 版本。
+
+```groovy
+dependencies {
+    implementation "org.lynxsdk.lynx:xelement:${lynxVersion}"
+    implementation "org.lynxsdk.lynx:xelement-map-interface:${lynxVersion}"
+    implementation "org.lynxsdk.lynx:xelement-map-impl:${lynxVersion}"
+}
+```
+
+在 `Application.onCreate()` 中注册 Google Maps 实现，再初始化 Lynx。
+
+```java
+import com.lynx.xelement.map.LynxXElementMapService;
+import com.lynx.xelement.map.google.GoogleMapProvider;
+
+// Application.onCreate()
+LynxXElementMapService.registerProvider(new GoogleMapProvider());
+```
+
+在 Google Cloud 项目中启用 Maps SDK for Android，并使用应用包名和签名证书指纹限制 API 密钥。通过 `googleMapsApiKey` 清单占位符传入密钥，在 `<application>` 内添加以下配置。构建 Lynx Explorer 时，可以通过同名 Gradle 属性或 `GOOGLE_MAPS_API_KEY` 环境变量传入密钥。[Google Maps SDK 配置指南](https://developers.google.com/maps/documentation/android-sdk/config)
+
+```xml
+<meta-data
+    android:name="com.google.android.geo.API_KEY"
+    android:value="${googleMapsApiKey}" />
+```
+
+导入 `com.lynx.xelement.XElementBehaviors`，在创建 LynxView 前调用 `builder.addBehaviors(new XElementBehaviors().create())`。在安装了 Google Play 服务的设备或模拟器上运行应用。
+
+## HarmonyOS
+
+在宿主模块的 `oh-package.json5` 中添加 `@lynx/xelement_map_interface` 和 `@lynx/xelement_map_impl`，版本与 `@lynx/lynx` 保持一致。在 AppGallery Connect 中为应用配置地图服务。[华为地图服务配置指南](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/map-config-agc)
+
+在应用初始化时选择系统地图实现，并将地图和标记与已有组件一起注册到传给 `LynxView` 的 `behaviors` 中。
+
+```typescript
+import { Behavior, BehaviorRegistryMap } from '@lynx/lynx';
+import {
+  LynxXElementMapService,
+  LynxUIMap,
+  LynxUIMapMarker,
+} from '@lynx/xelement_map_interface';
+import { SystemMapProvider } from '@lynx/xelement_map_impl';
+
+LynxXElementMapService.registerProvider(new SystemMapProvider());
+const behaviors: BehaviorRegistryMap = new Map([
+  ['map', new Behavior(LynxUIMap, undefined)],
+  ['map-marker', new Behavior(LynxUIMapMarker, undefined)],
+]);
+```
+
+使用其他地图 SDK 时，宿主只需依赖接口包和自己的实现，并在同一启动入口注册该实现。
+
+## 添加标记
+
+给地图设置高度，并给自定义标记设置宽高。`center` 和 `position` 都接受以度为单位的经纬度。`anchor` 指定标记上哪个点与地理坐标对齐，例如 `[0.5, 0.5]` 表示标记的中心。
+
+```tsx
+import { useState } from '@lynx-js/react';
+
+const ferry = { latitude: 37.7955, longitude: -122.3937 };
+
+export function Waterfront() {
+  const [selected, setSelected] = useState(false);
+  return (
+    <view>
+      <map center={ferry} scale={15} style={{ width: '100%', height: '320px' }}>
+        <map-marker
+          position={ferry}
+          anchor={[0.5, 0.5]}
+          style={{
+            width: '112px',
+            height: '38px',
+            backgroundColor: '#16584c',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          bindclickmarker={() => setSelected(true)}
+        >
+          <text style={{ color: '#fff' }}>Ferry Building</text>
+        </map-marker>
+      </map>
+      {selected && <text>Ferry Building</text>}
+    </view>
+  );
+}
+```
+
+在 Lynx Explorer 的组件示例中打开 **Map**，点击 Ferry Building 标记，然后点击 **Show Pier 14**，可以看到地图中心和标记一起移动。

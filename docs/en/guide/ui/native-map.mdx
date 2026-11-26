@@ -1,0 +1,116 @@
+---
+description: 'Display a native map and a tappable custom marker on Android, iOS, and HarmonyOS.'
+---
+
+# Display a native map
+
+The `<map>` element embeds a native map. Place a `<map-marker>` directly inside it to anchor Lynx content to a geographic coordinate. Add the map package to each native host and use the same ReactLynx component across platforms.
+
+## iOS
+
+Add `XElement/MapImpl` for Apple MapKit. Apps that use `XElement/Behavior` already include it. Register the provider in your app delegate before creating a Lynx view. To use your own provider, depend on `XElement/MapInterface` and register your implementation.
+
+```ruby
+pod 'XElement/MapImpl'
+```
+
+```objective-c
+#import <XElement/LynxMapKitProvider.h>
+#import <XElement/LynxXElementMapService.h>
+
+// application:didFinishLaunchingWithOptions:
+[LynxXElementMapService registerProvider:[LynxMapKitProvider new]];
+```
+
+## Android
+
+Add the XElement behavior bundle and the Google Maps implementation to the app module. Set `lynxVersion` to the SDK version used by the host.
+
+```groovy
+dependencies {
+    implementation "org.lynxsdk.lynx:xelement:${lynxVersion}"
+    implementation "org.lynxsdk.lynx:xelement-map-interface:${lynxVersion}"
+    implementation "org.lynxsdk.lynx:xelement-map-impl:${lynxVersion}"
+}
+```
+
+Register the Google Maps provider in `Application.onCreate()` before initializing Lynx.
+
+```java
+import com.lynx.xelement.map.LynxXElementMapService;
+import com.lynx.xelement.map.google.GoogleMapProvider;
+
+// Application.onCreate()
+LynxXElementMapService.registerProvider(new GoogleMapProvider());
+```
+
+Enable Maps SDK for Android in your Google Cloud project. Restrict the API key to the app's package name and signing certificate fingerprint. Supply the key through the `googleMapsApiKey` manifest placeholder and add this metadata inside `<application>`. Lynx Explorer accepts the `googleMapsApiKey` Gradle property or the `GOOGLE_MAPS_API_KEY` environment variable at build time. [Google Maps SDK setup](https://developers.google.com/maps/documentation/android-sdk/config)
+
+```xml
+<meta-data
+    android:name="com.google.android.geo.API_KEY"
+    android:value="${googleMapsApiKey}" />
+```
+
+Register `builder.addBehaviors(new XElementBehaviors().create())` on your `LynxViewBuilder` before creating the view. Import `com.lynx.xelement.XElementBehaviors`. Run the app on a device or emulator with Google Play services.
+
+## HarmonyOS
+
+Add `@lynx/xelement_map_interface` and `@lynx/xelement_map_impl` to the host module's `oh-package.json5` with versions matching `@lynx/lynx`. Configure Map Kit for your app in AppGallery Connect. [Huawei Map Kit configuration](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/map-config-agc)
+
+Choose the system provider during app initialization. Register both behaviors in the `behaviors` map passed to `LynxView`, alongside your existing behaviors.
+
+```typescript
+import { Behavior, BehaviorRegistryMap } from '@lynx/lynx';
+import {
+  LynxXElementMapService,
+  LynxUIMap,
+  LynxUIMapMarker,
+} from '@lynx/xelement_map_interface';
+import { SystemMapProvider } from '@lynx/xelement_map_impl';
+
+LynxXElementMapService.registerProvider(new SystemMapProvider());
+const behaviors: BehaviorRegistryMap = new Map([
+  ['map', new Behavior(LynxUIMap, undefined)],
+  ['map-marker', new Behavior(LynxUIMapMarker, undefined)],
+]);
+```
+
+To use a different map SDK, depend on the interface package and register your own provider at the same point during startup.
+
+## Add a marker
+
+Give the map a height and the marker a size for its custom content. Both `center` and `position` take coordinates in degrees. The marker's `anchor` identifies the point within its bounds that sits on the coordinate. For example, `[0.5, 0.5]` centers the label there.
+
+```tsx
+import { useState } from '@lynx-js/react';
+
+const ferry = { latitude: 37.7955, longitude: -122.3937 };
+
+export function Waterfront() {
+  const [selected, setSelected] = useState(false);
+  return (
+    <view>
+      <map center={ferry} scale={15} style={{ width: '100%', height: '320px' }}>
+        <map-marker
+          position={ferry}
+          anchor={[0.5, 0.5]}
+          style={{
+            width: '112px',
+            height: '38px',
+            backgroundColor: '#16584c',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          bindclickmarker={() => setSelected(true)}
+        >
+          <text style={{ color: '#fff' }}>Ferry Building</text>
+        </map-marker>
+      </map>
+      {selected && <text>Ferry Building</text>}
+    </view>
+  );
+}
+```
+
+Open **Map** in the Lynx Explorer showcase to try it. Tap the Ferry Building marker, then choose **Show Pier 14** to move both the camera and the marker.
