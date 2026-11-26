@@ -42,6 +42,7 @@ import {
   SUBSITES_CONFIG,
 } from '@site/shared-route-config';
 import AfterNavTitle from './AfterNavTitle';
+import BeforeDocContent from './BeforeDocContent';
 import BeforeSidebar from './BeforeSidebar';
 import OgHead from './OgHead';
 import RspeedyMigrationNotice from './RspeedyMigrationNotice';
@@ -94,6 +95,7 @@ declare global {
 
 function Layout({
   afterNavTitle = <AfterNavTitle />,
+  beforeDocContent = <BeforeDocContent />,
   ...props
 }: Parameters<typeof BaseLayout>[0]) {
   const { pathname } = useLocation();
@@ -119,7 +121,7 @@ function Layout({
         {...props}
         afterNavTitle={afterNavTitle}
         beforeSidebar={<BeforeSidebar />}
-        beforeDocContent={<RspeedyMigrationNotice />}
+        beforeDocContent={beforeDocContent}
         bottom={<Footer />}
       />
     </>
@@ -372,7 +374,7 @@ const Search = () => {
   );
 };
 
-export { HomeLayout, Layout, Search };
+export { BeforeDocContent, HomeLayout, Layout, Search };
 
 type BaseLinkProps = Parameters<typeof BaseLink>[0];
 type BaseLinkRestProps = Omit<
