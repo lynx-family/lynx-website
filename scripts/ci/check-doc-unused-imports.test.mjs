@@ -4,10 +4,12 @@ import {
   copyFileSync,
   mkdirSync,
   mkdtempSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -211,9 +213,8 @@ test('excludes documentation owned by source synchronization pipelines', () => {
 
 /** Create an isolated Git fixture that runs a copied CLI with linked deps. */
 function fixture(t) {
-  mkdirSync(path.join(repoRoot, 'node_modules/.cache'), { recursive: true });
   const root = mkdtempSync(
-    path.join(repoRoot, 'node_modules/.cache/doc-unused-imports-'),
+    path.join(realpathSync(os.tmpdir()), 'doc-unused-imports-'),
   );
   t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(path.join(root, 'scripts/ci'), { recursive: true });

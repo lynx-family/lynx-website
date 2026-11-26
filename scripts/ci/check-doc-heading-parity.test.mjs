@@ -4,9 +4,12 @@ import {
   mkdtempSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -357,15 +360,17 @@ test('CLI scans tracked pairs, reports both locations, and ignores generated out
   ];
   for (const [name, parity] of scenarios) {
     await t.test(name, (t) => {
-      // Keep all temporary inputs in the ignored investigation directory.
       const root = fileURLToPath(new URL('../..', import.meta.url));
-      const scratchRoot = path.join(root, '.reference');
-      mkdirSync(scratchRoot, { recursive: true });
       const directory = mkdtempSync(
-        path.join(scratchRoot, 'heading-parity-test-'),
+        path.join(realpathSync(os.tmpdir()), 'heading-parity-test-'),
       );
       t.after(() => rmSync(directory, { recursive: true, force: true }));
       mkdirSync(path.join(directory, 'scripts/ci'), { recursive: true });
+      symlinkSync(
+        path.join(root, 'node_modules'),
+        path.join(directory, 'node_modules'),
+        'junction',
+      );
       for (const name of [
         'check-doc-heading-parity.mjs',
         'documentation-parser.mjs',

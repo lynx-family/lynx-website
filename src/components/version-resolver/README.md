@@ -113,10 +113,13 @@ blockquotes, and headings. Explicit `<p>` wrappers and JSX text expressions are
 not required as an SSG workaround. Keep the patch installed and verify both HTML
 and Markdown output when changing these contexts.
 
-Code-fence `{versionJson.X}` replacement remains a separate Rspress concern.
-The current HTML build expands those placeholders; Markdown SSG still preserves
-them, including in untouched fragments. Resolver-backed links expand in both
-formats and do not depend on importing `versionJson` into the document.
+Code version bindings remain separate from resolver-backed components.
+The documentation pre-transform resolves `{versionJson.LYNX_VERSION}` and
+`{versionJson.PRIMJS_VERSION}` in Markdown code before HTML and Markdown
+compilation, including imported Markdown fragments. See
+[Documentation version bindings](../../../packages/lynx-doc-transform/README.md#documentation-version-bindings)
+for the supported syntax and scope. Resolver-backed links expand in both formats
+and do not depend on importing `versionJson` into the document.
 
 ## Resource authoring
 

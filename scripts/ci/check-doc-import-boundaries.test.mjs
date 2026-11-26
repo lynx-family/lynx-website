@@ -12,6 +12,12 @@ const projectRequire = createRequire(import.meta.url);
 const projectPackage = JSON.parse(
   readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
 );
+const transformPackagePath = new URL(
+  '../../packages/lynx-doc-transform/package.json',
+  import.meta.url,
+);
+const transformPackage = JSON.parse(readFileSync(transformPackagePath, 'utf8'));
+const transformRequire = createRequire(transformPackagePath);
 const rspressPackagePath = projectRequire.resolve('@rspress/core/package.json');
 const rspressPackage = JSON.parse(readFileSync(rspressPackagePath, 'utf8'));
 const rspressRequire = createRequire(rspressPackagePath);
@@ -21,26 +27,38 @@ const rspressRequire = createRequire(rspressPackagePath);
 // escaping are unchanged; use the same updated CJK plugins as the compiler.
 // The site explicitly retains pre-2.1 anchor checking; Shiki adds defaults.
 const auditedRspressVersion = '2.1.4';
-const parserDependencies = [
+// Audited 2.3.3: api.transform pre-order, dependency tracking, map composition,
+// and whole-build/watch hooks used by the version-binding pre-transform.
+const auditedRsbuildVersion = '2.3.3';
+const mdxPipelineDependencies = [
   '@mdx-js/mdx',
+  '@rsbuild/core',
+  'mdast-util-mdx',
   'remark-cjk-friendly',
   'remark-cjk-friendly-gfm-strikethrough',
   'remark-gfm',
 ];
 const parserAuditTestCommand =
   'node --test scripts/ci/check-doc-import-boundaries.test.mjs';
+const transformAuditTestCommand =
+  'pnpm --filter @lynx-js/lynx-doc-transform run test && pnpm --filter @lynx-js/lynx-doc-transform run test:integration && pnpm --filter @lynx-js/lynx-doc-transform run pack:check';
 
-function rspressVersionAuditMessage(installedVersion) {
+function rspressVersionAuditMessage(installedVersion, installedRsbuildVersion) {
   return [
-    'Rspress parser audit required.',
+    'Rspress MDX pipeline audit required.',
     `Audited @rspress/core version: ${auditedRspressVersion}`,
     `Installed @rspress/core version: ${installedVersion}`,
+    `Audited @rsbuild/core version: ${auditedRsbuildVersion}`,
+    `Installed @rsbuild/core version: ${installedRsbuildVersion}`,
     '',
-    'Before updating auditedRspressVersion:',
-    '1. Compare @rspress/core/dist/node/mdx/options.js and processor.js.',
+    'Before updating auditedRspressVersion or auditedRsbuildVersion:',
+    '1. Compare @rspress/core/dist/node/mdx/options.js, processor.js, and loader.js.',
     '2. Review .md/.mdx format selection, syntax plugins, frontmatter, and heading-ID preprocessing.',
-    '3. Align the parser dependencies in package.json and pnpm-lock.yaml.',
-    `4. Run: ${parserAuditTestCommand}`,
+    '3. Review @rsbuild/core/dist/transformLoader.mjs and api.transform pre-order, dependency tracking, and source map composition.',
+    '4. Review onBeforeBuild/onBeforeDevCompile snapshots across web, node, node_md, and watch rebuilds.',
+    '5. Align the MDX pipeline dependencies in packages/lynx-doc-transform/package.json, the site package.json, and pnpm-lock.yaml.',
+    `6. Run: ${parserAuditTestCommand}`,
+    `7. Run: ${transformAuditTestCommand}`,
   ].join('\n');
 }
 
@@ -48,21 +66,38 @@ function rspressVersionAuditMessage(installedVersion) {
 // OSS-local component import resolve differently in downstream layouts.
 const docPath = 'docs/en/guide/inclusion/foldable-devices.mdx';
 
-test('uses an audited Rspress parser contract', () => {
-  if (rspressPackage.version !== auditedRspressVersion) {
-    assert.fail(rspressVersionAuditMessage(rspressPackage.version));
+test('uses audited Rspress parser and Rsbuild transform contracts', () => {
+  const rsbuildPackage = JSON.parse(
+    readFileSync(rspressRequire.resolve('@rsbuild/core/package.json'), 'utf8'),
+  );
+  if (
+    rspressPackage.version !== auditedRspressVersion ||
+    rsbuildPackage.version !== auditedRsbuildVersion
+  ) {
+    assert.fail(
+      rspressVersionAuditMessage(
+        rspressPackage.version,
+        rsbuildPackage.version,
+      ),
+    );
   }
 });
 
-test('reports actionable instructions for unaudited Rspress versions', () => {
-  const message = rspressVersionAuditMessage('2.0.21');
+test('reports actionable instructions for unaudited Rspress and Rsbuild versions', () => {
+  const message = rspressVersionAuditMessage('2.0.21', '2.0.0');
   for (const expected of [
     'Audited @rspress/core version: 2.1.4',
     'Installed @rspress/core version: 2.0.21',
+    'Audited @rsbuild/core version: 2.3.3',
+    'Installed @rsbuild/core version: 2.0.0',
     '@rspress/core/dist/node/mdx/options.js',
     'frontmatter',
-    'parser dependencies in package.json and pnpm-lock.yaml',
+    '@rsbuild/core/dist/transformLoader.mjs',
+    'source map composition',
+    'onBeforeBuild/onBeforeDevCompile',
+    'MDX pipeline dependencies in packages/lynx-doc-transform/package.json',
     parserAuditTestCommand,
+    transformAuditTestCommand,
   ]) {
     assert.ok(
       message.includes(expected),
@@ -71,13 +106,15 @@ test('reports actionable instructions for unaudited Rspress versions', () => {
   }
 });
 
-test('resolves parser dependencies from the same installation as Rspress', () => {
+test('resolves MDX pipeline dependencies from the same installation as Rspress', () => {
   const problems = [];
-  for (const dependency of parserDependencies) {
-    const projectRange = projectPackage.devDependencies[dependency];
+  for (const dependency of mdxPipelineDependencies) {
+    const packageRange =
+      transformPackage.dependencies[dependency] ??
+      transformPackage.devDependencies[dependency];
     const rspressRange = rspressPackage.dependencies[dependency];
-    if (!projectRange) {
-      problems.push(`- ${dependency} is not a direct project devDependency.`);
+    if (!packageRange) {
+      problems.push(`- ${dependency} is not declared by lynx-doc-transform.`);
     }
     if (!rspressRange) {
       problems.push(
@@ -85,27 +122,42 @@ test('resolves parser dependencies from the same installation as Rspress', () =>
       );
     }
     if (
-      projectRange &&
+      packageRange &&
       rspressRange &&
-      projectRequire.resolve(dependency) !== rspressRequire.resolve(dependency)
+      transformRequire.resolve(dependency) !==
+        rspressRequire.resolve(dependency)
     ) {
       problems.push(
         [
           `- ${dependency} resolves to different installations:`,
-          `  project (${projectRange}): ${projectRequire.resolve(dependency)}`,
+          `  lynx-doc-transform (${packageRange}): ${transformRequire.resolve(dependency)}`,
           `  @rspress/core (${rspressRange}): ${rspressRequire.resolve(dependency)}`,
         ].join('\n'),
       );
     }
   }
 
+  // The host supplies the adapter peer; package tests must use that same host.
+  assert.ok(projectPackage.devDependencies['@rsbuild/core']);
+  assert.ok(transformPackage.peerDependencies['@rsbuild/core']);
+  assert.equal(
+    projectRequire.resolve('@rsbuild/core'),
+    transformRequire.resolve('@rsbuild/core'),
+    'The site and lynx-doc-transform must resolve the same Rsbuild installation.',
+  );
+  assert.equal(
+    projectRequire.resolve('@rspress/core/package.json'),
+    transformRequire.resolve('@rspress/core/package.json'),
+    'Package integration tests must use the site Rspress installation.',
+  );
+
   if (problems.length > 0) {
     assert.fail(
       [
-        'Rspress parser dependency alignment failed.',
+        'Rspress MDX pipeline dependency alignment failed.',
         ...problems,
         '',
-        'Review the new Rspress parser setup, align direct devDependencies,',
+        'Review the Rspress MDX pipeline and align package dependencies and host peers,',
         'run pnpm install, and then rerun:',
         `  ${parserAuditTestCommand}`,
       ].join('\n'),

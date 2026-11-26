@@ -151,6 +151,12 @@ jobs:
       - name: Generated HTML Cleanup Test
         run: node --test scripts/build/generated-html.test.mts
 
+      - name: Documentation Version Binding Integration Test
+        run: node --test packages/lynx-doc-transform/tests/version-bindings.integration.test.mjs
+
+      - name: Lynx Doc Transform Pack Check
+        run: pnpm --filter @lynx-js/lynx-doc-transform run pack:check
+
       - name: Theme Document Contract Test
         run: node --experimental-vm-modules --test scripts/theme-before-doc-content.test.mjs
 
@@ -254,6 +260,10 @@ jobs:
         run: |
           node --test scripts/ci/check-doc-import-boundaries.test.mjs
           node scripts/ci/check-doc-import-boundaries.mjs
+
+      - name: Documentation Version Binding Unit Tests
+        run: |
+          node --test packages/lynx-doc-transform/tests/parser.test.mjs packages/lynx-doc-transform/tests/version-bindings.test.mjs packages/lynx-doc-transform/tests/rsbuild.test.mjs
 
       - name: Unused Documentation Import Check
         run: |
