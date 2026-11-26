@@ -2,6 +2,14 @@
 
 Thanks for contributing to the Lynx website and documentation.
 
+Use this guide for contribution workflow and shared repository contracts.
+Topic-specific guidance lives with its owning code:
+
+- [Theme and components](./src/README.md)
+- [Alias contracts](./scripts/alias-contracts/README.md)
+- [Compatibility data tooling](./packages/lynx-compat-data/README.md#development)
+- [Media tools](./scripts/media/README.md)
+
 ## Developing
 
 ### Prerequisites
@@ -44,6 +52,25 @@ To preview the production build locally:
 pnpm run preview
 ```
 
+### Implementation Principles
+
+Trace the affected behavior through its owning modules, shared contracts, and
+consumers before choosing a solution. When documentation or skills disagree
+with the implementation, verify claims against the relevant version's source,
+types, and tests; use a focused runtime check when needed. Distinguish stale
+guidance from an implementation defect before deciding what to change.
+
+Design for the system's long-term maintenance. Put responsibilities in their
+owning layers, reuse existing mechanisms, and address shared causes at their
+source. Choose a coherent solution instead of accumulating local exceptions,
+while keeping refactoring tied to the feature.
+
+After completing a feature, review the cumulative diff from its starting
+point across all related commits. Consolidate overlapping logic and remove
+superseded code, comments, documentation, and tests that only served
+intermediate approaches. Keep regression tests that protect intended
+behavior, and run the checks relevant to the final result.
+
 ## Checks
 
 Before opening a pull request, run the relevant checks for your change:
@@ -77,6 +104,8 @@ pnpm run check:doc-import-boundaries
 
 The check parses documents without executing them, using Rspress-aligned
 Markdown/MDX syntax. It reports parse errors as well as import violations.
+Its boundary and parser contracts are documented in the
+[alias contract guide](./scripts/alias-contracts/README.md#documentation-boundary-check).
 For checker changes, also run:
 
 ```bash
@@ -148,6 +177,9 @@ pnpm run test:example-generators
 
 ### Lynx Compatibility Data
 
+Follow the [Compatibility Data](#compatibility-data) guidelines
+when editing compatibility statements or reviewing their documentation links.
+
 For changes under `packages/lynx-compat-data`, run:
 
 ```bash
@@ -157,7 +189,128 @@ pnpm --filter @lynx-js/lynx-compat-data run pack:check
 This verifies that generated CSS property compatibility data is present in the
 package tarball without committing `css/properties/*.json` to git.
 
+## Commits
+
+- Follow [Conventional Commits](https://www.conventionalcommits.org/) for
+  commit subjects.
+- Optional scopes MUST use lowercase kebab-case in commit and pull request
+  subjects.
+- Keep the commit subject on one line; prefer no more than 72 characters.
+- Use concise, direct English.
+- Use the body to explain the final change and why it matters. Prefer one
+  or two short paragraphs; include details only when they explain a material
+  design choice, compatibility impact, or constraint.
+- Summarize related changes by intent. Omit iteration history, review rounds,
+  abandoned approaches, and file-by-file or fix-by-fix inventories. When
+  amending, rewrite the body around the final result instead of appending
+  another progress update.
+- Wrap commit message body text at 72 characters where practical, except
+  where a URL or code sample cannot be wrapped clearly.
+- Use optional footers in the following form:
+
+```text
+issue: #12345
+doc: https://example.com
+TEST: Relevant test cases
+```
+
+Use exactly one `TEST` footer. It MUST concisely summarize validation rather
+than enumerate individual commands. Use lowercase `issue` and `doc`.
+
+In commit subjects, bodies, and footers, use GitHub's `owner/repo#number`
+syntax for cross-repository references, for example `lynx-community/go-web#94`.
+Use bare `#number` only for issues or pull requests in this repository.
+A label such as `go-web #94` still links to this repository's #94.
+
+## Pull Requests
+
+- Base normal changes on `main`.
+- Work on a topic or development branch. Never push directly to `main` or
+  any `release/*` branch.
+- Format pull request titles as Conventional Commit subjects because they
+  become commit subjects when squash-merged. Release backport titles may use
+  the [documented backport format](#release-cherry-picks-and-backports) instead,
+  such as `[release/4.0] fix: correct a crash`, with a prefix matching the
+  target release branch.
+- Pull request title subjects must contain at least 3 non-whitespace
+  characters and be no longer than 72 characters.
+- Renovate dependency pull requests may use longer subjects when their
+  generated package name and version require it.
+- Keep pull requests focused on one behavior or documentation update.
+- Keep descriptions structured and concise. Use sections such as
+  Summary, Rationale, Verification, and Documentation when helpful.
+- Include enough context for reviewers to understand the user impact,
+  affected pages, and validation performed.
+- The 72-character line-wrapping convention applies only to commit message
+  bodies, not GitHub issue bodies or pull request descriptions. Write those
+  as normal Markdown paragraphs without forced line breaks.
+- Use `owner/repo#number` for cross-repository references, as in commit messages.
+- Call out changes to CI, build or generation workflows, release behavior, or
+  downstream interfaces explicitly in the commit message and PR description.
+- Do not include internal-only content, private URLs, or downstream-only
+  implementation details in this OSS repository.
+- All pull requests require human review and manual merging. Automated agents
+  and reviewers must follow the policy in the
+  [pull request template](./.github/pull_request_template.md).
+
+## Documentation Routes
+
+Follow [Rspress conventional routing](https://rspress.rs/guide/basic/conventional-route).
+Do not define both `foo.md` (or `foo.mdx`) and `foo/index.md` (or
+`foo/index.mdx`): they create competing `/foo` and `/foo/` page entries.
+Choose one landing page for each logical route.
+
+Existing pages may have a same-named directory containing child pages or MDX
+fragments, without an index page. For example, `devtool.mdx` maps to
+`/guide/devtool`, while `devtool/panels.mdx` maps to `/guide/devtool/panels`.
+The directory itself does not create a route. Keep fragments excluded from
+routing and check for an existing sibling page before adding an index.
+
+Preserve published URLs when reorganizing pages. A migration to a directory
+index also needs coordinated navigation, redirects, locale updates, and
+compatibility-data links.
+
+## Compatibility Data
+
+Use the [LCD schema](./packages/lynx-compat-data/schemas/compat-data.schema.json)
+for Lynx fields and platform semantics. For display labels and API feature
+descriptions, follow the principles in MDN's
+[BCD schema](https://github.com/mdn/browser-compat-data/blob/main/schemas/compat-data-schema.md#compatibility-information)
+and [API guidelines](https://github.com/mdn/browser-compat-data/blob/main/docs/data-guidelines/api.md#static-api-members).
+
+- Treat `__compat.description` as a short caption or title. The compatibility
+  table and generated API statistics use it in place of the identifier.
+- Omit it, or leave an existing value empty, for an ordinary instance method
+  whose identifier already labels the feature clearly.
+- Use a short label when a distinction is needed: `abort() static method`,
+  `ImageData() constructor`, `focus event`, `reason parameter`, or
+  `Returns a Promise` for a separately tracked capability.
+- Keep general usage summaries in the documentation body. Put platform-specific
+  implementation caveats in the relevant `support.notes`.
+- Verify support claims against implementations, tests, and release evidence.
+  A similar browser API is not evidence of Lynx support. Follow the package's
+  [Web support guidance](./packages/lynx-compat-data/README.md#update-web-support)
+  and [CSS source ownership](./packages/lynx-compat-data/README.md#css);
+  change authoritative inputs rather than generated data.
+
+Review an authored `lynx_path` against the EN documentation and its exact
+`api: <compat identifier>` bindings. Flag an ancestor-page destination when a
+dedicated API page exists. For shared pages, section anchors, intentional guide
+destinations, or multiple page bindings, explain the selected destination in
+the PR. Do not infer it from identifier names or silently choose between
+main-thread and background-thread pages.
+
+Authors and reviewers must check display labels and documentation destinations
+explicitly. Schema validation, route-existence filtering, and MDX
+compatibility-query checks do not establish that a label or destination is
+appropriate.
+
 ## Media Assets
+
+Before adding or replacing media, identify its consuming page, example, test,
+or build step. Keep authoring/source assets out of this repository; consider an
+existing asset, a smaller web export, or a documentation CDN URL. Passing the
+size budget alone does not justify inclusion.
 
 Use approved immutable documentation CDN URLs for documentation media by
 default. Do not add a local copy merely to make an image available to a
@@ -296,19 +449,78 @@ consistency, component ownership, style overrides, and compatibility checks.
 
 ## Deployment Portability
 
-Build and generation scripts must remain portable across GitHub Actions,
-Cloudflare Pages, and Netlify build images. Do not add dependencies on
-undeclared host commands such as `rsync`; see
-[Portable Build and Generation Tooling](./AGENTS.md#portable-build-and-generation-tooling).
+Prepare and build tooling runs across local development, GitHub Actions,
+Cloudflare Pages, Netlify, and downstream consumers. Node-based generators must
+not invoke undeclared host commands. In particular, do not depend on `rsync`;
+it is not available in every supported Cloudflare Pages build image.
+
+Prefer `node:*` APIs or declared package dependencies. If an operating-system
+tool is unavoidable, provision it in every caller and supported build image,
+document the prerequisite, and add CI coverage for its absence or availability.
+A command installed on a developer machine or GitHub-hosted runner is not
+automatically part of the build contract. Keep the `Generator Portability` CI
+job dependency-free.
 
 ## Downstream Compatibility
 
-This repository is consumed by downstream documentation sites through a pinned
-revision. Changes to shared docs, runtime source, theme files, scripts, package
-metadata, generated data inputs, or shared configuration exports can affect
-those consumers.
+This repository is consumed by the in-house Lynx documentation site through a
+pinned git submodule and local `file:` dependency.
 
-Read [AGENTS.md](./AGENTS.md) before changing compatibility-sensitive paths.
+### Consumed Paths and Tools
+
+The downstream prepare flow consumes these OSS paths:
+
+- Copied or merged content: `docs/`, `i18n.json`, and `sharedDocs/`
+- Symlinked runtime: `src/` and `theme/`
+- Imported configuration: `tailwind.config.js`
+- Package contract: `package.json`
+- Generated-data inputs: `packages/lynx-living-spec/`,
+  `packages/lynx-compat-data/`, `packages/lynx-example-packages/`,
+  `packages/lynx-ui-example-packages/`, and
+  `packages/lynxtron-example-packages/`
+
+The downstream repository replaces `docs/public/lynx-examples` and applies
+internal content overlays after copying OSS content.
+
+It directly executes `scripts/luna-demo.js`, `scripts/lynx-example.js`, and
+`scripts/lynxtron-examples.js`. It also imports `mountSkillsDocs` from
+`scripts/skills-docs.mjs` to mount its composed AI documentation. The docs
+packages supply content and composition; website mounting and cleanup are
+owned here.
+
+The downstream directly executes `scripts/lynx-living-spec.js` from its
+installed `lynx-doc` dependency through its own Living Spec orchestration layer.
+It prepares downstream source overlays first and runs the generator with the
+downstream repository root as the working directory.
+
+Keep these script paths, caller-working-directory behavior, environment
+variables, and generated output layouts compatible with downstream callers.
+For compatibility statistics, follow the package's
+[documentation-root contract](./packages/lynx-compat-data/README.md#site-specific-statistics).
+
+### Mirrored Configuration
+
+The downstream repository maintains local versions of
+`shared-route-config.ts`, `shared-og-config.ts`, `rspress.config.ts`, and
+`tsconfig.json`. These files are not copied from OSS, but their runtime
+contracts must remain compatible.
+
+Keep OSS runtime imports compatible with downstream resolver aliases.
+Coordinate changes to shared configuration exports, new aliases, or alias
+ordering with downstream consumers.
+
+### Coordinating Changes
+
+Treat consumed paths, package names, script environment variables, output
+directories, and exported configuration fields as interfaces. Do not rename,
+remove, or change them without a compatibility plan and coordinated downstream
+update. Keep internal-only content and behavior in the in-house repository.
+
+The in-house scheduled sync runs daily at 09:30 UTC+8. For coordinated changes,
+especially those that must land internally first, plan the landing order around
+this window so an OSS change is not synced before its downstream counterpart
+is ready.
+
 When a change affects the downstream contract, run:
 
 ```bash
@@ -316,7 +528,17 @@ pnpm run prepare
 pnpm run build
 ```
 
-Then request downstream validation after the updated OSS revision is pinned.
+Outside the interface-specific requirements below, maintainers decide whether
+downstream validation is needed based on the affected contract and available
+evidence. When needed, validate against the updated OSS pin in the in-house
+repository, following that repository's own setup and build instructions.
+
+Automated reviewers must identify a specific affected interface and
+compatibility concern before requesting downstream validation. Missing
+downstream test evidence alone is not a defect. Respect explicit maintainer
+decisions about validation; revisit them only when new changes or evidence
+reveal a concrete compatibility risk. Do not report validation as passed
+when a maintainer decides it is unnecessary.
 
 ### Shared Theme Slots
 
@@ -526,45 +748,17 @@ not add one for a new OSS documentation component. Promote the component
 through the owning bare barrel. Downstream consumers may resolve `@` through
 multiple source roots, where an earlier match shadows later roots.
 
-## Commits
+### Host-Root Imports
 
-- Follow [Conventional Commits](https://www.conventionalcommits.org/) for
-  commit subjects.
-- Optional scopes MUST use lowercase kebab-case in commit and pull request
-  subjects.
-- Keep the subject focused; prefer no more than 72 characters per line.
-- Use concise, direct English.
-- Use the body to explain what changed, why it was needed, and how it
-  was verified or affects users. Use clear paragraphs or bullets; fixed
-  subsection headings are not required.
-- Use optional footers in the following form:
+`@site` resolves to the consuming site's repository root. Existing `@site/*`
+imports remain **temporarily** supported for OSS/downstream compatibility.
+Do not add new `@site/*` dependencies. For new code:
 
-```text
-issue: #12345
-doc: https://example.com
-TEST: Relevant test cases
-```
-
-Use exactly one `TEST` footer. It MUST concisely summarize validation rather
-than enumerate individual commands. Use lowercase `issue` and `doc`.
-
-## Pull Requests
-
-- Base normal changes on `main`.
-- Format pull request titles as Conventional Commit subjects.
-- Pull request title subjects must contain at least 3 non-whitespace
-  characters and be no longer than 72 characters.
-- Renovate dependency pull requests may use longer subjects when their
-  generated package name and version require it.
-- Keep pull requests focused on one behavior or documentation update.
-- Keep descriptions structured and concise. Use sections such as
-  Summary, Rationale, Verification, and Documentation when helpful.
-- Include enough context for reviewers to understand the user impact,
-  affected pages, and validation performed.
-- Prefer no more than 72 characters per line, except where a URL or code
-  sample cannot be wrapped clearly.
-- Do not include internal-only content, private URLs, or downstream-only
-  implementation details in this OSS repository.
+- Use a relative import when the target remains inside the owning OSS module.
+- Use an OSS-owned package export for reusable shared code.
+- Use a documented exact-match resolver alias when a downstream site must
+  intentionally inject configuration. For example, `@og-config` is configured
+  as the exact-match `@og-config$` alias in Rspress.
 
 ## Release Cherry-picks and Backports
 
@@ -679,3 +873,27 @@ node .github/scripts/cherry-pick-request.mjs check-config
 Pull requests that change GitHub Actions workflow files cannot be
 automatically cherry-picked with the default `GITHUB_TOKEN`; handle those
 backports manually or with a token that explicitly has workflow permission.
+
+## Agent Skills
+
+Use these local references as needed for Rspress configuration and theme work:
+
+- [rspress-best-practices](./.agents/skills/rspress-best-practices/SKILL.md)
+  for Rspress configuration, content, navigation, MDX, assets, and deployment.
+- [rspress-custom-theme](./.agents/skills/rspress-custom-theme/SKILL.md)
+  for theme variables, style overrides, Layout slots, and component ejection.
+
+The copies are based on
+[Rstack skills revision c22a21b](https://github.com/rstackjs/agent-skills/tree/c22a21bbdbc639d1b0f3ddc7aea0bc720f19dbb0/skills),
+with local corrections. Each includes the upstream repository's MIT license:
+[best practices](./.agents/skills/rspress-best-practices/LICENSE) and
+[custom theme](./.agents/skills/rspress-custom-theme/LICENSE).
+Preserve the licenses and update the source revision above when refreshing
+from upstream.
+
+Put project-specific rules in this guide or the owning README.
+This repository's media, alias, generated-content,
+and downstream contracts take precedence over generic skill examples.
+Use the existing
+[description governance skill](./.agents/skills/doc-description-governance/SKILL.md)
+for page descriptions.

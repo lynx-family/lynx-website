@@ -1,292 +1,53 @@
 # Repository Instructions
 
-## Branch Strategy
-
-Never push directly to `main` or any `release/*` branch. Before committing or
-pushing, ensure `HEAD` is on an appropriately named topic or development branch
-based on the applicable branch. Automated cherry-picks require a source pull
-request already merged into the default branch.
-
-Follow the release cherry-pick and backport rules in
-[Release Cherry-picks and Backports](./CONTRIBUTING.md#release-cherry-picks-and-backports).
-Use the newest applicable branch, normally `main`, and
-cherry-pick only toward older release branches; never in the opposite direction.
-
-## Contribution Workflow
-
-Follow the [commit](./CONTRIBUTING.md#commits) and
-[pull request](./CONTRIBUTING.md#pull-requests) conventions in
-`CONTRIBUTING.md`. Automated reviewers must also follow the policy
-embedded in [the pull request template](./.github/pull_request_template.md).
-
-### Issue and Pull Request References
-
-In commit subjects, bodies, and footers, use GitHub's `owner/repo#number`
-syntax for cross-repository references, for example `lynx-community/go-web#94`.
-Apply the same rule to pull request descriptions. Use bare `#number` only
-for issues or pull requests in this repository. A label such as `go-web #94`
-still links to this repository's #94.
-
-## Repository Hygiene
-
-Do not commit scratch notes, one-off investigation scripts, temporary analysis
-output, debug dumps, or other process artifacts. Keep them outside the
-repository or in an appropriate ignored location. Commit generated files only
-when a documented workflow treats them as maintained outputs.
-
-## Downstream Compatibility
-
-This repository is consumed by the in-house Lynx documentation site through a
-pinned git submodule and local `file:` dependency.
-
-### Directly Consumed Paths
-
-The downstream prepare flow consumes these OSS paths:
-
-- Copied or merged content: `docs/`, `i18n.json`, and `sharedDocs/`
-- Symlinked runtime: `src/` and `theme/`
-- Imported configuration: `tailwind.config.js`
-- Package contract: `package.json`
-- Generated-data inputs: `packages/lynx-living-spec/`,
-  `packages/lynx-compat-data/`, `packages/lynx-example-packages/`,
-  `packages/lynx-ui-example-packages/`, and
-  `packages/lynxtron-example-packages/`
-
-The downstream repository replaces `docs/public/lynx-examples` and applies
-internal content overlays after copying OSS content.
-
-### Downstream Tool Contract
-
-The downstream prepare flow directly executes:
-
-- `scripts/luna-demo.js`
-- `scripts/lynx-example.js`
-- `scripts/lynxtron-examples.js`
-
-The downstream imports `mountSkillsDocs` from `scripts/skills-docs.mjs` to mount
-its composed AI documentation. The docs packages supply content and composition;
-website mounting and cleanup are owned here.
-
-The downstream directly executes `scripts/lynx-living-spec.js` from its
-installed `lynx-doc` dependency through its own Living Spec orchestration layer.
-It prepares downstream source overlays first and runs the generator with the
-downstream repository root as the working directory.
-
-Keep these script paths, caller-working-directory behavior, environment
-variables, and generated output layouts compatible with downstream callers.
-
-### Mirrored Integration Contracts
-
-The downstream repository maintains local versions of
-`shared-route-config.ts`, `shared-og-config.ts`, `rspress.config.ts`, and
-`tsconfig.json`. These files are not copied from OSS, but their runtime
-contracts must remain compatible.
-
-Keep OSS runtime imports compatible with the downstream resolver aliases.
-Coordinate changes to shared configuration exports or resolver aliases with
-the downstream repository.
-
-### Compatibility Changes
-
-- Treat consumed paths, package names, script environment variables, output
-  directories, and exported configuration fields as interfaces. Do not rename,
-  remove, or change them without a compatibility plan and coordinated
-  downstream update.
-- Keep internal-only content and behavior in the in-house repository.
-
-The in-house scheduled sync runs daily at 09:30 UTC+8. For coordinated changes,
-especially those that must land internally first, plan the landing order around
-this window so an OSS change is not synced before its downstream counterpart is
-ready.
-
-### Verification
-
-When a change affects any downstream compatibility contract above, verify this
-repository with:
-
-```sh
-pnpm run prepare
-pnpm run build
-```
-
-Then request validation against the updated OSS pin in the in-house repository,
-following that repository's own setup and build instructions.
-
-## Portable Build and Generation Tooling
-
-Prepare and build tooling runs across local development, GitHub Actions,
-Cloudflare Pages, Netlify, and downstream consumers. Node-based generators must
-not invoke undeclared host commands. In particular, do not depend on `rsync`;
-it is not available in every Cloudflare Pages build image supported by this
-site.
-
-Prefer `node:*` APIs or declared package dependencies. If an operating-system
-tool is unavoidable, explicitly provision it in every caller and supported
-build image, document the prerequisite, and add CI coverage for its absence or
-availability. A command being installed on a developer machine or GitHub-hosted
-runner does not make it part of the build contract.
-
-## Media Assets
-
-The contributor-facing rules in
-[Media Assets](./CONTRIBUTING.md#media-assets) are the source of truth for
-media budgets and local media processing. Automated agents must not add or
-modify entries in `scripts/media/budget-allowlist.json`; exception decisions
-belong to developers and maintainers. Preserve the `media-budget` CI contract.
-
-Before adding or replacing any media file, double-check whether it really needs
-to live in this repository. Authoring/source assets should not enter the website
-repository. Identify the consuming page, example, test, or build step, and
-consider reusing an existing asset, a smaller web export, or a documentation CDN
-URL. Passing the size budget alone does not justify inclusion.
-
-### `api-stats.json` doc links
-
-`packages/lynx-compat-data`'s `gen-stats` emits a `doc_url` per API. **When the
-caller supplies a docs root** — via `--docs-root <dir>` (resolved against the
-working directory) or `LYNX_COMPAT_DOCS_ROOT` — it emits only the URLs that
-resolve to a route in that tree; without one it emits every URL unchecked. The
-OSS site supplies its own root through the `gen:compat-stats` script, which is
-therefore the script to use when regenerating these stats by hand. The root is
-never inferred from the package's location, so an install layout cannot decide
-which routes the data is checked against.
-
-A consumer that generates these stats itself should pass its own docs root, and
-gets a `doc_url` set matching the pages it publishes. Omitting the option skips
-verification and emits every URL unchecked; naming a root that does not exist
-is an error rather than a silent skip, so a run either verifies against the
-tree it was told to use or does not verify at all.
-
-## Generated Documentation
-
-The contributor-facing rules in
-[Generated Documentation](./CONTRIBUTING.md#generated-documentation) are the
-source of truth.
-
-CI must run documentation syncs and generators whose outputs are committed,
-then fail on additions, modifications, deletions, or untracked output files.
-When adding such a tool, include its complete output set in the consistency
-check.
-
-For lynx-ui source pin, example package, and documentation refreshes, follow
-the [lynx-ui update skill](./.agents/skills/lynx-ui-docs-update/SKILL.md).
-
-## Alias Contracts
-
-Follow the policy and change process in the
-[Alias Contract Guide](./scripts/alias-contracts/README.md). Treat the
-packaged checker path, CLI options, and consumer module export names as
-downstream compatibility interfaces.
-
-## Documentation Imports
-
-The contributor-facing rules, examples, and alias selection table in
-[Portable Documentation Imports](./CONTRIBUTING.md#portable-documentation-imports)
-are the source of truth. Automated changes to `docs/` and `sharedDocs/` must
-follow them.
-
-### Public Asset References
-
-The contributor-facing rules in
-[Public Asset References](./CONTRIBUTING.md#public-asset-references) are the
-source of truth.
-
-Rspress copies every file under `docs/public` into the build output while
-preserving its relative path. These public files are URL-addressed resources,
-not code modules. Files under `docs/` and `sharedDocs/` must not import from
-`@assets`; use an approved immutable documentation CDN URL by default. Standard
-Markdown public URLs are resolved under the configured documentation base. Raw
-HTML and explicit MDX JSX props must not use an unnormalized origin-root public
-URL such as `/assets/...`, which would request the asset from the current root
-deployment instead of the archived version. Normalize an existing public URL
-explicitly when it must be used outside standard Markdown.
-Documentation **MUST NOT** use an origin-root value such as
-`<Go img={'/assets/demo.gif'} />`; `Go` currently passes its `img` prop through
-unchanged.
-
-### Runtime Resolver Details
-
-The `@` alias resolves directly to `src` in OSS, but downstream consumers may
-configure it as an ordered list of source roots. The resolver uses the first
-matching path; it does not merge directories or barrel exports. Existing `@/*`
-imports remain **temporarily** supported for compatibility, but do not add one
-for a new OSS documentation component. Promote it through the owning bare
-barrel.
-
-Likewise, a downstream `@lynx` alias may search multiple component roots. A
-subpath such as `@lynx/example` can fall through until that component exists,
-while the bare `@lynx` import stops at the first resolvable barrel. Use the
-barrel after the export is present in every consumer's first matching barrel.
-Existing `@lynx/*` and `@lynx-ui/*` imports are migration inventory, not stable
-file-level Component APIs.
-
-The OSS `@luna` alias is an exact-match barrel for `src/luna/index.ts`. Shared
-documentation must use only the bare `@luna` import so consumers need to
-provide the same barrel contract, not internal Luna subpaths.
-
-Do not add a new alias or change alias ordering without coordinating the exact
-contract with downstream consumers.
-
-### Boundary Check
-
-The `scripts/ci/check-doc-import-boundaries.mjs` check enforces this boundary.
-It parses documents using direct MDX and syntax-plugin dependencies aligned
-with Rspress, then checks static imports, re-exports, and statically known
-dynamic imports in the AST. It does not execute documents or evaluate computed
-import sources. Preserve Rspress's `.md`/`.mdx` distinction, frontmatter
-handling, and heading-ID escaping when updating the parser; plain Markdown
-examples are not executable imports. Parse failures must fail the check, not
-silently skip files. Relative imports into `src/` or `theme/` are forbidden;
-relative imports that remain within the documentation tree are allowed. The
-check does not enforce alias ownership or canonicalize existing alias imports.
-
-Replacement suggestions derive only from the resolved source path. They may
-normalize known JS/TS extensions and trailing `index` files, but must not infer
-ownership from imported symbol names or guess aliases for undocumented source
-roots.
-
-Keep parser dependencies explicit rather than importing Rspress internals.
-The `Documentation Imports` CI job installs dependencies with lifecycle scripts
-disabled and checks committed documents without root `prepare`. Keep the
-separate `Generator Portability` job dependency-free.
-
-## Host-Root Imports
-
-`@site` resolves to the consuming site's repository root. Existing `@site/*`
-imports remain **temporarily** supported as part of the current OSS/downstream
-compatibility surface.
-
-Do not add new `@site/*` dependencies. For new code:
-
-- Use a relative import when the target remains inside the owning OSS module.
-- Use an OSS-owned package export for reusable shared code.
-- Use a documented exact-match resolver alias when a downstream site must
-  intentionally inject configuration. For example, `@og-config` is configured
-  as the exact-match `@og-config$` alias in Rspress.
-
-## Theme and Component Design
-
-Follow the contributor-facing [Theme and Component Design](./src/README.md)
-guide for changes to `src/` and `theme/`.
-
-### React Component Style
-
-- Prefer function components and Hooks for new or updated React components.
-- Define props with an explicit `type` or `interface` and annotate the function
-  parameters directly. Let TypeScript infer the return type unless a contract
-  requires an explicit annotation. Do not annotate component implementations
-  with `React.FC`, `React.FunctionComponent`, or equivalent aliases.
-- Keep class components when a React API requires them, such as native error
-  boundaries using `getDerivedStateFromError` or `componentDidCatch`. Preserve
-  existing error handling when modernizing components.
-
-## Change Rules
-
-Apply the section-specific rules above, including the resolver, host-root, and
-generated-documentation constraints, to changes in those areas.
-
-- Call out changes to CI, build or generation workflows, release behavior, or
-  downstream interfaces explicitly in the commit message and pull request
-  description.
-- All pull requests require human review and must be merged manually. Review
-  agents may approve changes but must not auto-merge them.
+## Core Principles
+
+- Follow [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution workflow and
+  shared contracts. Read the relevant task guidance below before editing.
+- When documentation, skills, and implementation disagree, verify claims
+  against the relevant version's source and behavior.
+- Review completed features across all related commits for overall design,
+  maintainability, and unnecessary remnants of intermediate approaches.
+- Put new contributor-facing principles in `CONTRIBUTING.md` and module-specific
+  usage, tooling, and implementation details in the owning `README.md`. Keep
+  this file limited to core agent constraints and links; update its task index
+  when guidance moves or a new topic needs an entry, without duplicating rules.
+- Work on a topic or development branch; never push directly to `main` or
+  `release/*`. Follow the documented backport direction and eligibility rules.
+- Preserve downstream interfaces and coordinate compatibility changes with
+  consumers. Keep internal-only content and behavior in the in-house repository.
+- Edit authoritative sources and regenerate maintained outputs. Do not patch
+  generated files or weaken checks to accommodate a change.
+- Keep scratch notes, investigation scripts, debug output, and other process
+  artifacts outside the repository or in an appropriate ignored location.
+- Run the checks relevant to the change and report their results. Call out
+  changes to CI, generation, release behavior, or downstream interfaces in
+  commit messages and PR descriptions.
+- Do not add or modify `scripts/media/budget-allowlist.json` entries;
+  media exceptions belong to developers and maintainers.
+
+## Task Guidance
+
+| Task                                          | Source of truth                                                                                                                                                                                            |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Commit messages and PRs                       | [Commits](./CONTRIBUTING.md#commits), [Pull Requests](./CONTRIBUTING.md#pull-requests)                                                                                                                     |
+| Release backports                             | [Release Cherry-picks and Backports](./CONTRIBUTING.md#release-cherry-picks-and-backports)                                                                                                                 |
+| Validation                                    | [Checks](./CONTRIBUTING.md#checks) and the owning module's guide                                                                                                                                           |
+| Implementation and final review               | [Implementation Principles](./CONTRIBUTING.md#implementation-principles)                                                                                                                                   |
+| Rspress configuration and theme customization | [Agent Skills](./CONTRIBUTING.md#agent-skills)                                                                                                                                                             |
+| Documentation routes                          | [Documentation Routes](./CONTRIBUTING.md#documentation-routes)                                                                                                                                             |
+| Docs and shared content                       | [Generated Documentation](./CONTRIBUTING.md#generated-documentation), [Portable Documentation Imports](./CONTRIBUTING.md#portable-documentation-imports), [Writing Style](./CONTRIBUTING.md#writing-style) |
+| Documentation media                           | [Media Assets](./CONTRIBUTING.md#media-assets), [Public Asset References](./CONTRIBUTING.md#public-asset-references)                                                                                       |
+| CSS references                                | [CSS Reference Style](./CONTRIBUTING.md#css-reference-style)                                                                                                                                               |
+| Site UI, React, and theme                     | [Theme and Component Design](./src/README.md)                                                                                                                                                              |
+| Build, generators, or downstream interfaces   | [Deployment Portability](./CONTRIBUTING.md#deployment-portability), [Downstream Compatibility](./CONTRIBUTING.md#downstream-compatibility)                                                                 |
+| Resolver aliases and import checks            | [Alias Contract Guide](./scripts/alias-contracts/README.md), [Host-Root Imports](./CONTRIBUTING.md#host-root-imports)                                                                                      |
+| Compatibility data or API documentation links | [Compatibility Data](./CONTRIBUTING.md#compatibility-data), [Site-specific Statistics](./packages/lynx-compat-data/README.md#site-specific-statistics)                                                     |
+| lynx-ui source pin, docs, and examples        | [lynx-ui update skill](./.agents/skills/lynx-ui-docs-update/SKILL.md)                                                                                                                                      |
+
+## Automated Review
+
+Follow the policy in the [pull request template](./.github/pull_request_template.md).
+Only human maintainers control PR readiness, conversation resolution, and
+merging. Review agents may approve only after completing a review with no
+blocking issues.

@@ -11,7 +11,7 @@ There are two types of data in this package:
 
 ### Platform data
 
-Platform data are defined against [`platform-schema.json`](./schemas/platform-schema.json). See [`platform-schema.md`](./schemas/platform-schema.md) for more details.
+Platform data are defined against [`platform.schema.json`](./schemas/platform.schema.json). See [`platform-schema.md`](./schemas/platform-schema.md) for more details.
 
 #### [`platforms`](./platforms)
 
@@ -21,7 +21,7 @@ Data for Lynx platforms e.g. iOS, Android, Web, etc.
 
 ### Compatibility data
 
-Compatibility data are defined against [`compat-data-schema.json`](./schemas/compat-data-schema.json). See [`compat-data-schema.md`](./schemas/compat-data-schema.md) for more details.
+Compatibility data are defined against [`compat-data.schema.json`](./schemas/compat-data.schema.json). See [`compat-data-schema.md`](./schemas/compat-data-schema.md) for more details.
 
 Compatibility data are organized into category directories such as `elements`, `css`, and `features`. A category may contain subcategory directories, such as `css/properties`, when the subcategory is not directly referenceable. Referenceable technologies are defined in `*.json` files under the corresponding category.
 
@@ -58,7 +58,7 @@ Data for CSS e.g. properties like `background`, `color`, etc.
 
 Data for Lynx APIs, e.g. `setTimeout`.
 
-#### [`lynx-native-api`](./lynx-api)
+#### [`lynx-native-api`](./lynx-native-api)
 
 Data for Lynx Native APIs, e.g. `LynxView`.
 
@@ -167,6 +167,9 @@ fetch('https://api.example.com/lynx-compat-data/platforms/ios.json')
 
 ## Development
 
+Follow [Compatibility Data](../../CONTRIBUTING.md#compatibility-data) for
+authoring and review principles.
+
 ### Update Web support
 
 The Web statements were reviewed against
@@ -262,9 +265,22 @@ reuse complete artifacts from an installed package or a prepared OSS checkout.
 If either output is missing, install the OSS checkout's dependencies and run
 `build:package` there before copying the package into the consuming site.
 
-Site-specific statistics are generated after any data overlays are applied.
-Pass the consuming site's documentation root to `gen-stats` with `--docs-root`
-or `LYNX_COMPAT_DOCS_ROOT`; `build:package` does not choose a site's routes.
+### Site-specific Statistics
+
+Generate statistics after applying any data overlays. From the OSS repository
+root, use `pnpm gen:compat-stats`; it supplies this site's EN documentation
+root.
+
+Consumers running `gen-stats` themselves should supply their own docs root via
+`--docs-root <dir>` or `LYNX_COMPAT_DOCS_ROOT`. Relative paths resolve from the
+caller's working directory. With a docs root, the generator emits `doc_url`
+only for destinations that resolve to a route in that tree.
+
+Without a docs root, it emits URLs unchecked. A supplied root that does not
+exist is an error, not a silent skip. Neither `build:package` nor the package's
+installation location chooses a site's routes. Route existence does not prove
+that a destination is canonical; see
+[Compatibility Data](../../CONTRIBUTING.md#compatibility-data).
 
 ### Package
 

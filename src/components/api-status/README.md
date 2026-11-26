@@ -57,7 +57,8 @@ This will:
 Use this script rather than calling the package's `gen-stats` directly. It
 passes this site's docs root, which is what lets the generator drop a `doc_url`
 that would 404 instead of emitting it; without a docs root every URL is emitted
-unchecked. See [`AGENTS.md`](../../../AGENTS.md#api-statsjson-doc-links).
+unchecked. See the
+[statistics contract](../../../packages/lynx-compat-data/README.md#site-specific-statistics).
 
 ### Viewing the Dashboard
 

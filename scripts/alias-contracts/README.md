@@ -247,6 +247,26 @@ for pre-existing downstream migration debt. See
 [UNDERSTANDING.md](./UNDERSTANDING.md#gate-2-resolution-verification) for the
 corpus, runtime, export-surface, and syntax boundaries.
 
+### Documentation Boundary Check
+
+`scripts/ci/check-doc-import-boundaries.mjs` checks static imports, re-exports,
+and statically known dynamic imports without executing documents or evaluating
+computed sources. Preserve Rspress's `.md`/`.mdx` distinction, frontmatter
+handling, and heading-ID escaping when changing the parser. Plain Markdown
+examples are not executable imports; parse failures must fail the check.
+
+Relative imports within the documentation tree are allowed; relative imports
+into runtime source under `src/` or `theme/` are forbidden. This standalone
+check does not validate alias ownership or canonicalize existing alias imports;
+the prepared-corpus gates enforce those policies.
+
+Replacement suggestions derive only from the resolved source path. They may
+normalize known JS/TS extensions and trailing `index` files, but must not infer
+ownership from imported symbol names or guess aliases for undocumented roots.
+Keep MDX and syntax-plugin dependencies explicit and aligned with Rspress;
+do not import Rspress internals. The `Documentation Imports` CI job checks
+committed documents with lifecycle scripts disabled and without root `prepare`.
+
 ## Import Policy and Baseline Shrinking
 
 Gate 3 checks importer permissions, private-owner closure, first resolved target
