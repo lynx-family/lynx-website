@@ -10,6 +10,8 @@ import { APISummary, APITable, VersionBadge } from '@lynx';
 
 ## 介绍
 
+在后台线程中创建和控制动画时，推荐使用 [`createSelectorQuery()` 的动画 API](#通过-createselectorquery-调用)。
+
 使用 `Element` 的 `animate()` 方法来给 UI 元件设置 [CSS Animation 动画](../../css/properties/animation.mdx)。
 
 1. 使用 [getElementById](./lynx-get-element-by-id) API, 根据 `id` 查找需要做动画的 `Element` 对象。
@@ -113,13 +115,18 @@ element.animate([
 ### 返回值
 
 返回 `Animation` 对象。
-`Animation` 对象上的方法：
 
-| 方法名               | 说明                                         |
-| -------------------- | -------------------------------------------- |
-| `Animation.cancel()` | 取消动画的执行，会触发animation cancel事件。 |
-| `Animation.pause()`  | 暂停动画的执行。                             |
-| `Animation.play()`   | 恢复动画的执行。                             |
+| `Animation` 的方法 | `AnimationElement` 的方法                   | 行为               |
+| ------------------ | ------------------------------------------- | ------------------ |
+| `cancel(): void`   | `cancelAnimate(animation: Animation): void` | 取消动画。         |
+| `pause(): void`    | `pauseAnimate(animation: Animation): void`  | 暂停动画。         |
+| `play(): void`     | `playAnimate(animation: Animation): void`   | 恢复已暂停的动画。 |
+
+:::info 备注
+
+`AnimationElement.finishAnimate(animation)` 无法让正在播放的动画提前结束，不建议使用。
+
+:::
 
 ## 示例
 
