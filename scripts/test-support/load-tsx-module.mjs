@@ -12,9 +12,10 @@ import ts from 'typescript';
  *
  * @param {URL} file URL of the production module to transpile and evaluate.
  * @param {Record<string, object>} imports Import specifiers and mock exports.
+ * @param {object} env Build flags exposed through import.meta.env.
  * @returns {Promise<object>} Evaluated exports of the production module.
  */
-export async function loadTsxModule(file, imports) {
+export async function loadTsxModule(file, imports, env = {}) {
   const { outputText } = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
     compilerOptions: {
       module: ts.ModuleKind.ESNext,
@@ -27,6 +28,9 @@ export async function loadTsxModule(file, imports) {
   const entry = new vm.SourceTextModule(outputText, {
     context,
     identifier: fileURLToPath(file),
+    initializeImportMeta(meta) {
+      meta.env = env;
+    },
   });
 
   // Reuse each synthetic module so all bindings share the declared exports.

@@ -19,6 +19,8 @@ import {
   removeBrokenLanguageAlternates,
 } from './scripts/build/generated-html.mts';
 import { pluginVersionBindings } from '@lynx-js/lynx-doc-transform/rsbuild';
+import { pluginPageSdkSince } from './scripts/build/plugin-sdk-since';
+import sdkRelease from './src/versioning/lynx-sdk-release.json';
 import { SITE_BASE } from './shared-route-config';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 
@@ -168,6 +170,11 @@ export default defineConfig({
     ],
   },
   plugins: [
+    pluginPageSdkSince(path.join(__dirname, 'docs'), {
+      ...sdkRelease,
+      baseline: '3.2',
+      showReleaseStatus: true,
+    }),
     pluginClientRedirects({
       redirects: [
         // Preserve locale/version prefixes for the former root-package page.
