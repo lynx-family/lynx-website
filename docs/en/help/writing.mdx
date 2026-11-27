@@ -3,7 +3,7 @@ description: 'Standards and best practices for writing documentation guides.'
 ---
 
 import { PackageManagerTabs, Steps } from '@theme';
-import { NextSteps, PlatformTabs } from '@lynx';
+import { NextSteps, Note, PlatformTabs } from '@lynx';
 
 # Authoring Guides
 
@@ -34,6 +34,23 @@ Defines the framework or context for the page (e.g., `react`, `vue`, `new`). Thi
 context: react
 ---
 ```
+
+### `since`
+
+Declares the minimum Lynx SDK version for the capability or usage taught by the
+whole guide. Use a quoted `x.y` string and keep English and Chinese counterparts
+consistent.
+
+```yaml
+---
+since: '4.3'
+---
+```
+
+The theme displays a page-level version capsule automatically. The site supplies
+the latest stable version and display baseline; authors only declare `since`.
+This is a support requirement, not the page's creation or last-updated version.
+Leaving it unspecified makes no support assertion.
 
 ## Writing Tutorials
 
@@ -145,6 +162,79 @@ import { PlatformTabs } from '@lynx';
 Use `<PlatformBadge>` or specific platform icons (like `<AndroidOnly />`) to explicitly mark features or caveats that apply only to certain platforms.
 
 See [MDX Components Reference](./components#platform-badges) for usage details.
+
+## Version-Specific Content
+
+Place version information at the smallest scope it describes:
+
+- **Whole guide:** use frontmatter `since` when one SDK requirement applies to the
+  whole capability or workflow.
+- **Section or method:** place `<Since since="x.y" />` below the heading or
+  beside the affected content. A newer optional feature does not raise the
+  entire page's minimum version.
+- **Changed usage:** place a Note beside the affected example, explaining the
+  version boundary and what readers on older versions should do.
+
+Keep Lynx SDK, ReactLynx package, tooling, and platform requirements explicit.
+`Unreleased` means a version is not yet included in a stable Lynx SDK release;
+it does not imply Nightly availability or Experimental API stability.
+
+### Local SDK Requirements
+
+Import `Since` from `@lynx`. Use the compact form for a section-wide requirement;
+pass children when a specific capability needs its own explanation:
+
+```mdx
+import { Since } from '@lynx';
+
+<Since since="3.4" />
+
+<Since since="4.5">
+
+Heap snapshot collection currently supports QuickJS only.
+
+</Since>
+```
+
+Scope the declaration to the capability whose version is known. An SDK version
+does not establish DevTool or engine support; retain those restrictions in the
+body. The site supplies release status and the HTML display baseline. A hidden
+indicator never hides children. Markdown always retains the version fact and
+groups it with any children in one blockquote.
+
+### Version-Specific Note
+
+Use a Note when an existing API or workflow has different usage across versions.
+Name the feature, the version where usage changes, and the older-version
+alternative. Keep this information visible near the code it qualifies.
+
+This example from React's
+[`createContext` reference](https://react.dev/reference/react/createContext#provider)
+describes a React version boundary:
+
+```mdx
+import { Note } from '@lynx';
+
+<Note title="Version-Specific Note">
+
+Starting in React 19, you can render `<SomeContext>` as a provider.
+
+In older versions of React, use `<SomeContext.Provider>`.
+
+</Note>
+```
+
+<Note title="Version-Specific Note">
+
+Starting in React 19, you can render `<SomeContext>` as a provider.
+
+In older versions of React, use `<SomeContext.Provider>`.
+
+</Note>
+
+Apply the same pattern to Lynx features using their actual SDK or package
+version boundary. For an unreleased feature, state that status and provide a
+released alternative when one exists.
 
 ## Related Resources
 

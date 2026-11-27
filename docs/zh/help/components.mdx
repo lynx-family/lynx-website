@@ -20,11 +20,121 @@ import {
   VideoList,
   EditThis,
   VersionTable,
+  Since,
 } from '@lynx';
 
 # MDX 组件参考
 
 本页作为 Lynx 文档中可用自定义组件的参考。您可以从 `@lynx` 导入这些组件。
+
+## 版本标识 (Versioning)
+
+页面级 SDK 标识使用指南 frontmatter 中的 `since` 和站点发布配置。
+从 `@lynx` 导入 `Since`，即可在 MDX 中声明局部内容的版本要求：
+
+```tsx
+<Since since="4.3" />
+```
+
+局部标识放在标题下方或它实际约束的内容旁边，使用品牌色图标和 Note 的淡色背景。
+
+`Since` 默认读取站点配置中的 `latestStable` 和 `baseline`。
+这两个属性都可以单独覆盖；未指定的属性仍使用站点配置。
+站点未提供配置时，使用 SDK 发布元数据，且不设置显示基线。
+下面的示例通过显式覆盖展示特定状态。指南 frontmatter 只需要填写 `since`。
+
+### 已发布 (Released)
+
+稳定版标识包含 **L** 图标，以及 **4.2+** 这样的紧凑版本标记，表示该版本及以上。
+
+```tsx
+<Since since="4.2" latestStable="4.2" />
+```
+
+<div className="rp-not-doc">
+  <Since since="4.2" latestStable="4.2" />
+</div>
+
+### 未发布 (Unreleased)
+
+标识仍以 **+** 表示最低版本，星芒图标提示这是即将发布的版本。
+悬停或键盘聚焦胶囊时显示 **未正式发布** 提示。
+展开后可查看完整说明和发布说明链接，此时浮动提示隐藏。
+
+```tsx
+<Since since="4.3" latestStable="4.2" />
+```
+
+<div className="rp-not-doc">
+  <Since since="4.3" latestStable="4.2" />
+</div>
+
+### 页面级标识 (Page-level)
+
+整页指南具有统一的 SDK 要求时，在 frontmatter 中声明：
+
+```yaml
+---
+since: '4.3'
+---
+```
+
+主题在页面标题前渲染中性色标识，作者不需要在正文中添加 `Since`。
+
+### 局部内容块 (Local Content)
+
+传入子内容，即可将版本要求和说明组合为一个 Note 风格的内容块。
+版本取代通用的 Note 标题；只有发布状态说明可以折叠，作者编写的内容始终可见。
+
+```mdx
+<Since since="4.5">
+
+堆快照采集当前仅支持 QuickJS。
+
+</Since>
+```
+
+<Since since="4.5" latestStable="4.2">
+
+堆快照采集当前仅支持 QuickJS。
+
+</Since>
+
+Markdown 导出将版本、适用时的未发布状态和子内容放在同一个 blockquote 中。
+没有子内容时，版本和状态输出为普通段落。
+
+### 显示基线 (Display Baseline)
+
+版本不高于 `baseline` 时，HTML 标识隐藏。第一个示例不渲染内容；
+Markdown 输出仍然保留版本信息。
+
+```tsx
+<Since since="3.2" latestStable="4.2" baseline="3.2" />
+<Since since="3.2" latestStable="4.2" baseline="3.2" format="markdown" />
+```
+
+<div className="rp-not-doc">
+  <Since since="3.2" latestStable="4.2" baseline="3.2" />
+</div>
+
+<Since since="3.2" latestStable="4.2" baseline="3.2" format="markdown" />
+
+存在子内容时，显示基线只隐藏版本标识。内容块仍然可见，
+其中的平台、引擎或工具要求也会保留：
+
+```mdx
+<Since since="3.2" baseline="3.2">
+
+平台要求仍然适用。
+
+</Since>
+```
+
+<Since since="3.2" latestStable="4.2" baseline="3.2">
+
+平台要求仍然适用。
+
+</Since>
 
 ## 标注与警告 (Callout & Alerts)
 
