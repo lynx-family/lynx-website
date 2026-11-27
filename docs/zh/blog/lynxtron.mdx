@@ -1,43 +1,27 @@
 ---
-title: '正式发布 Lynxtron'
+title: '正式发布 Lynxtron：熟悉的 Electron API，更轻的桌面框架'
 date: 2026-09-21
 sidebar: false
 blog_hidden: true
 authors: ['icecreamx10', 'GuoXi', 'lynx']
 badge_text: 'Lynxtron 框架介绍'
 featured: true
-description: 'Lynxtron 是 Electron-like 应用框架，提供由 Lynx 驱动的轻量 UI 渲染器、跨平台 UI 模型，以及基于 UI/texture extension C-APIs 和 Node-API 的原生扩展能力。'
+description: '沿用 Electron 的主进程 API，用 Lynx 构建轻量桌面应用，并按需接入原生能力。'
 ---
 
 import { BlogHeader, Go } from '@lynx';
 
 <BlogHeader authors={['icecreamx10', 'GuoXi', 'lynx']} />
 
-Lynx 正在走向桌面端。
+Electron 让前端开发者可以用 JavaScript 高效地开发桌面应用：界面用 Web 技术编写，系统能力通过 Node.js 调用。这份效率建立在 Chromium 之上，代价也同样来自它：每个应用都要随包分发一份浏览器内核，基础包体因此偏大，运行时内存占用也偏高。为了在保留这份效率的同时减轻这些代价，我们开发了 **[Lynxtron](/zh/lynxtron/)**。
 
-**[Lynxtron](/zh/lynxtron/)** 是由 Lynx 驱动的 Electron-like 应用框架。在 Lynxtron 应用中，宿主进程仍然保留桌面开发需要的 Node.js 能力，而窗口层由 `LynxWindow` 通过轻量 UI 渲染器承载 Lynx UI，而不是加载浏览器页面。
+它以 Node.js 为宿主，由 Lynx 渲染界面，基础运行时不内置浏览器内核。开发者可以继续使用 Electron 风格的主进程 API 管理窗口和应用生命周期，并以开发 Web 应用的方式编写 Lynx 组件和样式。同一套界面代码也能[在浏览器里运行](https://github.com/lynx-community/lynxtron-examples/tree/main/showcases/cross-platform-notes)，不必为 Web 另写一份。
 
-这意味着：你可以用 Lynx 的 UI 模型构建桌面应用，同时继续获得更轻的运行时、更直接的原生扩展能力，以及面向桌面、Web 和移动端的跨平台代码组织方式。
+<span id="light-weight-and-fast" />
 
-## Lynxtron 解决什么问题
-
-桌面应用开发长期有一个现实选择：要么使用 Web 技术快速构建跨平台应用，要么投入更多原生工程成本换取体积、性能和系统能力。Lynxtron 的目标是在这两者之间提供一个新的路径：用 Lynx 组织 UI，用桌面宿主进程连接系统能力，用原生扩展承载真正需要原生实现的部分。
-
-Lynxtron 围绕 **Light-weight and Fast**、**Multiplatform** 和 **Natively Extensible** 三项特性展开。下面观察它们如何落到桌面应用开发中。
-
-## 使用 Lynxtron Go 体验
-
-[Lynxtron Go](/zh/lynxtron/go) 是 Lynxtron 官方提供的 playground，它本身也是使用 Lynxtron 框架构建的桌面应用。它提供模板、内置示例 Gallery、编辑器和 Console，无需先创建完整工程，即可运行和检查小型 Lynxtron 应用。下面的可运行示例也可以直接在 Lynxtron Go 中打开。
-
-:::info 测试版本与平台
-
-本文示例来自 Lynxtron Go 0.1.18 release，并使用 Lynxtron runtime 0.0.28。桌面示例支持 Apple 芯片和 Intel 芯片 Mac，以及 x64 Windows；Notes 示例还支持 Web。Lynxtron 工程需要 Node.js `^22.18.0 || ^24.0.0 || ^26.0.0`。
-
-:::
-
-## Light-weight and Fast
-
-Lynxtron 在应用模型上接近 Electron，但它没有把 browser 作为 UI runtime 打包进应用。[`LynxWindow`](/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow) 通过轻量化的 Lynx renderer 承载 UI，让桌面运行时更小，也让启动、窗口创建和内存使用路径更直接。
+- **下载体积。** Lynxtron 0.0.28 的运行时压缩包在 macOS arm64 上为 **24 MB**，在 Windows x64 上为 **35 MB**。相同平台上，Electron 44.3.0 分别为 **130 MB** 和 **158 MB**。[Lynxtron 发布包](https://github.com/lynx-family/lynxtron/releases/tag/v0.0.28) · [Electron 发布包](https://github.com/electron/electron/releases/tag/v44.3.0)
+- **空闲内存。** 在 700×520 的 hello-world 空闲基准中，Lynxtron 0.0.28 的占用低于 Electron 44.3.0：macOS 上（Apple M5 Max MacBook Pro）单进程为 **52 MB** 内存 Footprint，Electron 四个进程合计 **86 MB**，约低 **40%**；Windows 上（Windows 11 25H2、Core Ultra 7 155H）单进程为 **68.3 MB** Working Set - Private，Electron 四个进程合计 **158.7 MB**，约低 **57%**。
+- **启动速度。** 抖音 PC Windows 版已上线 Lynxtron 启动入口，与原有的 Electron 启动入口并存。线上真实用户数据显示，首屏展现耗时 P50 缩短 **27%**；冷启动场景下，首刷耗时 P90 从 Electron 的 **19.0 秒**降至 **10.8 秒**，降幅 **43%**。
 
 <Go
   example="benchmark"
@@ -50,11 +34,55 @@ Lynxtron 在应用模型上接近 Electron，但它没有把 browser 作为 UI r
   nativeFramework="lynxtron"
 />
 
-> 该 benchmark 会报告 Lynxtron 的基础包体积、启动耗时、物理内存、JS heap、平台信息，以及打开第二个 `LynxWindow` 后的内存增量，覆盖一个或两个窗口时的启动和内存表现。截图记录了 Benchmark 示例 v0.0.6 使用 Lynxtron 0.0.28，在 Windows 11 x64（Core Ultra 7 155H、Intel Arc）上的一次冷启动结果（不含安装后的首次启动）；启动耗时从进程创建计至首屏内容上屏，不代表平均值。
+在 [Lynxtron Go](/zh/lynxtron/go) 中运行 Benchmark 示例，即可查看本机的下载体积、启动耗时和内存占用。另见[启动基准测试与测量方法](https://github.com/lynx-family/lynxtron/issues/289)。
 
-## Natively Extensible
+## Electron 风格的 API 与架构 \{#multiplatform}
 
-Lynxtron 通过 [LynxExtensionModule](/zh/api/lynx-native-api/lynx-extension-module) 扩展渲染器能力。它是由[公开的 Lynx Native API](/zh/api/lynx-native-api/lynx-view) 支撑的 Desktop C++ extension API；该 reference 覆盖这个示例使用的 native view 生命周期、注册和 texture API。原生模块使用 C++ extension module wrapper 管理接入和生命周期，并通过 [Node-API](/zh/lynxtron/Native-Libraries/NodeJS-Native-Modules) 向 JavaScript 暴露接口；原生 UI 和 texture surface 则使用 native view wrappers。在桌面开发中，一部分图形或 UI 需要原生实现是很常见的需求：摄像头预览、视频画面、地图视图、绘制画布、平台控件，或者任何需要硬件访问、GPU 深度绑定、复用系统渲染能力的 surface。Lynxtron 可以把这些原生 surface 或原生 UI 和 Lynx runtime 结合起来，让需要原生渲染的部分继续走原生路径，同时让交互和界面逻辑继续用 Lynx UI 构建和迭代。
+### Node.js 宿主与 Lynx 渲染架构
+
+迁移 Electron 应用时，Agent 可以直接从现有的 Node.js 主进程脚本入手。Lynxtron 沿用 Electron 的主进程 API：应用生命周期、菜单、托盘、对话框等保持同样的用法。最直接的差异在窗口这一层：`BrowserWindow` 换成 `LynxWindow`，窗口的创建、尺寸、显隐和全屏等管理方法沿用 `BaseWindow` 的命名与语义，但加载的是 Lynx bundle 而非 HTML，`webContents` 也不再提供。渲染架构随之改变：Electron 在独立的 Chromium 进程里渲染页面，Lynxtron 在同一进程的主线程上渲染界面，在后台线程执行业务逻辑。[了解 Lynxtron 架构](/zh/lynxtron/learn/what-is-lynxtron)。
+
+![在 Lynxtron 中，Node.js 宿主和 Lynx 渲染共用主线程，UI 业务逻辑运行在后台线程。](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/lynxtron-architecture.png)
+
+### 用 Agent 熟悉的 API 管理窗口
+
+例如，Electron 应用通常在 `app.whenReady()` 之后打开第一个窗口。在 Lynxtron 中也一样，创建 [`LynxWindow`](/zh/lynxtron/api/@lynx-js/lynxtron/Class.LynxWindow.mdx)，然后加载编译好的 Lynx bundle 即可。
+
+```ts
+import { app, LynxWindow } from '@lynx-js/lynxtron';
+
+app.whenReady().then(() => {
+  const win = new LynxWindow({ width: 800, height: 600 });
+  win.show();
+  win.loadFile('main.lynx.bundle');
+});
+```
+
+### 在 Lynx 中直接调用 Node.js 对象
+
+Lynxtron 的 [preload script](/zh/lynxtron/learn/Communication-Between-Node-And-Lynx) 与 [Electron 的做法](https://www.electronjs.org/docs/latest/tutorial/tutorial-preload) 一致：在隔离的上下文中获得 Node.js 能力，再暴露给界面。区别在于系统环境与 UI 环境之间能传递什么。Electron 的 [`contextBridge`](https://www.electronjs.org/docs/latest/api/context-bridge) 会按自己的规则序列化、代理或拷贝跨上下文的值，页面拿不到 preload 上下文里的原始对象。Lynxtron 的 [`contextBridge.exposeInLynxBTS()`](/zh/lynxtron/api/@lynx-js/lynxtron/context-bridge/Interface.ContextBridge.mdx#exposeinlynxbts) 则把 JS 对象直接暴露给 Lynx BTS：对象上可以带函数，函数可以使用 preload 上下文中的闭包、接收其他函数作为参数，也可以返回 Promise。
+
+Electron 也提供 `nodeIntegration`，让页面直接使用 Node.js 能力，但开启后隔离性变差，通常不被推荐。Lynxtron 不需要这个取舍：preload script 在隔离的上下文中使用 Node.js，暴露出来的对象依然可以直接调用。
+
+下面的文件浏览器示例就是这样做的：preload script 暴露文件读写能力，Lynx 界面通过 [`NativeModules.nodejs.exposed`](/zh/lynxtron/api/@lynx-js/lynxtron/lynx/Interface.LynxtronNodejs.mdx#exposed) 调用。
+
+<Go
+  example="file-explorer"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/file-explorer.gif"
+  deepLinkUrl="lynxtron-go://showcase/open?id=%40lynxtron-examples%2Ffile-explorer"
+  defaultFile="src/app/App.tsx"
+  defaultEntryName="main"
+  webPreview={false}
+  nativeFramework="lynxtron"
+/>
+
+## 可扩展性 \{#natively-extensible}
+
+桌面应用已有的原生渲染器、原生视图和原生模块，都可以接入 Lynxtron，复用已有的原生能力。
+
+### 用外部纹理接入原生渲染器
+
+如果应用已经有自己的渲染器，可以让它继续绘制。下面的画布示例通过外部纹理把绘制结果交给 Lynx，让原生画布和 Lynx 控件出现在同一个界面里。
 
 <Go
   example="native-texture-canvas"
@@ -66,33 +94,21 @@ Lynxtron 通过 [LynxExtensionModule](/zh/api/lynx-native-api/lynx-extension-mod
   nativeFramework="lynxtron"
 />
 
-> Lynx UI 通过注册的原生模块控制 native texture surface，在同一组件树中组合原生渲染与前端式交互。
+### 把原生视图嵌入 Lynxtron
 
-## Multiplatform
-
-Lynxtron 不是把 Lynx 锁在桌面端。借助 Lynx，UI 可以运行在包括 Web 在内的多个平台上，也可以用较低成本迁移到新的宿主环境。
+Lynxtron 支持把原生视图封装为 Lynx 元素，直接嵌入界面，从而复用已有的原生能力。借助这一能力，可以把系统 WebView 嵌入应用界面；若应用需要自带 Chromium 内核，可以改用我们提供的 [CEF WebView](/zh/lynxtron/api/@lynx-js/cef-webview/index.mdx)。其他原生视图同样可以按这种方式封装，例如富文本编辑器、大数据量表格、地图控件。
 
 <Go
-  example="cross-platform-notes"
-  designWidth={800}
-  designHeight={600}
-  deepLinkUrl="lynxtron-go://showcase/open?id=@lynxtron-examples/cross-platform-notes"
-  defaultFile="src/app/api.ts"
-  defaultEntryName="main"
-  defaultTab="web"
-  webPreviewMode="responsive"
-  highlight="{71-87,146-149,165-178}"
+  example="system-webview"
+  deepLinkUrl="lynxtron-go://showcase/open?id=@lynxtron-examples/system-webview"
+  img="https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/lynxtron/system-webview-7eb4e077d51a.webp"
+  defaultFile="src/app/index.tsx"
+  entry={['src/app/index.tsx', 'system_webview.mm', 'system_webview_win.cc']}
   nativeFramework="lynxtron"
 />
 
-> 同一套 Lynx UI 只依赖统一的 notes API。构建时，桌面和 Web 目标会分别将该 API 接入 Node preload bridge 和浏览器侧 bridge。
+### 在 UI 侧直接加载 Node-API 模块
 
-这对应的是 Lynxtron 的跨平台工程模型：保持 Lynx UI 层可复用，把平台相关逻辑隔离在宿主适配层中，并在需要时将渲染器模型迁移到新的宿主。
+Electron 的渲染进程跑在 Chromium 里，用不了 [Node-API](/zh/guide/use-native-modules.html?platform=node-api)，原生模块只能加载在主进程，UI 通过 IPC 调用。Lynxtron 的 preload script 运行在 Node.js 环境中，可以直接 `require` 原生模块，再把对象交给 Lynx UI。模块本身与 Electron 通用，都是 npm 上的 Node-API 模块，重建工具换成 [`@lynx-js/lynxtron-rebuild`](/zh/lynxtron/api/@lynx-js/lynxtron-rebuild/) 即可。我们也在为所有 Lynx 原生平台[引入 Node-API](https://github.com/lynx-family/lynx/discussions/845)。
 
-## 工程边界
-
-对开发者来说，更重要的是可检查的源码边界：宿主进程负责桌面能力，Lynx UI 负责界面和交互，原生扩展负责需要平台能力的部分。Lynxtron 的设计重点不是把所有能力收进同一层，而是让每一层承担自己最擅长的职责。
-
-## 开始使用
-
-前往 [Lynxtron 快速上手](/zh/lynxtron/introduction)，创建并运行你的第一个工程。
+[创建你的第一个 Lynxtron 应用](/zh/lynxtron/introduction)，或[在 Lynxtron Go 中体验示例](/zh/lynxtron/go)。
