@@ -131,7 +131,7 @@ dependencies {
 
 ### Configure obfuscation rules ([Proguard](https://developer.android.com/build/shrink-code))
 
-The obfuscation rules for` Lynx Engine` are as follows. It is recommended to refer to the latest source code configuration.
+The obfuscation rules for `Lynx Engine` are as follows. Lynx is split into several Android modules, and each module uses its own `@CalledByNative` annotation for methods that native code calls through JNI. Keep all of these annotations; otherwise R8 renames those methods and the app aborts during `LynxEnv.init` when `isMinifyEnabled = true`. It is recommended to refer to the latest source code configuration: [`lynx_android`](https://github.com/lynx-family/lynx/blob/develop/platform/android/lynx_android/proguard-rules.pro), [`base`](https://github.com/lynx-family/lynx/blob/develop/base/platform/android/proguard-rules.pro), and [`trace`](https://github.com/lynx-family/lynx/blob/develop/base/trace/android/proguard-rules.pro).
 
 <CodeFold height={360} toggle>
 
@@ -154,8 +154,18 @@ The obfuscation rules for` Lynx Engine` are as follows. It is recommended to ref
 -keepclasseswithmembers,includedescriptorclasses class * {
     native <methods>;
 }
+# Lynx modules use separate @CalledByNative annotations for JNI callbacks.
 -keepclasseswithmembers class * {
     @com.lynx.tasm.base.CalledByNative <methods>;
+}
+-keepclasseswithmembers class * {
+    @com.lynx.base.CalledByNative <methods>;
+}
+-keepclasseswithmembers class * {
+    @com.lynx.trace.CalledByNative <methods>;
+}
+-keepclasseswithmembers class * {
+    @com.lynx.basedevtool.CalledByNative <methods>;
 }
 
 # to customize a module, you need to keep the class name and the method annotated as LynxMethod.

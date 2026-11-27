@@ -270,7 +270,7 @@ dependencies {
 
 ### 配置混淆规则 ([Proguard](https://developer.android.com/build/shrink-code))
 
-Lynx Engine 混淆规则如下，建议参考最新的源码配置：
+Lynx Engine 混淆规则如下。Lynx 由多个 Android 模块组成，每个模块都使用各自的 `@CalledByNative` 注解标记会被 native 代码通过 JNI 调用的方法。请保留所有这些注解，否则 R8 会重命名这些方法，导致在 `isMinifyEnabled = true` 时应用在 `LynxEnv.init` 阶段崩溃。建议参考最新的源码配置：[`lynx_android`](https://github.com/lynx-family/lynx/blob/develop/platform/android/lynx_android/proguard-rules.pro)、[`base`](https://github.com/lynx-family/lynx/blob/develop/base/platform/android/proguard-rules.pro) 和 [`trace`](https://github.com/lynx-family/lynx/blob/develop/base/trace/android/proguard-rules.pro)。
 
 <CodeFold height={360} toggle>
 
@@ -293,8 +293,18 @@ Lynx Engine 混淆规则如下，建议参考最新的源码配置：
 -keepclasseswithmembers,includedescriptorclasses class * {
     native <methods>;
 }
+# Lynx modules use separate @CalledByNative annotations for JNI callbacks.
 -keepclasseswithmembers class * {
     @com.lynx.tasm.base.CalledByNative <methods>;
+}
+-keepclasseswithmembers class * {
+    @com.lynx.base.CalledByNative <methods>;
+}
+-keepclasseswithmembers class * {
+    @com.lynx.trace.CalledByNative <methods>;
+}
+-keepclasseswithmembers class * {
+    @com.lynx.basedevtool.CalledByNative <methods>;
 }
 
 # to customize a module, you need to keep the class name and the method annotated as LynxMethod.
