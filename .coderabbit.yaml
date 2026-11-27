@@ -7,14 +7,27 @@ reviews:
   high_level_summary: true
   high_level_summary_instructions: |
     Write a concise, structured pull request summary in clear, direct English:
-    - Explain what changed, why it was needed, and its user or reviewer impact.
-    - Use the imperative mood and present tense, such as "Update reference links" or "Refine documentation formatting".
-    - Do not use past-tense verbs such as "Updated", "Refined", "Added", "Fixed", or "Changed".
+    - Lead with the problem or intended improvement, the main change, and its
+      resulting behavior or impact; explain the rationale for a solution only
+      when a non-obvious tradeoff matters to the reviewer.
+    - Use the imperative mood and present tense, such as
+      "Update reference links" or "Refine documentation formatting".
+    - Do not use past-tense verbs such as "Updated", "Refined", "Added",
+      "Fixed", or "Changed".
     - Group related changes by intent instead of listing every touched file.
-    - Keep each bullet concise and action-oriented, with one clear change per bullet.
-    - Include relevant verification, but do not invent test results.
-    - Prefer lines no longer than 72 characters when practical.
+    - Prefer one or two sentences for simple changes and one or two short
+      paragraphs for broader changes; use grouped bullets only when they improve
+      clarity, without unnecessary headings or file-by-file inventories.
+    - When verification results are available, summarize the relevant evidence
+      and outcome in one short sentence by default; omit routine command lists
+      and per-file results, retain material failures or coverage gaps, and never
+      infer or invent test results.
+    - Use normal Markdown paragraphs and bullets without forced line wrapping.
     - Prefer repository terminology exactly as written in the changed files.
+    - If the PR description already has content outside your own summary
+      (excluding HTML comments and empty template sections), preserve that
+      content and start your summary with `## CodeRabbit Summary`; otherwise,
+      omit the heading.
   poem: false
   review_status: true
   collapse_walkthrough: false
@@ -27,23 +40,58 @@ reviews:
       instructions: |
         # Documentation & Website Review Process
 
-        You are the guardian of the project's documentation and website consistency.
+        You are the guardian of the project's documentation and website
+        consistency.
 
         1. **Check Documentation Navigation and Localization**:
-           If this PR adds, removes, renames, or moves documentation pages, verify that route/sidebar/i18n-related files are updated when needed, including `shared-route-config.ts`, `i18n.json`, and the matching English or Chinese document.
-           - Flag missing paired-language updates when the change affects user-facing documentation in only one locale without an obvious reason.
+           If this PR adds, removes, renames, or moves documentation pages,
+           verify that route/sidebar/i18n-related files are updated when needed,
+           including `shared-route-config.ts`, `i18n.json`, and the matching
+           English or Chinese document.
+           - Flag missing paired-language updates when the change affects
+             user-facing documentation in only one locale without an obvious
+             reason.
 
         2. **Check Generated and Synced Content**:
-           If this PR changes generated or synced documentation outputs under `sharedDocs/`, `docs/public/lynx-compat-data`, or lynx-ui package docs, verify that the corresponding source or sync script change is present when applicable.
-           - If the generated output appears stale or source-less, ask for the source update or regeneration command.
+           Follow CONTRIBUTING.md#generated-documentation for generated or
+           synced outputs, including `sharedDocs/`,
+           `docs/public/lynx-compat-data`, lynx-ui package docs, and
+           package-owned pages under `docs/*/ai/skills/`.
+           - AI Skills directories also contain website-owned pages. Confirm
+             ownership from the package manifest or `sourceEditUrl` before
+             requesting an upstream change.
+           - Check source revisions, dependency updates, and sync tooling before
+             flagging unexplained output changes. Request regeneration when
+             evidence shows outputs are stale, incomplete, or edited directly.
 
         3. **lynx-ui Subproject Naming Convention**:
-           When referring to the lynx-ui subproject, package, routes, or synchronized docs, use **lynx-ui** (lowercase).
-           - Do not rewrite references to the overall Lynx website, Lynx documentation, or Lynx runtime as lynx-ui.
-           - If you find "Lynx UI" or "Lynx-UI" where it refers to the lynx-ui subproject or package, provide a replacement suggestion immediately.
+           When referring to the lynx-ui subproject, package, routes, or
+           synchronized docs, use **lynx-ui** (lowercase).
+           - Do not rewrite references to the overall Lynx website, Lynx
+             documentation, or Lynx runtime as lynx-ui.
+           - If you find "Lynx UI" or "Lynx-UI" where it refers to the lynx-ui
+             subproject or package, provide a replacement suggestion
+             immediately.
 
         4. **Reject Process and Temporary Artifacts**:
-           Flag scratch notes, one-off investigation scripts, temporary analysis output, debug dumps, and other process artifacts added to the repository.
-           - Do not flag generated files that a documented workflow explicitly treats as maintained outputs.
+           Flag scratch notes, one-off investigation scripts, temporary analysis
+           output, debug dumps, and other process artifacts added to the
+           repository.
+           - Do not flag generated files that a documented workflow explicitly
+             treats as maintained outputs.
+
+        5. **Check Compatibility Data**:
+           For changes to compatibility data or API documentation bindings,
+           follow CONTRIBUTING.md#compatibility-data, including its MDN
+           references.
+
+        6. **Assess Downstream Compatibility**:
+           Follow CONTRIBUTING.md#coordinating-changes. Identify a specific
+           affected interface and compatibility concern before requesting
+           downstream validation; do not routinely ask whether it was run.
+           Missing downstream test evidence alone is not a defect. Respect
+           explicit maintainer decisions about validation, and revisit them
+           only when new changes or evidence reveal a concrete compatibility
+           risk. A decision to skip validation does not mean validation passed.
 chat:
   auto_reply: true

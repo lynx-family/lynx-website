@@ -106,6 +106,17 @@ such as `[--icon-size:20px]` is valid in scanned source, but document MDX is not
 part of the hosts' normal content globs. Documentation must not rely on a new
 utility class being emitted.
 
+## React Component Style
+
+- Prefer function components and Hooks for new or updated React components.
+- Define props with an explicit `type` or `interface` and annotate the function
+  parameters directly. Let TypeScript infer the return type unless a contract
+  requires an explicit annotation. Do not annotate component implementations
+  with `React.FC`, `React.FunctionComponent`, or equivalent aliases.
+- Keep class components when a React API requires them, such as native error
+  boundaries using `getDerivedStateFromError` or `componentDidCatch`. Preserve
+  existing error handling when modernizing components.
+
 ## Checks
 
 Run both gates for changes under `src/` or `theme/`:

@@ -49,19 +49,8 @@ themes, and preparation tooling. A downstream in-house documentation site
 consumes a pinned revision through a git submodule and layers internal-only
 content and configuration on top.
 
-Changes to directly consumed content such as `docs/`, `i18n.json`, and
-`sharedDocs/`, as well as package metadata, shared configuration contracts,
-runtime source, themes, preparation scripts, or example-package layouts can
-affect downstream consumers. Contributors changing this boundary must
-coordinate downstream validation after the updated OSS revision is pinned.
-
-The in-house repository synchronizes OSS changes daily at 09:30 UTC+8. For
-coordinated changes, especially those that must land internally first, land the
-downstream counterpart before the OSS change can be synchronized, or time the
-OSS merge around that window.
-
-See [AGENTS.md](./AGENTS.md) for the detailed compatibility contract and
-verification requirements.
+See [Downstream Compatibility](./CONTRIBUTING.md#downstream-compatibility)
+for consumed paths, shared contracts, landing order, and verification.
 
 ## Overview
 
