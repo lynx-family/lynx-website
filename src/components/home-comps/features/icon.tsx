@@ -33,6 +33,16 @@ const IconVueLynx = () => {
   return <VueLynxIcon className={styles['vue-icon']} />;
 };
 
+const IconAngularLynx = () => {
+  return (
+    <img
+      src={withBase('/assets/home/angularlynx-logo.png')}
+      alt=""
+      className={styles['angular-icon']}
+    />
+  );
+};
+
 const IconOctaneLynx = () => {
   return <OctaneIcon className={styles['octane-icon']} />;
 };
@@ -56,6 +66,7 @@ export {
   IconWindows,
   IconReactLynx,
   IconVueLynx,
+  IconAngularLynx,
   IconOctaneLynx,
   IconMisoLynx,
 };
