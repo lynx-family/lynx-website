@@ -145,3 +145,88 @@ ${content.trimEnd()}
     console.log(`Added the Lynx Go example to docs/${locale}/${page}`);
   }
 }
+
+// First supported @lynx-js/genui version for OpenUI APIs whose generated
+// reference does not state one. Older packages fail at module resolution for
+// `openui/explicit`, so the boundary must be visible on the reference pages
+// as well as in the OpenUI guide. Remove an entry once the synced lynx-stack
+// reference states its availability.
+const genuiAvailabilityCopy = {
+  en: {
+    title: 'Availability',
+    requires: (version) => `Requires \`@lynx-js/genui\` ${version} or later.`,
+    explicitEntry:
+      'Earlier versions do not export `@lynx-js/genui/openui/explicit`, so importing it fails during module resolution.',
+  },
+  zh: {
+    title: '可用版本',
+    requires: (version) => `需要 \`@lynx-js/genui\` ${version} 或更高版本。`,
+    explicitEntry:
+      '更早的版本没有导出 `@lynx-js/genui/openui/explicit`，导入时会在模块解析阶段失败。',
+  },
+};
+
+// `member` places the notice under that property's signature; otherwise the
+// notice follows the page title.
+const genuiAvailability = [
+  {
+    version: '0.3.0',
+    page: 'api/genui/openui/explicit/index.mdx',
+    explicitEntry: true,
+  },
+  {
+    version: '0.3.0',
+    page: 'api/genui/openui/explicit/functions/createOpenUiLibrary.mdx',
+    explicitEntry: true,
+  },
+  {
+    version: '0.3.0',
+    page: 'api/genui/openui/explicit/type-aliases/CreateExplicitOpenUiLibraryOptions.mdx',
+    explicitEntry: true,
+  },
+  {
+    version: '0.3.0',
+    page: 'api/genui/openui/core/interfaces/CreateOpenUiLibraryOptions.mdx',
+    member: 'includeDefaultComponents',
+  },
+  {
+    version: '0.3.0',
+    page: 'api/genui/openui/core/type-aliases/InitialQueryResults.mdx',
+  },
+  {
+    version: '0.3.0',
+    page: 'api/genui/openui/core/interfaces/OpenUiRendererRuntimeProps.mdx',
+    member: 'initialQueryResults',
+  },
+  {
+    version: '0.3.0',
+    page: 'api/genui/openui/core/interfaces/UseOpenUIStateOptions.mdx',
+    member: 'initialQueryResults',
+  },
+];
+
+for (const [locale, copy] of Object.entries(genuiAvailabilityCopy)) {
+  for (const { version, page, member, explicitEntry } of genuiAvailability) {
+    const file = `${repoRoot}docs/${locale}/${page}`;
+    const content = await readFile(file, 'utf8');
+    const body = explicitEntry
+      ? `${copy.requires(version)}${locale === 'zh' ? '' : ' '}${copy.explicitEntry}`
+      : copy.requires(version);
+    const notice = `:::info ${copy.title}\n${body}\n:::`;
+    if (content.includes(notice)) continue;
+    // A member heading is followed by its signature blockquote, which can span
+    // several lines.
+    const anchor = member
+      ? new RegExp(`^### ${member}\\??\\n\\n(?:>[^\\n]*\\n)+`, 'm')
+      : /^# [^\n]+\n/m;
+    if (!anchor.test(content)) {
+      throw new Error(
+        `Missing ${member ? `${member} signature` : 'page title'}: docs/${locale}/${page}`,
+      );
+    }
+    await writeFile(file, content.replace(anchor, `$&\n${notice}\n`));
+  }
+  console.log(
+    `Added ${genuiAvailability.length} GenUI availability notices (${locale})`,
+  );
+}
