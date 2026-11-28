@@ -1,0 +1,45 @@
+# lynx_value_get_string_utf8
+
+## 介绍
+
+从 lynx_value 中读取一个 UTF8 编码的字符串，字符串将会被拷贝。
+
+## 语法
+
+```c
+lynx_api_status lynx_value_get_string_utf8(lynx_api_env env,
+                                           lynx_value value,
+                                           char* buf,
+                                           size_t bufsize,
+                                           size_t* result);
+```
+
+### 参数
+
+| Key           | Description                                                                                                                                                                    |
+|:--------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [in] env      | lynx_value 的运行环境，一般情况下是 nullptr                                                                                                                    |
+| [in] value    | string 类型 lynx_value                                                                                                                               |
+| [in] buf      | 用于容纳 UTF8 字符串的 Buffer，如果它传 NULL，将会返回数组长度                |
+| [in] bufsize  | 想要读取字符串的长度，如果这个值为零，则不会返回字符串                                                |
+| [out] result  | 复制到缓冲区的字节数，不包括空终止符                                                                                                         |
+
+### 返回值
+
+Returns lynx_api_ok if the API succeeded. Returns lynx_api_string_expected if the types do not match.
+
+## 示例
+
+```c
+size_t length = 0;
+lynx_api_status status = lynx_value_get_string_utf8(env, string_value, nullptr, 0, &length);
+if (status != lynx_api_ok) {
+  // handle error.
+}
+std::string str;
+str.resize(length);
+status = lynx_value_get_string_utf8(env, string_value, &str[0], length + 1, &length);
+if (status != lynx_api_ok) {
+  // handle error.
+}
+```
