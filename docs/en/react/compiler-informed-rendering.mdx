@@ -217,11 +217,32 @@ For structures that genuinely need to be determined at runtime, keeping the code
 
 One characteristic of ReactLynx is that this compiled representation participates not only in update-time reconciliation, but also in Lynx's dual-thread [Instant First-Frame Rendering (IFR)](/guide/interaction/ifr) pipeline.
 
-The same template can be reused by multiple mounted `Greeting` components. Each mounted `Greeting` has a corresponding pair of template instances: the main-thread template instance owns the Lynx elements it creates, while the background template instance stores the logical tree and dynamic data used for reconciliation. The runtime consumes the compiled output in two stages: initial rendering and subsequent updates.
+### One Template, Two Instances per Use
+
+This section uses _template_ for the reusable compiled structure described above, which is a Snapshot in the current implementation. A _template instance_ is one use of that structure at runtime. Three roles work together:
+
+| Role                          | Where it lives                          | How many                                                | What it holds                                                                                 |
+| ----------------------------- | --------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Template                      | Compiled into the code for both threads | One per JSX structure, such as one for every `Greeting` | The static creator, dynamic updaters, slot positions, and template identity.                  |
+| Main-thread template instance | Main thread                             | One per mounted use                                     | The Lynx elements built by the static creator.                                                |
+| Background template instance  | Background thread                       | One per mounted use                                     | The latest dynamic values and dynamic children used for reconciliation, but no Lynx elements. |
+
+For example, rendering `<Greeting name="Alice" />` and `<Greeting name="Bob" highlighted />` uses one `Greeting` template and two pairs of template instances. Both main-thread instances are built by the same static creator, so their element structures are identical. They differ only in the dynamic values each instance receives.
+
+The two instances in a pair share an identity, which lets each thread refer to the same instance across the thread boundary. Static structure never crosses that boundary, because both threads already have the template. Only identities and dynamic data cross it:
+
+- During the initial render, the main thread reports which template instances it created and which dynamic values it used.
+- During updates, the background thread sends changed dynamic values and child changes for specific template instances.
+
+The following sections follow this data flow through both stages.
 
 ### Initial Render: Create a Template Instance
 
-The UI elements for the initial render are created directly on the main thread. The runtime first finds the template from the VNode type, then creates a main-thread template instance for this `Greeting`. The template instance owns the Lynx elements returned by the static creator. Initial dynamic values are passed to their corresponding updaters, and dynamic children are inserted into the slots reserved by the compiler.
+The initial render takes three steps:
+
+1. **The main thread renders the first frame.** It runs the components and creates a main-thread template instance for each use of a template. The static creator builds the Lynx elements, the dynamic updaters apply the initial dynamic values, and dynamic children are inserted into the slots reserved by the compiler. The first frame can be displayed at this point.
+2. **The main thread describes what it created.** It sends the background thread a description of its template-instance tree: the template, identity, and dynamic values of each instance. The Lynx elements themselves stay on the main thread.
+3. **The background thread hydrates.** It runs the same components again to build its own template-instance tree, pairs each background instance with the main-thread instance at the same position, and adopts that instance's identity. Where its dynamic values or children differ from the main-thread result, it sends only those differences back.
 
 The following pseudocode illustrates this process:
 
@@ -233,7 +254,7 @@ const initialRender = mainThreadRoot.render(<App />);
 const backgroundRoot = hydrateRootFromMainThread(initialRender, <App />);
 ```
 
-Here, `initialRender` abstracts the main-thread template-instance information required for the initial synchronization; the Lynx elements themselves remain on the main thread. `hydrateRootFromMainThread()` abstracts the background render, instance association, and initial difference synchronization, returning the long-lived background root responsible for reconciliation. These names illustrate the mechanism and are not current public ReactLynx APIs.
+Here, `initialRender` abstracts the template-instance description from step 2. `hydrateRootFromMainThread()` abstracts step 3: the background render, instance pairing, and initial difference synchronization. It returns the long-lived background root responsible for reconciliation. These names illustrate the mechanism and are not current public ReactLynx APIs.
 
 Here, we borrow the concept of SSR hydration to describe this process: the main thread runs the application first and creates the Host Tree required for the first frame, allowing content to be displayed without waiting for the background thread to become ready. The background thread then runs the application again and attaches its own template-instance tree to the existing Host Tree instead of recreating the entire tree.
 
@@ -241,7 +262,14 @@ ReactLynx takes advantage of the main thread's ability to create the Host Tree a
 
 ### Updates: Process Only Changes to Dynamic Positions
 
-After the mapping is established, the background thread compares old and new dynamic data and generates updates. The main thread then finds the corresponding template instance and applies the changes.
+After hydration, every background template instance has a main-thread counterpart with the same identity, and the background thread drives all later updates:
+
+1. A state or property change runs the affected components again on the background thread.
+2. For each affected template instance, the background thread compares the new dynamic values with the ones it stored last time. React reconciles the dynamic children.
+3. The background thread sends only the changes to the main thread, labeled with the template-instance identity and the dynamic position.
+4. The main thread finds the template instance by that identity. It passes each changed value to the template's updater for that dynamic position and applies child changes to the reserved slots.
+
+The static part of the structure is not created or compared again during this process.
 
 The following pseudocode illustrates the same mechanism for any template. Changes to dynamic properties can be handled by targeted updaters generated by the compiler, while dynamic children remain reconciled by React:
 
@@ -264,7 +292,7 @@ function applyTemplateChanges(Template, instance, changes) {
 }
 ```
 
-For dynamic properties, the main thread directly calls the compiler-generated `Template.update()` without traversing the static host structure again. For dynamic children, the background thread still performs reconciliation and applies the resulting child changes to the reserved slots.
+For dynamic properties, the main thread directly calls the compiler-generated `Template.update()` without traversing the static host structure again. For dynamic children, React still performs reconciliation on the background thread, and the main thread applies the resulting child changes to the reserved slots.
 
 ## Back to Application Code
 
