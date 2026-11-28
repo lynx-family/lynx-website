@@ -35,15 +35,34 @@
     color: #333;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
     backdrop-filter: blur(4px);
+    // Hidden until the frame is hovered or the link is focused. While hidden it
+    // must not intercept pointer input aimed at the document underneath.
     opacity: 0;
+    pointer-events: none;
     transition:
       opacity 0.2s ease,
       background 0.15s ease;
     text-decoration: none;
   }
 
-  &:hover .open-external {
+  &:hover .open-external,
+  .open-external:focus-visible {
     opacity: 1;
+    pointer-events: auto;
+  }
+
+  .open-external:focus-visible {
+    outline: 2px solid var(--rp-c-brand);
+    outline-offset: 2px;
+  }
+
+  // Devices without hover (touch screens) cannot reveal the link by hovering,
+  // so keep it visible and tappable there.
+  @media (hover: none) {
+    .open-external {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
 
   .open-external:hover {
