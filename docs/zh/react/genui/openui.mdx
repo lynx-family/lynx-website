@@ -45,14 +45,18 @@ import { Go } from '@lynx';
 pnpm add @lynx-js/genui @lynx-js/react @lynx-js/lynx-ui
 ```
 
+:::info 版本要求
+[`openui/explicit`](#显式选择组件) 入口、`includeDefaultComponents` 选项和 [`initialQueryResults`](#预取-query-结果) 属性需要 `@lynx-js/genui` 0.3.0 或更高版本。
+:::
+
 在应用样式中引入 OpenUI 样式：
 
 ```css
-@import '@lynx-js/genui/openui/styles/renderer.css';
+@import '@lynx-js/genui/openui/styles/theme.css';
 ```
 
 :::info 样式入口兼容性
-已发布的 `@lynx-js/genui@0.0.6` 使用 `renderer.css`。当前 `lynx-stack/main` 源码已把宿主侧主题变量移到 `@lynx-js/genui/openui/styles/theme.css`；直接基于 `main` 开发，或使用明确导出该入口的版本时，请改用该路径。
+`@lynx-js/genui` 0.1.0 及更高版本通过 `theme.css` 导出宿主侧主题变量；0.0.6 及更早版本则导出 `@lynx-js/genui/openui/styles/renderer.css`。
 :::
 
 创建一个引用稳定的 Library，再把 OpenUI Lang 源码传给 Renderer：
@@ -204,6 +208,10 @@ actions = Buttons([
 
 ### 预取 Query 结果
 
+:::info 可用版本
+`initialQueryResults` 需要 `@lynx-js/genui` 0.3.0 或更高版本。
+:::
+
 如果 Query 数据在 ReactLynx 首屏前已经可用，可以通过 `initialQueryResults` 传入。每个 key 都是 Query assignment name（statement ID），而不是 tool name，因此调用同一个工具但参数不同的 Queries 也不会混淆：
 
 ```text
@@ -270,6 +278,10 @@ const library = createOpenUiLibrary({
 默认情况下，`createOpenUiLibrary()` 会把自定义 definitions 追加到 26 个内置组件和 6 个 component groups 之后；同名自定义组件会覆盖对应的内置组件。设置 `includeDefaultComponents: false` 会同时移除内置 definitions 及其 groups，此时 `components` 和 `componentGroups` 描述的是完整的 Library vocabulary。可以用 `library.toJSONSchema()` 检查最终契约。通过 memoization 保证一个活动流的 Library 引用稳定，不要在每次渲染时重新创建。
 
 ### 显式选择组件
+
+:::info 可用版本
+`@lynx-js/genui/openui/explicit` 入口和 `includeDefaultComponents` 选项需要 `@lynx-js/genui` 0.3.0 或更高版本。更早的版本没有导出 `openui/explicit`，导入时会在模块解析阶段失败。
+:::
 
 从逐组件子路径导入所需的内置组件。如果未选择的组件也不能进入静态依赖图，请使用不依赖 catalog 的 `openui/explicit` 入口：
 

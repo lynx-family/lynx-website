@@ -45,14 +45,18 @@ Install the renderer and its ReactLynx peers:
 pnpm add @lynx-js/genui @lynx-js/react @lynx-js/lynx-ui
 ```
 
+:::info Version requirements
+The [`openui/explicit`](#select-components-explicitly) entry, the `includeDefaultComponents` option, and the [`initialQueryResults`](#prefetch-query-results) prop require `@lynx-js/genui` 0.3.0 or later.
+:::
+
 Import the OpenUI styles in your application stylesheet:
 
 ```css
-@import '@lynx-js/genui/openui/styles/renderer.css';
+@import '@lynx-js/genui/openui/styles/theme.css';
 ```
 
 :::info Style entry compatibility
-The published `@lynx-js/genui@0.0.6` package uses `renderer.css`. The current `lynx-stack/main` source has moved the host-facing theme variables to `@lynx-js/genui/openui/styles/theme.css`; use that path when developing against `main` or a release that exports it.
+`@lynx-js/genui` 0.1.0 and later export the host-facing theme variables from `theme.css`. Versions up to 0.0.6 export `@lynx-js/genui/openui/styles/renderer.css` instead.
 :::
 
 Create one stable Library and pass OpenUI Lang source to the Renderer:
@@ -204,6 +208,10 @@ After streaming finishes and a Query statement is complete, its default or prefe
 
 ### Prefetch Query results
 
+:::info Availability
+`initialQueryResults` requires `@lynx-js/genui` 0.3.0 or later.
+:::
+
 When Query data is available before the ReactLynx first screen, pass it through `initialQueryResults`. Each key is the Query assignment name (statement ID), not the tool name, so calls to the same tool with different arguments remain distinct:
 
 ```text
@@ -270,6 +278,10 @@ Declare `zod` as a direct application dependency when defining components. The s
 By default, `createOpenUiLibrary()` appends custom definitions to its 26 built-in components and six component groups. A custom component with the same name overrides that built-in. Set `includeDefaultComponents: false` to omit both the built-in definitions and their groups; `components` and `componentGroups` then describe the complete Library vocabulary. You can inspect the resulting contract with `library.toJSONSchema()`. Keep this contract stable for the lifetime of an active stream by memoizing the Library instead of creating it during every render.
 
 ### Select components explicitly
+
+:::info Availability
+The `@lynx-js/genui/openui/explicit` entry and the `includeDefaultComponents` option require `@lynx-js/genui` 0.3.0 or later. Earlier versions do not export `openui/explicit`, so importing it fails during module resolution.
+:::
 
 Import selected built-ins from their component subpaths. Use the catalog-free `openui/explicit` entry when components you did not select must also stay outside the static dependency graph:
 
