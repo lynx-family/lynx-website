@@ -10,6 +10,19 @@ import { APISummary, APITable } from '@lynx';
 
 Using [LynxUpdateMeta](/api/lynx-native-api/lynx-update-meta) to update `LynxView`, it is the main entrance for the client to update template data.
 
+This page is the reference for the complete update-method signatures, parameters, types, and version notes on every platform.
+
+## Platform Mapping
+
+Android, iOS, and Desktop (C++) pass a [LynxUpdateMeta](/api/lynx-native-api/lynx-update-meta) object that carries the template data and global props. HarmonyOS uses a [`MetaData`](/api/lynx-native-api/lynx-update-meta#harmony) object instead. On the Web, [`<lynx-view>`](/api/lynx-native-api/lynx-view/lynx-view) has no metadata structure: its methods accept the data directly.
+
+| Platform      | Update method                       | Input                                                  |
+| :------------ | :---------------------------------- | :----------------------------------------------------- |
+| Android       | `updateMetaData`                    | `LynxUpdateMeta`                                       |
+| iOS           | `updateMetaData:`                   | `LynxUpdateMeta`                                       |
+| Desktop (C++) | `UpdateData`                        | `std::shared_ptr<lynx::pub::LynxUpdateMeta>`           |
+| Web           | `updateData` and `updateGlobalProps` | Template data or global props as a [`Cloneable`](#cloneable) value |
+
 ## Syntax
 
 ### Android
@@ -40,12 +53,6 @@ The signature below applies to `@lynx-js/web-core` 0.18.0 and later. In earlier 
 :::
 
 ```ts
-export type Cloneable<T = string | number | null | boolean | undefined> =
-  | T
-  | Record<string, T>
-  | T[]
-  | Array<Record<string, Cloneable>>;
-
 updateData(
   data: Cloneable,
   processorName?: string,
@@ -56,7 +63,21 @@ updateGlobalProps(data: Cloneable): void;
 
 #### Parameters
 
-- `data`: Data to be updated, should be `structuredClone` compatible.
+- `data`: Data to be updated, should be `structuredClone` compatible. For `updateData`, it is the template data; for `updateGlobalProps`, it is the global props.
+- `processorName`: Optional. The name of the `dataProcessor` that processes `data` before the update. If it is omitted, the default `dataProcessor` is used. See [Using Data from Host Platform](/guide/use-data-from-host-platform).
+- `callback`: Optional. Called after the update is applied.
+
+#### Cloneable
+
+The data accepted by the `<lynx-view>` methods, including [`sendGlobalEvent`](/api/lynx-native-api/lynx-view/send-global-event), is declared with the `Cloneable` type:
+
+```ts
+export type Cloneable<T = string | number | null | boolean | undefined> =
+  | T
+  | Record<string, T>
+  | T[]
+  | Array<Record<string, Cloneable>>;
+```
 
 ### Desktop (C++)
 

@@ -69,30 +69,16 @@ metaData = new MetaData(
 
 ## Web
 
-:::info
-
-The signature below applies to `@lynx-js/web-core` 0.18.0 and later. In earlier versions, the second parameter of `updateData` is required and declared as `updateDataType: UpdateDataType`; since 0.18.0, it is the optional `processorName?: string`. See the [0.18.0 changelog](https://github.com/lynx-family/lynx-stack/blob/main/packages/web-platform/web-core/CHANGELOG.md#0180).
-
-:::
-
-```ts
-export type Cloneable<T = string | number | null | boolean | undefined> =
-  | T
-  | Record<string, T>
-  | T[]
-  | Array<Record<string, Cloneable>>;
-
-updateData(
-  data: Cloneable,
-  processorName?: string,
-  callback?: () => void,
-): void;
-updateGlobalProps(data: Cloneable): void;
-```
+On the Web, `<lynx-view>` has no `LynxUpdateMeta` structure to construct. Its update methods accept the data directly. See [updateMetaData](./lynx-view/update-meta-data.mdx#web) for their signatures, parameters, and version notes.
 
 ### Parameters
 
-- `data`: Data to be updated, should be `structuredClone` compatible.
+The data that native platforms carry in `LynxUpdateMeta` fields is passed directly as the `data` argument of the matching Web method:
+
+- Template data: pass it to `updateData`.
+- Global props: pass it to `updateGlobalProps`.
+
+The data must be a [`Cloneable`](./lynx-view/update-meta-data.mdx#cloneable) value.
 
 ## Desktop (C++)
 
